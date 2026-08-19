@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   Kadokowe design tokens — SRS v1.4 §11.2 / §11.3
+   Ported from the client-approved concept prototype.
+
+   The brand commits to a single light visual world: near-black type on white
+   and warm grey, with one saturated red reserved for action. That commitment
+   is deliberate (§11.1 "premium but energetic"), so this stylesheet does not
+   define a dark theme — an inverted palette would put white type on a red
+   that was chosen to sit on white.
+   ========================================================================== */
+
+@theme {
+  /* Brand — fixed by the client, do not substitute */
+  --color-red: #bf0001;
+  --color-ink: #0f0c0d;
+  --color-warm: #f3f2f0;
+  --color-paper: #ffffff;
+
+  /* Functional neutrals derived from the warm grey, biased warm to match it.
+     These are greys, not a secondary palette — §11.2 records that no
+     secondary palette exists. */
+  --color-line: #e2dfdb;
+  --color-muted: #7c766f;
+  --color-plate-a: #e8e5e1;
+  --color-plate-b: #d6d2cc;
+  --color-plate-c: #c4bfb8;
+
+  /* Poppins carries navigation, headlines, category labels and UI.
+     Lora is reserved for editorial statements and voice — used sparingly,
+     or the intended contrast between structure and story is lost (§11.3). */
+  --font-display: var(--font-poppins), "Avenir Next", system-ui, sans-serif;
+  --font-editorial: var(--font-lora), "Iowan Old Style", Georgia, serif;
+
+  /* Type scale. Fluid, so mobile-first sizing needs no breakpoint juggling. */
+  --text-mega: clamp(2.6rem, 8.5vw, 7rem);
+  --text-mega--line-height: 0.94;
+  --text-xl-display: clamp(2rem, 5vw, 3.9rem);
+  --text-xl-display--line-height: 1.02;
+  --text-lg-display: clamp(1.5rem, 3vw, 2.4rem);
+  --text-lg-display--line-height: 1.1;
+  --text-md-display: clamp(1.125rem, 1.8vw, 1.5rem);
+  --text-md-display--line-height: 1.2;
+  --text-lede: clamp(1.0625rem, 1.5vw, 1.375rem);
+  --text-lede--line-height: 1.55;
+
+  --spacing-gutter: clamp(1.25rem, 5vw, 5rem);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ------------------------------------------------------------------ base */
+
+html {
+  scroll-behavior: smooth;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Keyboard focus must stay visible everywhere (NFR-5.x). */
+:focus-visible {
+  outline: 2px solid var(--color-red);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-red);
+  color: var(--color-paper);
+}
+
+/* ------------------------------------------------- editorial primitives */
+
+/* Uppercase eyebrow labels need tracking to stay legible at small sizes. */
+@utility eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+@utility balance {
+  text-wrap: balance;
+}
+
+/* Headings are set tight; the display face opens up at large sizes and
+   default tracking reads loose. */
+@utility tracked-tight {
+  letter-spacing: -0.03em;
+}
+
+/* Photo stand-in. Real imagery replaces these, but the surface treatment
+   stays as the loading and empty state. */
+@utility plate {
+  background: linear-gradient(
+    145deg,
+    var(--color-plate-a) 0%,
+    var(--color-plate-b) 55%,
+    var(--color-plate-c) 100%
+  );
+  position: relative;
+  overflow: hidden;
 }
