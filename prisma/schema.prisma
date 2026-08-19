@@ -1,0 +1,593 @@
+// Kadokowe — data model
+// Implements SRS v1.4 §9. Phase 2 and Phase 3 entities are defined here from
+// the outset per NFR-7.4, so later phases need no destructive migration.
+//
+// Bilingual strategy: paired `*En` / `*Id` columns rather than a translations
+// table. The site supports exactly two fixed languages (§8.11), so paired
+// columns stay directly indexable for per-language search (FR-11.7) and avoid
+// a join on every read. Resolution and fallback live in src/lib/i18n.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- enums
+
+/// FR-3.15–3.17. Replaces the earlier three-value Sourcing Type.
+enum Availability {
+  READY_STOCK
+  LOCAL_PRODUCTION
+  IMPORT_SOURCING
+  CUSTOM_MADE
+}
+
+/// Draft is always the default. FR-13.4 makes this the sole safeguard
+/// protecting unpublished client proposals in Concept Collections.
+enum Visibility {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
+/// The four independent browse axes. FR-3.1–3.4, FR-3.6.
+enum TaxonomyAxis {
+  PRODUCT
+  PURPOSE
+  INDUSTRY
+  BUDGET
+}
+
+/// FR-8.1. Four categories, strategy-led rather than format-led.
+enum ArticleCategory {
+  GIFTING_STRATEGY
+  IDEAS_TRENDS
+  PACKAGING_DESIGN
+  BEHIND_THE_MAKING
+}
+
+/// FR-12.1. Seven families, renamed to avoid collision with Idea Library
+/// product categories — see SRS §8.12.
+enum CustomMadeFamily {
+  CUSTOM_BAGS
+  PRINTED_TEXTILES
+  PLUSH_CHARACTERS
+  SILICONE_MOULDED
+  CUSTOM_APPAREL
+  CUSTOM_PACKAGING
+  SPECIAL_PROJECTS
+}
+
+/// FR-6.1.
+enum EnquiryType {
+  EVENT
+  CAMPAIGN
+  CORPORATE_GIFT
+  EMPLOYEE_GIFT
+  VIP_GIFT
+  PRODUCT_LAUNCH
+  OTHER
+}
+
+/// FR-6.9.
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  PROPOSAL_SENT
+  WON
+  CLOSED
+}
+
+/// FR-15.2. Double opt-in: a subscriber is only mailed once CONFIRMED.
+enum SubscriberStatus {
+  UNCONFIRMED
+  CONFIRMED
+  UNSUBSCRIBED
+}
+
+enum Locale {
+  EN
+  ID
+}
+
+/// Phase 3, FR-9.3.
+enum ProjectStage {
+  BRIEF
+  CONCEPT
+  DESIGN
+  MOCKUP
+  APPROVAL
+  PRODUCTION
+  QC
+  SHIPPING
+  DELIVERED
+}
+
+// ---------------------------------------------------------------- catalogue
+
+/// The Idea Library. Schema follows SRS §9.2 exactly.
+model Product {
+  id        String @id @default(cuid())
+  slug      String @unique
+
+  nameEn    String
+  nameId    String?
+  /// The idea-led line on the product card. FR-4.1.
+  shortEn   String
+  shortId   String?
+  /// Kadokowe's perspective. The field that distinguishes a library from a
+  /// price list — FR-4.5.
+  whyEn     String?
+  whyId     String?
+
+  material    String?
+  dimensions  String?
+  capacity    String?
+  colours     String[] @default([])
+  moq         Int?
+  leadTime    String?
+  /// Logo printing, laser, UV, custom colour, sleeve, packaging, gift set.
+  customisation String[] @default([])
+
+  availability Availability @default(LOCAL_PRODUCTION)
+
+  /// Stored for filtering precision and to derive Budget Tier across a large
+  /// catalogue. Never a primary display element — FR-4.3.
+  indicativePrice Int?
+
+  heroImage String?
+  gallery   Image[]
+
+  /// Free-form, per language, because search must match Indonesian terms
+  /// against Indonesian tags — FR-11.7.
+  tagsEn    String[] @default([])
+  tagsId    String[] @default([])
+
+  featured   Boolean @default(false)
+  isNew      Boolean @default(false)
+  visibility Visibility @default(DRAFT)
+
+  seoTitleEn String?
+  seoTitleId String?
+  seoDescEn  String?
+  seoDescId  String?
+
+  // §9.4 relationships
+  terms       TaxonomyTerm[]      @relation("ProductTerms")
+  projects    Project[]           @relation("ProductProjects")
+  collections ConceptCollection[] @relation("ProductCollections")
+  articles    Article[]           @relation("ProductArticles")
+  issues      QuarterlyIssue[]    @relation("IssueProducts")
+  family      CustomMadeFamily?
+
+  boardItems IdeaBoardItem[]
+  enquiries  EnquiryProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, featured])
+  @@index([availability])
+  @@index([family])
+}
+
+/// One row per term across all four axes. FR-3.13 requires these be
+/// administrator-managed rather than hard-coded.
+model TaxonomyTerm {
+  id      String       @id @default(cuid())
+  axis    TaxonomyAxis
+  slugEn  String
+  slugId  String?
+  nameEn  String
+  nameId  String?
+  image   String?
+  sortOrder Int        @default(0)
+
+  parentId String?
+  parent   TaxonomyTerm?  @relation("TermTree", fields: [parentId], references: [id])
+  children TaxonomyTerm[] @relation("TermTree")
+
+  products Product[] @relation("ProductTerms")
+
+  @@unique([axis, slugEn])
+  @@index([axis, sortOrder])
+}
+
+/// Gallery images. A single model with nullable parents keeps alt text and
+/// ordering attached to the asset rather than scattered across string arrays.
+model Image {
+  id         String  @id @default(cuid())
+  publicId   String  // Cloudinary public ID
+  altEn      String?
+  altId      String?
+  /// Caption naming the intended shot; carried over from the approved concept.
+  captionEn  String?
+  captionId  String?
+  sortOrder  Int     @default(0)
+
+  productId    String?
+  product      Product?           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  projectId    String?
+  project      Project?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  articleId    String?
+  article      Article?           @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  collectionId String?
+  collection   ConceptCollection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@index([projectId, sortOrder])
+  @@index([articleId, sortOrder])
+  @@index([collectionId, sortOrder])
+}
+
+// ---------------------------------------------------------------- our work
+
+/// FR-7.2. Six narrative sections, every one optional — a project renders
+/// only what it carries, with no empty headings.
+model Project {
+  id     String @id @default(cuid())
+  slug   String @unique
+
+  titleEn String
+  titleId String?
+  client  String
+  industry String?
+  /// Shown on the index card.
+  summaryEn String?
+  summaryId String?
+
+  briefEn      String?
+  briefId      String?
+  challengeEn  String?
+  challengeId  String?
+  thinkingEn   String?
+  thinkingId   String?
+  createdWorkEn String?
+  createdWorkId String?
+  makingEn     String?
+  makingId     String?
+  impactEn     String?
+  impactId     String?
+
+  /// Impact figures rendered as a stat band.
+  stats Json?
+
+  heroImage String?
+  gallery   Image[]
+
+  featured   Boolean    @default(false)
+  visibility Visibility @default(DRAFT)
+  publishedAt DateTime?
+  sortOrder  Int        @default(0)
+
+  seoTitleEn String?
+  seoTitleId String?
+  seoDescEn  String?
+  seoDescId  String?
+
+  products    Product[]           @relation("ProductProjects")
+  articles    Article[]           @relation("ProjectArticles")
+  collections ConceptCollection[] @relation("ProjectCollections")
+  issues      QuarterlyIssue[]    @relation("IssueProjects")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, featured])
+}
+
+// ---------------------------------------------------------------- insights
+
+model Article {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  titleEn String
+  titleId String?
+  /// Standfirst on the index.
+  excerptEn String?
+  excerptId String?
+  bodyEn  String?
+  bodyId  String?
+
+  category ArticleCategory
+
+  heroImage String?
+  gallery   Image[]
+
+  featured    Boolean    @default(false)
+  visibility  Visibility @default(DRAFT)
+  publishedAt DateTime?
+
+  seoTitleEn String?
+  seoTitleId String?
+  seoDescEn  String?
+  seoDescId  String?
+  shareImage String?
+
+  // FR-8.8 — the cross-link pattern renders each block only when populated.
+  products    Product[]           @relation("ProductArticles")
+  projects    Project[]           @relation("ProjectArticles")
+  collections ConceptCollection[] @relation("ArticleCollections")
+  issues      QuarterlyIssue[]    @relation("IssueArticles")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, category, publishedAt])
+  @@index([featured])
+}
+
+// ---------------------------------------------------------------- concepts
+
+/// FR-13. Code-managed at launch (FR-13.7) — no admin interface — but modelled
+/// here so the relationship graph and the Quarterly can reference it.
+model ConceptCollection {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  titleEn String
+  titleId String?
+  themeEn String?
+  themeId String?
+  /// The brief or opportunity this explored.
+  briefEn String?
+  briefId String?
+  /// Creative direction taken.
+  directionEn String?
+  directionId String?
+
+  heroImage String?
+  gallery   Image[]
+
+  /// FR-13.4 — defaults to DRAFT. Nothing is published without explicit action.
+  visibility Visibility @default(DRAFT)
+  sortOrder  Int        @default(0)
+
+  products Product[]        @relation("ProductCollections")
+  projects Project[]        @relation("ProjectCollections")
+  articles Article[]        @relation("ArticleCollections")
+  issues   QuarterlyIssue[] @relation("IssueCollections")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, sortOrder])
+}
+
+// ---------------------------------------------------------------- quarterly
+
+/// FR-16, Phase 1b. Curates existing content by reference — FR-16.4 forbids
+/// duplicating content to make it appear in an issue.
+model QuarterlyIssue {
+  id     String @id @default(cuid())
+  number Int    @unique
+  slug   String @unique
+
+  /// e.g. "January – March 2026"
+  periodEn String
+  periodId String?
+  themeEn  String
+  themeId  String?
+  introEn  String?
+  introId  String?
+  /// Short opening editorial — "From Kadokowe".
+  editorialEn String?
+  editorialId String?
+
+  coverImage String?
+  /// Optional download. Modelled now, not required at launch — FR-16.5.
+  pdfUrl     String?
+
+  /// Ordered section blocks. Sections are optional and issues need not be
+  /// uniform — FR-16.3.
+  sections Json?
+
+  visibility  Visibility @default(DRAFT)
+  publishedAt DateTime?
+
+  projects    Project[]           @relation("IssueProjects")
+  articles    Article[]           @relation("IssueArticles")
+  collections ConceptCollection[] @relation("IssueCollections")
+  products    Product[]           @relation("IssueProducts")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, number])
+}
+
+// ---------------------------------------------------------------- conversion
+
+/// FR-6. The site's single primary conversion.
+model Enquiry {
+  id String @id @default(cuid())
+
+  type        EnquiryType?
+  quantity    String?
+  targetBudget String?
+  neededBy    DateTime?
+  description String?
+
+  name    String
+  company String?
+  email   String
+  phone   String?
+
+  /// Where the enquiry began, so a product-page enquiry is distinguishable
+  /// from a cold one — FR-6.10.
+  sourcePage String?
+  locale     Locale  @default(EN)
+  uploads    String[] @default([])
+
+  status EnquiryStatus @default(NEW)
+  notes  String?
+
+  products EnquiryProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+/// Explicit join so an enquiry keeps the product reference even if the
+/// product is later unpublished.
+model EnquiryProduct {
+  enquiryId String
+  productId String
+  enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([enquiryId, productId])
+}
+
+/// FR-15. Double opt-in with recorded consent — required because sending
+/// campaigns to Indonesian recipients engages Law No. 27 of 2022.
+model NewsletterSubscriber {
+  id    String @id @default(cuid())
+  email String @unique
+
+  status SubscriberStatus @default(UNCONFIRMED)
+
+  /// Single-use, cleared on confirmation.
+  confirmToken     String?   @unique
+  /// Long-lived, so one-click unsubscribe works without a session — FR-15.3.
+  unsubscribeToken String    @unique @default(cuid())
+
+  /// FR-15.7 — consent evidence.
+  consentAt     DateTime?
+  consentLocale Locale    @default(EN)
+  sourcePage    String?
+
+  /// FR-15.4 — the list stays Kadokowe's asset regardless of provider.
+  providerSyncedAt DateTime?
+
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------- content
+
+/// FR-10.5 and FR-12.11. Standard page copy, including the seven Custom Made
+/// family pages, editable without a bespoke editor per content type.
+model PageContent {
+  id     String @id @default(cuid())
+  /// e.g. "home.hero", "custom-made.custom-bags"
+  key    String @unique
+  blocks Json
+
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}
+
+/// FR-10.1. One administrator at launch, but modelled with a role so further
+/// accounts need no restructuring — SRS §5.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("ADMIN")
+  active       Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+}
+
+// ---------------------------------------------------------------- phase 2
+
+/// FR-5. Replaces the shopping cart. Never carries a total — FR-5.10.
+model IdeaBoard {
+  id         String  @id @default(cuid())
+  name       String?
+  /// Anonymous boards persist by session; Phase 3 attaches them to a client.
+  sessionKey String?
+  shareToken String  @unique @default(cuid())
+
+  clientId String?
+  client   ClientAccount? @relation(fields: [clientId], references: [id])
+
+  items IdeaBoardItem[]
+
+  submittedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sessionKey])
+}
+
+model IdeaBoardItem {
+  id        String @id @default(cuid())
+  boardId   String
+  productId String
+  sortOrder Int    @default(0)
+  note      String?
+
+  board   IdeaBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  product Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, productId])
+}
+
+// ---------------------------------------------------------------- phase 3
+
+/// FR-9.1. Accounts are created by Kadokowe; there is no self-registration.
+model ClientAccount {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  company      String
+  contactName  String?
+  phone        String?
+  active       Boolean @default(true)
+
+  projects    ClientProject[]
+  brandAssets BrandAsset[]
+  boards      IdeaBoard[]
+
+  createdAt DateTime @default(now())
+}
+
+model ClientProject {
+  id       String @id @default(cuid())
+  clientId String
+  client   ClientAccount @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  name             String
+  stage            ProjectStage @default(BRIEF)
+  expectedDelivery DateTime?
+  lastUpdate       DateTime     @updatedAt
+
+  /// Stage transitions, so history is auditable.
+  stageHistory Json?
+  /// Proposal, artwork, packaging, specification, approvals, production, QC.
+  files        Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId, stage])
+}
+
+model BrandAsset {
+  id       String @id @default(cuid())
+  clientId String
+  client   ClientAccount @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  /// logo | colour | pantone | font | tagline | guideline | artwork | packaging
+  type  String
+  label String?
+  value String?
+  fileUrl String?
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId, type])
+}
