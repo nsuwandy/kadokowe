@@ -10,7 +10,8 @@ import { AxisBar } from "@/components/AxisBar";
 import { SearchBox } from "@/components/SearchBox";
 import { Pagination, PAGE_SIZE } from "@/components/Pagination";
 import { ProductCard } from "@/components/ProductCard";
-import { AXES, AXIS_KEYS } from "@/content/taxonomy";
+import { AXIS_KEYS } from "@/content/taxonomy";
+import { getAllAxes, axisLabel } from "@/lib/taxonomy";
 
 export const metadata: Metadata = {
   title: "The Idea Library",
@@ -30,6 +31,7 @@ export default async function IdeasPage({
 
   const sp = await searchParams;
   const page = Math.max(1, Number(sp?.page ?? 1) || 1);
+  const axes = await getAllAxes(l);
 
   const [products, totalProducts] = await Promise.all([
     db.product.findMany({
@@ -104,26 +106,27 @@ export default async function IdeasPage({
           {/* Entry points for every axis, so no axis is subordinated (FR-3.6). */}
           <div className="mb-10 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {AXIS_KEYS.map((key) => {
-              const axis = AXES[key];
+              const terms = axes[key];
+              if (terms.length === 0) return null;
               return (
                 <div key={key} className="flex flex-col gap-3 bg-paper p-6">
                   <h2 className="text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-red">
-                    {l === "id" ? axis.id : axis.en}
+                    {axisLabel(key, l)}
                   </h2>
                   <ul className="flex flex-wrap gap-x-3 gap-y-1.5">
-                    {axis.terms.slice(0, 6).map((term) => (
+                    {terms.slice(0, 6).map((term) => (
                       <li key={term.slug}>
                         <Link
                           href={path(`/ideas/${key}/${term.slug}`)}
                           className="text-[0.8125rem] text-muted transition-colors hover:text-ink"
                         >
-                          {l === "id" ? term.id : term.en}
+                          {term.label}
                         </Link>
                       </li>
                     ))}
                   </ul>
                   <ArrowLink
-                    href={path(`/ideas/${key}/${axis.terms[0].slug}`)}
+                    href={path(`/ideas/${key}/${terms[0].slug}`)}
                     className="mt-auto pt-2"
                   >
                     {t("Browse", "Telusuri")}
