@@ -25,6 +25,16 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip API routes, Next internals, and anything with a file extension.
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  /**
+   * Skip API routes, the admin area, Next internals, and anything with a file
+   * extension.
+   *
+   * `admin` must be excluded explicitly. Without it next-intl treats the
+   * first path segment as a locale, fails to match "admin", and rewrites to a
+   * locale route that does not exist — which returned 404 for the entire
+   * admin area rather than the login redirect. The admin is deliberately
+   * English-only (FR-10 says nothing about translating it, and it has one
+   * operator), so it has no business in locale routing at all.
+   */
+  matcher: ["/((?!api|admin|_next|_vercel|.*\\..*).*)"],
 };
