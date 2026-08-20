@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { AppLocale } from "@/lib/i18n";
-import { ENQUIRY_TYPES, TYPE_LABELS } from "@/lib/enquiry-schema";
+import {
+  ENQUIRY_TYPES, TYPE_LABELS,
+  checkUploads, MAX_UPLOAD_BYTES, MAX_UPLOADS,
+} from "@/lib/enquiry-schema";
 import { cn } from "@/lib/cn";
 
 /**
@@ -49,6 +52,28 @@ export function EnquiryForm({ locale }: { locale: AppLocale }) {
     };
 
     const next: Record<string, string> = {};
+
+    // The route discards anything outside these limits. Without the same check
+    // here the visitor is thanked for a brief that was never stored.
+    const mb = Math.round(MAX_UPLOAD_BYTES / (1024 * 1024));
+    const problem = checkUploads(files);
+    if (problem?.kind === "count") {
+      next.uploads = t(
+        `Please attach no more than ${MAX_UPLOADS} files.`,
+        `Mohon lampirkan maksimal ${MAX_UPLOADS} berkas.`,
+      );
+    } else if (problem?.kind === "size") {
+      next.uploads = t(
+        `“${problem.file}” is larger than ${mb} MB. Send us a link instead, or split it up.`,
+        `“${problem.file}” lebih besar dari ${mb} MB. Kirimkan tautan saja, atau bagi menjadi beberapa berkas.`,
+      );
+    } else if (problem?.kind === "type") {
+      next.uploads = t(
+        `We can't read “${problem.file}”. PDF, Word, PowerPoint, images or a zip work best.`,
+        `Kami tidak dapat membaca “${problem.file}”. PDF, Word, PowerPoint, gambar, atau zip paling sesuai.`,
+      );
+    }
+
     if (!payload.name.trim()) next.name = t("Please tell us your name.", "Mohon isi nama Anda.");
     if (!/^\S+@\S+\.\S+$/.test(payload.email))
       next.email = t("We need a valid email to reply.", "Kami perlu email yang valid untuk membalas.");
@@ -168,8 +193,18 @@ export function EnquiryForm({ locale }: { locale: AppLocale }) {
           name="uploads"
           multiple
           accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.svg,.ai,.zip"
-          className="w-full border border-dashed border-line bg-warm px-4 py-4 text-sm file:mr-4 file:border-0 file:bg-paper file:px-3 file:py-1.5 file:text-xs file:font-semibold"
+          aria-invalid={!!errors.uploads}
+          aria-describedby={errors.uploads ? "uploads-error" : undefined}
+          className={cn(
+            "w-full border border-dashed bg-warm px-4 py-4 text-sm file:mr-4 file:border-0 file:bg-paper file:px-3 file:py-1.5 file:text-xs file:font-semibold",
+            errors.uploads ? "border-red" : "border-line",
+          )}
         />
+        {errors.uploads && (
+          <p id="uploads-error" className="text-xs text-red" role="alert">
+            {errors.uploads}
+          </p>
+        )}
         <p className="text-xs text-muted">
           {t(
             "Optional — a logo, brand guide, or an existing brief. Anything that saves you explaining.",

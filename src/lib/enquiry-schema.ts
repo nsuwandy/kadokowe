@@ -8,6 +8,47 @@ import { z } from "zod";
  * vague budget is exactly who this form is for, and demanding a quantity they
  * have not decided is how you lose them.
  */
+/**
+ * Attachment limits — FR-6.4, NFR-3.6.
+ *
+ * Shared so the form and the route cannot disagree. They did: the route
+ * dropped anything oversized and the form still reported "your brief has
+ * reached us", so a client could send a 12 MB deck and be told it arrived.
+ * A silent discard on the only conversion path is worse than a rejection.
+ */
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_UPLOADS = 5;
+export const ALLOWED_UPLOAD_TYPES = new Set([
+  "application/pdf", "image/png", "image/jpeg", "image/svg+xml",
+  "application/zip", "application/msword", "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/postscript",
+]);
+
+export type UploadProblem =
+  | { kind: "count" }
+  | { kind: "size"; file: string }
+  | { kind: "type"; file: string };
+
+/**
+ * The single decision about whether an attachment set is acceptable, so the
+ * form and the route cannot drift apart. Returns the first problem found, or
+ * null when everything is storable.
+ */
+export function checkUploads(
+  files: { name: string; size: number; type: string }[],
+): UploadProblem | null {
+  if (files.length > MAX_UPLOADS) return { kind: "count" };
+  const big = files.find((f) => f.size > MAX_UPLOAD_BYTES);
+  if (big) return { kind: "size", file: big.name };
+  // An empty type means the browser could not identify the file. The route
+  // keeps those and derives an extension, so the form must not reject them.
+  const wrong = files.find((f) => f.type && !ALLOWED_UPLOAD_TYPES.has(f.type));
+  if (wrong) return { kind: "type", file: wrong.name };
+  return null;
+}
+
 export const ENQUIRY_TYPES = [
   "EVENT",
   "CAMPAIGN",

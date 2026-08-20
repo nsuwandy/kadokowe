@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { enquirySchema, TYPE_LABELS } from "@/lib/enquiry-schema";
+import { enquirySchema, TYPE_LABELS, checkUploads } from "@/lib/enquiry-schema";
 import { sendEnquiryAcknowledgement, sendEnquiryNotification } from "@/lib/email";
 import { storeEnquiryFile } from "@/lib/uploads";
 
@@ -13,20 +13,9 @@ import { storeEnquiryFile } from "@/lib/uploads";
  * site's only conversion. Delivery problems are logged; the visitor still
  * gets a confirmation.
  */
-/** Files are capped per-file and in total; the rest is validated by type. */
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
-const MAX_FILES = 5;
-const ALLOWED = new Set([
-  "application/pdf", "image/png", "image/jpeg", "image/svg+xml",
-  "application/zip", "application/msword", "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/postscript",
-]);
-
 export async function POST(request: Request) {
   let input;
-  let uploads: string[] = [];
+  const uploads: string[] = [];
 
   try {
     const contentType = request.headers.get("content-type") ?? "";
@@ -37,13 +26,21 @@ export async function POST(request: Request) {
 
       const files = form
         .getAll("uploads")
-        .filter((f): f is File => f instanceof File && f.size > 0)
-        .slice(0, MAX_FILES);
+        .filter((f): f is File => f instanceof File && f.size > 0);
+
+      // NFR-3.6 — validate before anything touches storage, and reject rather
+      // than drop. Silently discarding an attachment and then answering "ok"
+      // tells the visitor their brief arrived when it did not; the form runs
+      // the same check, so reaching here means a caller bypassing it.
+      const problem = checkUploads(files);
+      if (problem) {
+        return NextResponse.json(
+          { error: "upload", problem: problem.kind },
+          { status: 400 },
+        );
+      }
 
       for (const file of files) {
-        // NFR-3.6 — validate by type and size before anything touches storage.
-        if (file.size > MAX_FILE_BYTES) continue;
-        if (file.type && !ALLOWED.has(file.type)) continue;
         uploads.push(await storeEnquiryFile(file));
       }
     } else {
