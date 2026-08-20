@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { enquirySchema, TYPE_LABELS } from "@/lib/enquiry-schema";
 import { sendEnquiryAcknowledgement, sendEnquiryNotification } from "@/lib/email";
+import { storeEnquiryFile } from "@/lib/uploads";
 
 /**
  * Project enquiry — FR-6.8 to FR-6.11.
@@ -12,10 +13,42 @@ import { sendEnquiryAcknowledgement, sendEnquiryNotification } from "@/lib/email
  * site's only conversion. Delivery problems are logged; the visitor still
  * gets a confirmation.
  */
+/** Files are capped per-file and in total; the rest is validated by type. */
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const MAX_FILES = 5;
+const ALLOWED = new Set([
+  "application/pdf", "image/png", "image/jpeg", "image/svg+xml",
+  "application/zip", "application/msword", "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/postscript",
+]);
+
 export async function POST(request: Request) {
   let input;
+  let uploads: string[] = [];
+
   try {
-    input = enquirySchema.parse(await request.json());
+    const contentType = request.headers.get("content-type") ?? "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const form = await request.formData();
+      input = enquirySchema.parse(JSON.parse(String(form.get("payload") ?? "{}")));
+
+      const files = form
+        .getAll("uploads")
+        .filter((f): f is File => f instanceof File && f.size > 0)
+        .slice(0, MAX_FILES);
+
+      for (const file of files) {
+        // NFR-3.6 — validate by type and size before anything touches storage.
+        if (file.size > MAX_FILE_BYTES) continue;
+        if (file.type && !ALLOWED.has(file.type)) continue;
+        uploads.push(await storeEnquiryFile(file));
+      }
+    } else {
+      input = enquirySchema.parse(await request.json());
+    }
   } catch {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
@@ -45,6 +78,7 @@ export async function POST(request: Request) {
         company: input.company || null,
         phone: input.phone || null,
         sourcePage: input.sourcePage || null,
+        uploads,
         locale: input.locale === "id" ? "ID" : "EN",
         // FR-6.10 — a product-page enquiry keeps its product automatically.
         products: product

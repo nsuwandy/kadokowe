@@ -29,6 +29,9 @@ export function EnquiryForm({ locale }: { locale: AppLocale }) {
     if (state === "sending") return;
 
     const form = new FormData(e.currentTarget);
+    const files = form.getAll("uploads").filter(
+      (f): f is File => f instanceof File && f.size > 0,
+    );
     const payload = {
       type,
       quantity: String(form.get("quantity") ?? ""),
@@ -54,11 +57,21 @@ export function EnquiryForm({ locale }: { locale: AppLocale }) {
 
     setState("sending");
     try {
-      const res = await fetch("/api/enquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res: Response;
+      if (files.length > 0) {
+        // Multipart when there are attachments; the route accepts both so a
+        // brief-less enquiry keeps the cheaper JSON path.
+        const body = new FormData();
+        body.append("payload", JSON.stringify(payload));
+        for (const f of files) body.append("uploads", f);
+        res = await fetch("/api/enquiry", { method: "POST", body });
+      } else {
+        res = await fetch("/api/enquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
       if (!res.ok) throw new Error("failed");
       setState("done");
     } catch {
@@ -142,6 +155,25 @@ export function EnquiryForm({ locale }: { locale: AppLocale }) {
           {t(
             "Rush is normal here. Ready stock can ship in five to seven days.",
             "Pesanan kilat itu biasa bagi kami. Stok siap dapat dikirim dalam lima hingga tujuh hari.",
+          )}
+        </p>
+      </div>
+
+      <div className="mb-8 flex flex-col gap-2">
+        <span className={label}>
+          {t("Upload brand or brief", "Unggah merek atau brief")}
+        </span>
+        <input
+          type="file"
+          name="uploads"
+          multiple
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.svg,.ai,.zip"
+          className="w-full border border-dashed border-line bg-warm px-4 py-4 text-sm file:mr-4 file:border-0 file:bg-paper file:px-3 file:py-1.5 file:text-xs file:font-semibold"
+        />
+        <p className="text-xs text-muted">
+          {t(
+            "Optional — a logo, brand guide, or an existing brief. Anything that saves you explaining.",
+            "Opsional — logo, panduan merek, atau brief yang sudah ada. Apa pun yang menghemat penjelasan Anda.",
           )}
         </p>
       </div>

@@ -91,6 +91,32 @@ export default async function EnquiryDetail({
         </section>
       )}
 
+      {enquiry.uploads.length > 0 && (
+        <section className="bg-paper p-5">
+          <h2 className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted">
+            Files they sent
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {enquiry.uploads.map((entry) => {
+              const [stored, original] = entry.split("::");
+              return (
+                <li key={stored}>
+                  <a
+                    href={`/api/admin/uploads/${stored}`}
+                    className="text-sm font-semibold text-red hover:underline"
+                  >
+                    {original || stored} ↓
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-xs text-muted">
+            Only signed-in staff can open these.
+          </p>
+        </section>
+      )}
+
       {enquiry.description && (
         <section className="bg-paper p-5">
           <h2 className="mb-2 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted">
