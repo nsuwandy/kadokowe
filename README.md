@@ -89,19 +89,39 @@ Law No. 27 of 2022.
 account with a script that calls `hashPassword` from `src/lib/auth.ts` —
 there is no public registration and no password reset yet.
 
-Bulk import at `/admin/products/import` is how the catalogue grows without a
-developer: paste or upload CSV, matched on `slug`, validated per row. A file
-with bad rows imports the good ones and reports the rest by line number.
-Download the template from that page for the exact column headings.
+| Section | Does |
+|---|---|
+| Products | Create, edit, delete; four-axis tagging; visibility |
+| Import | Bulk CSV — how the catalogue grows without a developer |
+| Our Work | Six optional story sections, ordering, related products |
+| Insights | Rich text editor, categories, the FR-8.8 cross-links |
+| Page copy | Override wording on key pages; homepage hero images |
+| Categories | The four browse axes — rename, reorder, add |
+| Enquiries | Status, notes, attachments, CSV export |
+| Newsletter | Subscribers with consent evidence, CSV export |
+
+Two behaviours worth knowing:
+
+**Budget tier is derived from price**, never tagged. Set an indicative price
+and the tier follows; any budget term you tick is discarded. This keeps a
+product out of a filter its own price contradicts.
+
+**Clearing a page-copy field restores the original**, it does not blank the
+page. The wording written into the code is the default; the database only
+holds what you have deliberately changed.
 
 ## Still to build for Phase 1a
 
-- Editors for projects and articles (both lists are read-only)
-- Insights article bodies — six articles have titles and standfirsts, no body
-- Cloudinary account wired up (every image is a placeholder plate today)
-- Resend key, so email actually sends rather than logging
-- Neon database, deployment, analytics
-- The launch catalogue itself: 150–250 products
+Every requirement in the spec is now implemented. What remains is
+configuration and content, not code:
+
+- **Cloudinary** — until an account and upload preset are set, every image is
+  a labelled placeholder and the image fields fall back to pasting a public ID
+- **Resend** — without a key, email logs to the console instead of sending
+- **Newsletter provider** — subscribers are captured but nothing sends
+- **Neon** — the local `prisma dev` database does not survive a reboot
+- **Deployment** and a domain
+- **The launch catalogue** — 150–250 products with copy, and photography
 
 Kadokowe Quarterly is Phase 1b. Idea Board is Phase 2. Client portal is
 Phase 3.
