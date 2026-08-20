@@ -8,6 +8,7 @@ import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { ArrowLink } from "@/components/ui/Button";
 import { AxisBar } from "@/components/AxisBar";
 import { SearchBox } from "@/components/SearchBox";
+import { Pagination, PAGE_SIZE } from "@/components/Pagination";
 import { ProductCard } from "@/components/ProductCard";
 import { AXES, AXIS_KEYS } from "@/content/taxonomy";
 
@@ -17,17 +18,25 @@ export const metadata: Metadata = {
     "Not a catalogue — a working set of starting points. Browse merchandise ideas by product, purpose, industry or budget.",
 };
 
-export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">) {
+export default async function IdeasPage({
+  params,
+  searchParams,
+}: PageProps<"/[locale]/ideas">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const products = await db.product.findMany({
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp?.page ?? 1) || 1);
+
+  const [products, totalProducts] = await Promise.all([
+    db.product.findMany({
     where: { visibility: "PUBLISHED" },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
-    take: 24,
+    skip: (page - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
     select: {
       slug: true,
       nameEn: true,
@@ -39,7 +48,9 @@ export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">
       heroImage: true,
       availability: true,
     },
-  });
+    }),
+    db.product.count({ where: { visibility: "PUBLISHED" } }),
+  ]);
 
   return (
     <>
@@ -132,10 +143,10 @@ export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">
 
           <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-5">
             <span className="text-xs uppercase tracking-[0.1em] tabular-nums text-muted">
-              {products.length > 0
+              {totalProducts > 0
                 ? t(
-                    `Showing ${products.length} ideas`,
-                    `Menampilkan ${products.length} ide`,
+                    `${totalProducts} ideas`,
+                    `${totalProducts} ide`,
                   )
                 : t("Catalogue in preparation", "Katalog sedang disiapkan")}
             </span>
@@ -158,6 +169,13 @@ export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">
           ) : (
             <EmptyCatalogue locale={l} />
           )}
+
+          <Pagination
+            page={page}
+            total={totalProducts}
+            basePath={path("/ideas")}
+            locale={l}
+          />
         </Wrap>
       </Section>
 

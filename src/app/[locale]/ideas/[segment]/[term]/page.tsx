@@ -8,6 +8,7 @@ import { ArrowLink } from "@/components/ui/Button";
 import { AxisBar, TermChips } from "@/components/AxisBar";
 import { ProductCard } from "@/components/ProductCard";
 import { AXES, isAxisKey, type AxisKey } from "@/content/taxonomy";
+import { Pagination, PAGE_SIZE } from "@/components/Pagination";
 
 /**
  * Axis-filtered Idea Library view — /ideas/{axis}/{term}.
@@ -66,8 +67,11 @@ export async function generateMetadata({
 
 export default async function FilteredIdeasPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/ideas/[segment]/[term]">) {
   const { locale, segment, term } = await params;
+  const sp = await searchParams;
+  const page = Math.max(1, Number(sp?.page ?? 1) || 1);
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
   const t = (en: string, id: string) => (l === "id" ? id : en);
@@ -77,16 +81,23 @@ export default async function FilteredIdeasPage({
   if (!isReadyStock && !isAxisKey(segment)) notFound();
 
   let products;
+  let total = 0;
   let heading: { eyebrow: string; title: string; intro?: string };
 
   if (isReadyStock) {
     const c = readyStockCopy(l);
     heading = c;
-    products = await db.product.findMany({
-      where: { visibility: "PUBLISHED", availability: "READY_STOCK" },
-      orderBy: [{ featured: "desc" }, { nameEn: "asc" }],
-      select: PRODUCT_SELECT,
-    });
+    const where = { visibility: "PUBLISHED", availability: "READY_STOCK" } as const;
+    [products, total] = await Promise.all([
+      db.product.findMany({
+        where,
+        orderBy: [{ featured: "desc" }, { nameEn: "asc" }],
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: PRODUCT_SELECT,
+      }),
+      db.product.count({ where }),
+    ]);
   } else {
     const axisKey = segment as AxisKey;
     const record = await db.taxonomyTerm.findFirst({
@@ -98,14 +109,20 @@ export default async function FilteredIdeasPage({
       eyebrow: l === "id" ? AXES[axisKey].id : AXES[axisKey].en,
       title: pick(record, "name", l),
     };
-    products = await db.product.findMany({
-      where: {
-        visibility: "PUBLISHED",
-        terms: { some: { id: record.id } },
-      },
-      orderBy: [{ featured: "desc" }, { nameEn: "asc" }],
-      select: PRODUCT_SELECT,
-    });
+    const where = {
+      visibility: "PUBLISHED",
+      terms: { some: { id: record.id } },
+    } as const;
+    [products, total] = await Promise.all([
+      db.product.findMany({
+        where,
+        orderBy: [{ featured: "desc" }, { nameEn: "asc" }],
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: PRODUCT_SELECT,
+      }),
+      db.product.count({ where }),
+    ]);
   }
 
   return (
@@ -141,8 +158,8 @@ export default async function FilteredIdeasPage({
         <div className="mb-8 flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-5">
           <span className="text-xs uppercase tracking-[0.1em] tabular-nums text-muted">
             {t(
-              `${products.length} ${products.length === 1 ? "idea" : "ideas"}`,
-              `${products.length} ide`,
+              `${total} ${total === 1 ? "idea" : "ideas"}`,
+              `${total} ide`,
             )}
           </span>
           <ArrowLink href={path("/start-a-project")}>
@@ -187,6 +204,13 @@ export default async function FilteredIdeasPage({
             </ArrowLink>
           </div>
         )}
+
+        <Pagination
+          page={page}
+          total={total}
+          basePath={path(`/ideas/${segment}/${term}`)}
+          locale={l}
+        />
       </Wrap>
     </Section>
   );
