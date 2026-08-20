@@ -83,8 +83,39 @@ provider. Double opt-in, consent timestamps and one-click unsubscribe are
 required because sending marketing email to recipients in Indonesia engages
 Law No. 27 of 2022.
 
+## Admin
+
+`/admin`, English only, not linked from the public site. Create the first
+account with a script that calls `hashPassword` from `src/lib/auth.ts` —
+there is no public registration and no password reset yet.
+
+Bulk import at `/admin/products/import` is how the catalogue grows without a
+developer: paste or upload CSV, matched on `slug`, validated per row. A file
+with bad rows imports the good ones and reports the rest by line number.
+Download the template from that page for the exact column headings.
+
 ## Still to build for Phase 1a
 
-Admin area with bulk product import (FR-10), Insights article bodies, and the
-homepage teasers for Custom Made and Ready Stock. Kadokowe Quarterly is
-Phase 1b.
+- Editors for projects and articles (both lists are read-only)
+- Insights article bodies — six articles have titles and standfirsts, no body
+- Cloudinary account wired up (every image is a placeholder plate today)
+- Resend key, so email actually sends rather than logging
+- Neon database, deployment, analytics
+- The launch catalogue itself: 150–250 products
+
+Kadokowe Quarterly is Phase 1b. Idea Board is Phase 2. Client portal is
+Phase 3.
+
+## Deploying
+
+Set every variable from `.env.example` in the host. Two that matter more than
+they look:
+
+- `DATABASE_POOL_MAX` — pool size *per process*, and prerendering runs one
+  process per core. Too high fails the build with P1017. Start at 1 and raise
+  it only against a pooled endpoint.
+- `AUTH_SECRET` — at least 32 characters, or the admin refuses to start.
+  `openssl rand -base64 32`.
+
+Run `npx prisma migrate deploy` against the production database before the
+first deploy.
