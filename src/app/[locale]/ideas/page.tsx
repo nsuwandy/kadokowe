@@ -57,6 +57,32 @@ export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">
 
           <AxisBar locale={l} />
 
+          {/* FR-3.16 — Ready Stock is a view, not a fifth axis. Availability
+              is a product field; giving it equal billing with the four browse
+              axes would misrepresent how the library is organised. */}
+          <Link
+            href={path("/ideas/ready-stock/all")}
+            className="group mb-10 flex flex-wrap items-center justify-between gap-4 border border-line bg-warm px-6 py-5 transition-colors hover:border-red"
+          >
+            <span className="flex flex-col gap-1">
+              <span className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-red">
+                {t("Need it fast?", "Butuh cepat?")}
+              </span>
+              <span className="text-[0.9375rem]">
+                {t(
+                  "Explore merchandise already available locally and ready for customisation.",
+                  "Jelajahi merchandise yang sudah tersedia secara lokal dan siap dikustomisasi.",
+                )}
+              </span>
+            </span>
+            <span className="font-display text-xs font-semibold uppercase tracking-[0.13em] text-red">
+              {t("Explore Ready Stock", "Jelajahi Stok Siap")}{" "}
+              <span className="inline-block transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </span>
+          </Link>
+
           {/* Entry points for every axis, so no axis is subordinated (FR-3.6). */}
           <div className="mb-10 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {AXIS_KEYS.map((key) => {
