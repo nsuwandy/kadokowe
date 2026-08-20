@@ -12,7 +12,7 @@ export default async function AdminProjects() {
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
     select: {
       id: true, slug: true, titleEn: true, titleId: true, client: true,
-      industry: true, visibility: true, featured: true,
+      industry: true, visibility: true, featured: true, sortOrder: true,
       briefEn: true, challengeEn: true, thinkingEn: true,
       createdWorkEn: true, makingEn: true, impactEn: true,
     },
@@ -38,7 +38,7 @@ export default async function AdminProjects() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left">
-              {["Project", "Client", "Story sections", "Status"].map((h) => (
+              {["#", "Project", "Client", "Story sections", "Status"].map((h) => (
                 <th key={h} className="px-5 py-3 text-[0.625rem] font-bold uppercase tracking-[0.12em] text-muted">{h}</th>
               ))}
             </tr>
@@ -46,6 +46,7 @@ export default async function AdminProjects() {
           <tbody className="divide-y divide-line">
             {projects.map((p) => (
               <tr key={p.id} className="hover:bg-warm">
+                <td className="px-5 py-3 text-xs tabular-nums text-muted">{p.sortOrder}</td>
                 <td className="px-5 py-3">
                   <Link href={`/admin/projects/${p.id}`} className="font-semibold hover:text-red">
                     {p.titleEn}

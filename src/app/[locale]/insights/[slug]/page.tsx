@@ -10,6 +10,7 @@ import { Plate } from "@/components/ui/Plate";
 import { ProductCard } from "@/components/ProductCard";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { categoryLabel } from "@/content/insights";
+import { sanitizeArticleHtml } from "@/lib/sanitize";
 
 async function getArticle(slug: string) {
   return db.article.findFirst({
@@ -119,11 +120,10 @@ export default async function ArticlePage({
 
           <div className="mx-auto mt-10 max-w-[68ch]">
             {body ? (
-              body.split("\n\n").map((para, i) => (
-                <p key={i} className="mb-5 text-[1.0625rem] leading-relaxed">
-                  {para}
-                </p>
-              ))
+              <div
+                className="article-body"
+                dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(body) }}
+              />
             ) : (
               <p className="font-editorial text-lede italic text-muted">
                 {t(

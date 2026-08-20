@@ -40,6 +40,7 @@ export async function saveProject(
   }
 
   const visibility = String(formData.get("visibility") ?? "DRAFT");
+  const sortRaw = String(formData.get("sortOrder") ?? "").replace(/[^\d]/g, "");
   const productIds = formData.getAll("productIds").map(String).filter(Boolean);
 
   const data = {
@@ -51,6 +52,7 @@ export async function saveProject(
     summaryId: str("summaryId"),
     ...sections,
     heroImage: str("heroImage"),
+    sortOrder: sortRaw ? Number(sortRaw) : 0,
     featured: formData.get("featured") === "on",
     visibility: visibility as never,
     publishedAt: visibility === "PUBLISHED" ? new Date() : null,

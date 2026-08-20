@@ -72,6 +72,7 @@ export default async function ProjectEditor({
                 heroImage: project.heroImage,
                 featured: project.featured,
                 visibility: project.visibility,
+                sortOrder: project.sortOrder,
                 productIds: project.products.map((p) => p.id),
               }
             : null

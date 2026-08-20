@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { VISIBILITY_OPTIONS, emptySaveState, type SaveState } from "@/lib/editor-shared";
 import { CATEGORIES } from "@/content/insights";
 import { ImageField } from "@/components/admin/ImageField";
+import { RichText } from "@/components/admin/RichText";
 
 export type ArticleFormValues = {
   id: string;
@@ -33,9 +34,10 @@ export type ArticleFormValues = {
  * who does not know that ticking a project produces a "See It In Action"
  * block at the foot of their article will not tick one.
  *
- * Body is plain text with blank-line paragraphs rather than a rich editor.
- * A WYSIWYG is on the list for a later pass; shipping a half-working one
- * would be worse than a plain textarea that behaves predictably.
+ * Body uses a rich editor (FR-8.3, FR-10.8) with a deliberately short
+ * toolbar: headings, emphasis, lists, pull quotes and images. Every extra
+ * control is another decision an author has to make, and the design already
+ * decides how each element looks.
  */
 export function ArticleForm({
   action,
@@ -106,18 +108,17 @@ export function ArticleForm({
           <textarea name="excerptId" rows={2} defaultValue={article?.excerptId ?? ""} className={field} />
         </label>
 
-        <label className="flex flex-col gap-2">
-          <span className={labelCls}>Body (English)</span>
-          <textarea name="bodyEn" rows={14} defaultValue={article?.bodyEn ?? ""} className={`${field} leading-relaxed`} />
-          <span className={hint}>
-            Leave a blank line between paragraphs. Plain text for now — a rich
-            editor is a later pass.
-          </span>
-        </label>
-        <label className="flex flex-col gap-2">
-          <span className={labelCls}>Body (Indonesian)</span>
-          <textarea name="bodyId" rows={14} defaultValue={article?.bodyId ?? ""} className={`${field} leading-relaxed`} />
-        </label>
+        <RichText
+          name="bodyEn"
+          label="Body (English)"
+          defaultValue={article?.bodyEn}
+          hint="Headings, lists, pull quotes and images. The design decides how each looks — you decide what it is."
+        />
+        <RichText
+          name="bodyId"
+          label="Body (Indonesian)"
+          defaultValue={article?.bodyId}
+        />
       </section>
 
       {/* FR-8.8 — the pattern is invisible from here unless it is explained. */}
