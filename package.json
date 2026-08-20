@@ -10,7 +10,8 @@
     "db:seed": "tsx --env-file=.env prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx tests/term-order.test.ts && tsx tests/enquiry-uploads.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
