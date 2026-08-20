@@ -3,7 +3,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -54,15 +54,15 @@ export function RichText({
       },
     },
     onUpdate: ({ editor }) => setHtml(editor.getHTML()),
+    // Sync once the editor has parsed the incoming HTML, so the hidden input
+    // carries the editor's normalised markup rather than the raw defaultValue.
+    // Doing this in an effect instead would setState during render commit and
+    // cascade an extra render for every editor on the page.
+    onCreate: ({ editor }) => setHtml(editor.getHTML()),
     // Rendered on the client only; server-rendering a contenteditable
     // produces a hydration mismatch.
     immediatelyRender: false,
   });
-
-  // Keep the hidden input in step when the editor initialises.
-  useEffect(() => {
-    if (editor) setHtml(editor.getHTML());
-  }, [editor]);
 
   return (
     <div className="flex flex-col gap-2">
