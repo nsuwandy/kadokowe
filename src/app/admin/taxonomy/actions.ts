@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { SaveState } from "@/lib/editor-shared";
+import { resolveTermOrder } from "@/lib/term-order";
 
 const AXES = ["PRODUCT", "PURPOSE", "INDUSTRY", "BUDGET"] as const;
 
@@ -26,9 +27,17 @@ export async function saveTerms(
   }
 
   try {
-    // Existing terms: rename and reorder.
+    // Existing terms: rename and reorder. Order comes from the number typed
+    // against each row; positions are then renumbered from the sorted result,
+    // so duplicates and gaps ("10, 20, 30") both resolve sensibly instead of
+    // being rejected.
     const ids = formData.getAll("termId").map(String);
-    for (const [i, id] of ids.entries()) {
+    const ordered = resolveTermOrder(ids, (id) => {
+      const raw = formData.get(`order_${id}`);
+      return raw === null || raw === "" ? undefined : Number(raw);
+    });
+
+    for (const [i, id] of ordered.entries()) {
       const nameEn = String(formData.get(`nameEn_${id}`) ?? "").trim();
       const nameId = String(formData.get(`nameId_${id}`) ?? "").trim();
       if (!nameEn) continue;
@@ -73,12 +82,16 @@ export async function saveTerms(
  * Refused while products still use it. Deleting a term that products depend
  * on would silently drop them out of a browse axis with nothing to indicate
  * why, and the operator would have no way to find them again.
+ *
+ * The id arrives bound rather than through a form field. React uses the
+ * submitting button's `name` to carry its own action id, so a `name="id"` on
+ * that button is overwritten and the action ran with nothing to delete — the
+ * button appeared to do nothing at all.
  */
-export async function deleteTerm(formData: FormData): Promise<void> {
+export async function deleteTerm(id: string): Promise<void> {
   const admin = await currentAdmin();
   if (!admin) return;
 
-  const id = String(formData.get("id") ?? "");
   if (!id) return;
 
   const term = await db.taxonomyTerm.findUnique({

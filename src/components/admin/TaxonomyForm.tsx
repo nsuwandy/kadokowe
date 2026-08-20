@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
 import { emptySaveState, type SaveState } from "@/lib/editor-shared";
 import { deleteTerm } from "@/app/admin/taxonomy/actions";
 
@@ -22,6 +22,11 @@ export type TermRow = {
  * Terms in use cannot be deleted, and the row says how many products depend
  * on it. Removing one silently would drop those products out of a browse axis
  * with nothing to explain where they went.
+ *
+ * Remove is a plain button that calls the action directly, not a submit
+ * button. As a submit button it sat ahead of Save in the form, which made it
+ * the target of implicit submission — pressing Enter while renaming a term
+ * deleted the first removable row instead of saving.
  */
 export function TaxonomyForm({
   action,
@@ -35,6 +40,7 @@ export function TaxonomyForm({
   terms: TermRow[];
 }) {
   const [state, formAction, pending] = useActionState(action, emptySaveState);
+  const [removing, startRemove] = useTransition();
 
   const cell = "w-full border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-red";
 
@@ -64,7 +70,16 @@ export function TaxonomyForm({
             <tbody>
               {terms.map((t, i) => (
                 <tr key={t.id} className="border-b border-line">
-                  <td className="w-14 px-2 py-2 text-xs tabular-nums text-muted">{i + 1}</td>
+                  <td className="w-16 px-2 py-2">
+                    <input
+                      name={`order_${t.id}`}
+                      type="number"
+                      min={1}
+                      defaultValue={i + 1}
+                      aria-label={`Position of ${t.nameEn}`}
+                      className={`${cell} tabular-nums`}
+                    />
+                  </td>
                   <td className="px-2 py-2">
                     <input type="hidden" name="termId" value={t.id} />
                     <input name={`nameEn_${t.id}`} defaultValue={t.nameEn} className={cell} />
@@ -77,10 +92,19 @@ export function TaxonomyForm({
                   <td className="px-2 py-2">
                     {t.productCount === 0 ? (
                       <button
-                        formAction={deleteTerm}
-                        name="id"
-                        value={t.id}
-                        className="text-xs text-muted hover:text-red"
+                        type="button"
+                        disabled={removing}
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              `Remove "${t.nameEn}"? Visitors browsing by this term will no longer see it. This cannot be undone.`,
+                            )
+                          ) {
+                            return;
+                          }
+                          startRemove(() => deleteTerm(t.id));
+                        }}
+                        className="text-xs text-muted hover:text-red disabled:opacity-50"
                       >
                         Remove
                       </button>
@@ -100,8 +124,9 @@ export function TaxonomyForm({
         </div>
 
         <p className="text-xs text-muted">
-          Rows save in the order shown. To move a term, change its name order by
-          editing and saving — the numbers renumber themselves.
+          To move a term, change its position number and save. The numbers
+          renumber themselves afterwards, so you can type 1 to send a term to
+          the top without touching the rest.
         </p>
 
         <fieldset className="flex flex-col gap-3 border-t border-line pt-5">
