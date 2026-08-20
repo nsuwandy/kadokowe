@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { ArrowLink } from "@/components/ui/Button";
 import { AxisBar } from "@/components/AxisBar";
+import { SearchBox } from "@/components/SearchBox";
 import { ProductCard } from "@/components/ProductCard";
 import { AXES, AXIS_KEYS } from "@/content/taxonomy";
 
@@ -54,6 +55,12 @@ export default async function IdeasPage({ params }: PageProps<"/[locale]/ideas">
               "Empat cara masuk. Datang dengan produk di benak Anda, atau hanya dengan acara dan anggaran — keduanya bisa.",
             )}
           </p>
+
+          {/* FR-3.7 — search sits above the axes: a visitor who already knows
+              the word for what they want should not have to pick an axis first. */}
+          <div className="mb-7 max-w-[640px]">
+            <SearchBox locale={l} />
+          </div>
 
           <AxisBar locale={l} />
 
