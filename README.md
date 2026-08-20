@@ -36,6 +36,7 @@ credentials, so a missing key never takes down a form or a page.
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Unit checks for upload limits and term ordering |
 | `npm run db:seed` | Seed sample content |
 | `npm run db:migrate` | Create and apply a migration |
 | `npm run db:studio` | Browse the database |
@@ -125,6 +126,19 @@ configuration and content, not code:
 
 Kadokowe Quarterly is Phase 1b. Idea Board is Phase 2. Client portal is
 Phase 3.
+
+### Not yet verified
+
+Being honest about the gap between "implemented" and "proven":
+
+- **No cross-browser pass.** Everything has been exercised in one Chromium
+  preview. Safari on iOS matters most here — SRS §3.2 has links arriving over
+  WhatsApp.
+- **No performance measurement** against NFR-1.2's 2.5s mobile LCP. The build
+  prerenders 126 pages, which is the right shape, but nothing has been timed on
+  a real connection.
+- **Automated tests cover two pure functions**, not pages, actions or routes.
+  The admin forms in particular are verified by hand.
 
 ## Deploying
 
