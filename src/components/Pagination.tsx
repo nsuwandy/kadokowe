@@ -40,6 +40,9 @@ export function Pagination({
   // Show first, last, current and its neighbours; elide the rest. A catalogue
   // of a thousand products is forty pages, and forty numbers is not navigation.
   const shown = new Set<number>([1, pages, page - 1, page, page + 1]);
+  // An ellipsis standing in for a single page is wasted space and costs the
+  // reader a click, so close any one-page gap rather than eliding it.
+  for (const p of [...shown]) if (shown.has(p + 2)) shown.add(p + 1);
   const numbers = [...shown].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
 
   const link =
