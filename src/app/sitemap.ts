@@ -13,6 +13,18 @@ import { publishedConcepts } from "@/content/concepts";
  * Without that pairing the Indonesian pages compete with the English ones
  * rather than being understood as translations of them.
  */
+/**
+ * Generated per request rather than at build time.
+ *
+ * Build workers run with a constrained connection pool, and the sitemap was
+ * consistently the query that lost the race — falling into the catch below
+ * and shipping without any product, project or article URLs. A sitemap
+ * missing most of the site is worse than one generated a moment later, and
+ * crawlers fetch it rarely enough that the cost is irrelevant. It also means
+ * newly published content appears without a rebuild.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE.url.replace(/\/$/, "");
 
