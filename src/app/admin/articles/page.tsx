@@ -22,6 +22,9 @@ export default async function AdminArticles() {
       <div className="flex flex-wrap items-center gap-4">
         <h1 className="text-2xl font-bold">Insights</h1>
         <span className="text-sm text-muted">{articles.length} articles</span>
+        <Link href="/admin/articles/new" className="ml-auto bg-red px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-paper hover:bg-ink">
+          Add article
+        </Link>
       </div>
 
       <div className="overflow-x-auto bg-paper">
@@ -37,8 +40,8 @@ export default async function AdminArticles() {
             {articles.map((a) => (
               <tr key={a.id} className="hover:bg-warm">
                 <td className="px-5 py-3">
-                  <Link href={`/insights/${a.slug}`} target="_blank" className="font-semibold hover:text-red">
-                    {a.titleEn} ↗
+                  <Link href={`/admin/articles/${a.id}`} className="font-semibold hover:text-red">
+                    {a.titleEn}
                   </Link>
                   {!a.titleId && (
                     <span className="ml-2 text-[0.625rem] font-semibold text-muted" title="No Indonesian translation">EN only</span>
@@ -65,8 +68,9 @@ export default async function AdminArticles() {
       </div>
 
       <p className="max-w-[70ch] text-xs text-muted">
-        Six articles are seeded with titles and standfirsts; none has a body yet.
-        The article editor is not built — see the README for what remains.
+        An article marked &ldquo;not written&rdquo; has a title and standfirst
+        but no body. It still renders on the site, showing the related work
+        instead — but it reads as a placeholder until the body is filled.
       </p>
     </div>
   );

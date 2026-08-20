@@ -29,6 +29,9 @@ export default async function AdminProjects() {
       <div className="flex flex-wrap items-center gap-4">
         <h1 className="text-2xl font-bold">Our Work</h1>
         <span className="text-sm text-muted">{projects.length} projects</span>
+        <Link href="/admin/projects/new" className="ml-auto bg-red px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.1em] text-paper hover:bg-ink">
+          Add project
+        </Link>
       </div>
 
       <div className="overflow-x-auto bg-paper">
@@ -44,8 +47,8 @@ export default async function AdminProjects() {
             {projects.map((p) => (
               <tr key={p.id} className="hover:bg-warm">
                 <td className="px-5 py-3">
-                  <Link href={`/our-work/${p.slug}`} target="_blank" className="font-semibold hover:text-red">
-                    {p.titleEn} ↗
+                  <Link href={`/admin/projects/${p.id}`} className="font-semibold hover:text-red">
+                    {p.titleEn}
                   </Link>
                   {!p.titleId && (
                     <span className="ml-2 text-[0.625rem] font-semibold text-muted" title="No Indonesian translation — English will be shown">
@@ -74,8 +77,9 @@ export default async function AdminProjects() {
       </div>
 
       <p className="max-w-[70ch] text-xs text-muted">
-        Project stories are seeded from the company profile. Editing them in the
-        admin is not built yet — see the README for what remains.
+        &ldquo;Story sections&rdquo; counts how many of the six narrative
+        sections are filled. All six are optional — a project with four reads
+        as complete on the site.
       </p>
     </div>
   );
