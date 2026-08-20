@@ -237,6 +237,60 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </section>
 
+      {/* Custom Made + Ready Stock teasers.
+          The revision brief asks for small previews, not more full sections
+          (§15): Custom Made earns visible presence, Ready Stock is a one-line
+          prompt. Paired side by side so together they occupy one band rather
+          than lengthening the page by two. */}
+      <Section className="py-10 md:py-14">
+        <Wrap>
+          <div className="grid gap-px border border-line bg-line lg:grid-cols-[1.4fr_1fr]">
+            <a
+              href={path("/custom-made")}
+              className="group flex flex-col gap-4 bg-paper p-8 transition-colors hover:bg-warm md:p-12"
+            >
+              <Eyebrow accent>{t("Custom Made", "Dibuat Khusus")}</Eyebrow>
+              <h2 className="balance max-w-[20ch] text-lg-display font-bold tracked-tight transition-colors group-hover:text-red">
+                {t(
+                  "Made for your brand. Not picked from a catalogue.",
+                  "Dibuat untuk merek Anda. Bukan dipilih dari katalog.",
+                )}
+              </h2>
+              <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-muted">
+                {t(
+                  "Bags, textiles, plush, silicone, apparel and packaging — developed from scratch around an idea rather than selected from stock.",
+                  "Tas, tekstil, plush, silikon, pakaian, dan kemasan — dikembangkan dari nol berdasarkan ide, bukan dipilih dari stok.",
+                )}
+              </p>
+              <span className="mt-auto pt-2 font-display text-xs font-semibold uppercase tracking-[0.13em] text-red">
+                {t("See what we can make", "Lihat yang bisa kami buat")}{" "}
+                <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+              </span>
+            </a>
+
+            <a
+              href={path("/ideas/ready-stock/all")}
+              className="group flex flex-col gap-3 bg-paper p-8 transition-colors hover:bg-warm md:p-12"
+            >
+              <Eyebrow accent>{t("Need it fast?", "Butuh cepat?")}</Eyebrow>
+              <h2 className="text-md-display font-semibold transition-colors group-hover:text-red">
+                {t("Ready when you are.", "Siap saat Anda siap.")}
+              </h2>
+              <p className="text-[0.9375rem] leading-relaxed text-muted">
+                {t(
+                  "Merchandise already in our warehouse, ready for customisation and rush deadlines.",
+                  "Merchandise yang sudah ada di gudang kami, siap dikustomisasi untuk tenggat mendesak.",
+                )}
+              </p>
+              <span className="mt-auto pt-2 font-display text-xs font-semibold uppercase tracking-[0.13em] text-red">
+                {t("Explore Ready Stock", "Jelajahi Stok Siap")}{" "}
+                <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+              </span>
+            </a>
+          </div>
+        </Wrap>
+      </Section>
+
       {/* 05 — Category navigation. Clean, structured, no imagery. */}
       <Section className="pb-0">
         <Wrap className="mb-8">
