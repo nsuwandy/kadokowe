@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { deleteProduct as deleteAction } from "@/app/admin/products/actions";
+import { ImageField } from "@/components/admin/ImageField";
 import {
   AVAILABILITY_OPTIONS,
   VISIBILITY_OPTIONS,
@@ -245,13 +246,12 @@ export function ProductForm({
             </label>
           </div>
 
-          <label className="flex flex-col gap-2">
-            <span className={labelCls}>Hero image</span>
-            <input name="heroImage" defaultValue={product?.heroImage ?? ""} className={field} placeholder="Cloudinary public ID" />
-            <span className={hint}>
-              Left blank, a labelled placeholder is shown rather than a gap.
-            </span>
-          </label>
+          <ImageField
+            name="heroImage"
+            label="Hero image"
+            defaultValue={product?.heroImage}
+            hint="Left blank, a labelled placeholder is shown rather than a gap."
+          />
 
           <div className="flex flex-wrap gap-6">
             <label className="flex items-center gap-2 text-sm">

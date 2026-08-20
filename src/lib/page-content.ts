@@ -32,15 +32,35 @@ export const EDITABLE_PAGES = [
 ] as const;
 
 /** Fields each page key exposes, so the editor knows what to render. */
-export const PAGE_FIELDS: Record<string, { name: string; label: string; multiline?: boolean }[]> = {
+export const PAGE_FIELDS: Record<string, { name: string; label: string; multiline?: boolean; image?: boolean }[]> = {
   default: [
     { name: "heading", label: "Heading" },
     { name: "intro", label: "Introduction", multiline: true },
+  ],
+  // FR-10.6 — the homepage hero rotates through these (FR-2.2). Kept as
+  // separate slots rather than a gallery so the order is explicit and an
+  // empty slot is obviously empty.
+  "home.hero": [
+    { name: "heading", label: "Headline" },
+    { name: "intro", label: "Sub-headline", multiline: true },
+    { name: "hero1", label: "Hero image 1", image: true },
+    { name: "hero2", label: "Hero image 2", image: true },
+    { name: "hero3", label: "Hero image 3", image: true },
   ],
 };
 
 export function fieldsFor(key: string) {
   return PAGE_FIELDS[key] ?? PAGE_FIELDS.default;
+}
+
+/** All values for a page key at once, for callers needing several fields. */
+export async function pageBlocks(key: string): Promise<PageBlocks> {
+  try {
+    const row = await db.pageContent.findUnique({ where: { key } });
+    return (row?.blocks as PageBlocks | null) ?? {};
+  } catch {
+    return {};
+  }
 }
 
 /**

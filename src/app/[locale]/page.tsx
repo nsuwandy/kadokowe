@@ -5,6 +5,7 @@ import { Wrap, Section, Eyebrow, SectionHead } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { OUTCOMES, PROCESS, PRODUCT_CATEGORIES } from "@/content/home";
+import { pageBlocks } from "@/lib/page-content";
 
 /**
  * Homepage — SRS v1.4 §11.4 and FR-2.1 to FR-2.14.
@@ -22,6 +23,13 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
+  // FR-10.6 / FR-2.2 — administrator-set hero imagery and headline, each
+  // falling back to the design default when unset.
+  const hero = await pageBlocks("home.hero");
+  const heroImage =
+    [hero.hero1?.en, hero.hero2?.en, hero.hero3?.en].find((v) => v && v.trim()) ?? null;
+  const heroHeading = (l === "id" ? hero.heading?.id : hero.heading?.en) || null;
+
   return (
     <>
       {/* 01 — Hero. Split composition, full bleed. */}
@@ -35,12 +43,18 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </div>
 
           <h1 className="balance text-mega font-bold tracked-tight">
-            <span className="block">
-              {t("More Than Gifts.", "Lebih Dari Sekadar Hadiah.")}
-            </span>
-            <span className="block font-editorial text-red italic font-normal">
-              {t("We Craft Brand Stories.", "Kami Merangkai Cerita Merek.")}
-            </span>
+            {heroHeading ? (
+              <span className="block">{heroHeading}</span>
+            ) : (
+              <>
+                <span className="block">
+                  {t("More Than Gifts.", "Lebih Dari Sekadar Hadiah.")}
+                </span>
+                <span className="block font-editorial text-red italic font-normal">
+                  {t("We Craft Brand Stories.", "Kami Merangkai Cerita Merek.")}
+                </span>
+              </>
+            )}
           </h1>
 
           <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
@@ -72,6 +86,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             tone="dark"
             ratio="auto"
             priority
+            publicId={heroImage}
+            alt=""
             sizes="(min-width: 1024px) 50vw, 100vw"
             caption="Hero — rotating: custom gift set, packaging detail, event merchandise, production floor"
             className="h-full min-h-[46vh] lg:min-h-full"

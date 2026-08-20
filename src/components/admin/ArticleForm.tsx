@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { VISIBILITY_OPTIONS, emptySaveState, type SaveState } from "@/lib/editor-shared";
 import { CATEGORIES } from "@/content/insights";
+import { ImageField } from "@/components/admin/ImageField";
 
 export type ArticleFormValues = {
   id: string;
@@ -173,10 +174,12 @@ export function ArticleForm({
             <input name="slug" defaultValue={article?.slug ?? ""} className={field} placeholder="made from the title" />
           </label>
         </div>
-        <label className="flex flex-col gap-2">
-          <span className={labelCls}>Hero image</span>
-          <input name="heroImage" defaultValue={article?.heroImage ?? ""} className={field} placeholder="Cloudinary public ID" />
-        </label>
+        <ImageField
+          name="heroImage"
+          label="Hero image"
+          defaultValue={article?.heroImage}
+          hint="Also used as the share image when the link is sent on WhatsApp."
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-2">
             <span className={labelCls}>Search title</span>

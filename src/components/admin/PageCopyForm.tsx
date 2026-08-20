@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { emptySaveState, type SaveState } from "@/lib/editor-shared";
+import { ImageField } from "@/components/admin/ImageField";
 
 export function PageCopyForm({
   action,
@@ -13,7 +14,7 @@ export function PageCopyForm({
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   pageKey: string;
   label: string;
-  fields: { name: string; label: string; multiline?: boolean }[];
+  fields: { name: string; label: string; multiline?: boolean; image?: boolean }[];
   values: Record<string, { en?: string; id?: string }>;
 }) {
   const [state, formAction, pending] = useActionState(action, emptySaveState);
@@ -33,7 +34,13 @@ export function PageCopyForm({
         </p>
       )}
 
-      {fields.map((f) => (
+      {fields.map((f) =>
+        f.image ? (
+          /* Images are language-independent, so one picker rather than two. */
+          <div key={f.name} className="border-t border-line pt-4">
+            <ImageField name={`${f.name}_en`} label={f.label} defaultValue={values[f.name]?.en} />
+          </div>
+        ) : (
         <div key={f.name} className="flex flex-col gap-3 border-t border-line pt-4">
           <span className={labelCls}>{f.label}</span>
           <label className="flex flex-col gap-1.5">
@@ -53,7 +60,8 @@ export function PageCopyForm({
             )}
           </label>
         </div>
-      ))}
+        ),
+      )}
 
       <button
         disabled={pending}

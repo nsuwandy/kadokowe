@@ -7,6 +7,7 @@ import {
   emptySaveState,
   type SaveState,
 } from "@/lib/editor-shared";
+import { ImageField } from "@/components/admin/ImageField";
 
 export type ProjectFormValues = {
   id: string;
@@ -184,10 +185,12 @@ export function ProjectForm({
             <span className={hint}>Changing this on a live project breaks existing links.</span>
           </label>
         </div>
-        <label className="flex flex-col gap-2">
-          <span className={labelCls}>Hero image</span>
-          <input name="heroImage" defaultValue={project?.heroImage ?? ""} className={field} placeholder="Cloudinary public ID" />
-        </label>
+        <ImageField
+          name="heroImage"
+          label="Hero image"
+          defaultValue={project?.heroImage}
+          hint="Used full-bleed at the top of the story, so landscape works best."
+        />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="featured" defaultChecked={project?.featured} />
           Feature at the top of Our Work and on the homepage
