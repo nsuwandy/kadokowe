@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/products/import", label: "Import" },
   { href: "/admin/projects", label: "Our Work" },
   { href: "/admin/articles", label: "Insights" },
+  { href: "/admin/pages", label: "Page copy" },
   { href: "/admin/enquiries", label: "Enquiries" },
   { href: "/admin/subscribers", label: "Newsletter" },
 ];

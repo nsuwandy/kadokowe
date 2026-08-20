@@ -8,6 +8,7 @@ import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { FAMILIES, familyBySlug } from "@/content/custom-made";
+import { pageCopy } from "@/lib/page-content";
 
 export function generateStaticParams() {
   return FAMILIES.flatMap((f) =>
@@ -22,9 +23,16 @@ export async function generateMetadata({
   const f = familyBySlug(family);
   if (!isLocale(locale) || !f) return {};
   const l = locale as AppLocale;
+  // Respect the copy override here too — an operator who rewrites the
+  // headline expects the search result to match it, and metadata reading
+  // from a different source than the page is the kind of drift nobody
+  // notices until it is embarrassing.
+  const description = await pageCopy(
+    `custom-made.${f.slug}`, "heading", l, l === "id" ? f.leadId : f.leadEn,
+  );
   return {
     title: l === "id" ? f.nameId : f.nameEn,
-    description: l === "id" ? f.leadId : f.leadEn,
+    description,
   };
 }
 
@@ -53,6 +61,15 @@ export default async function FamilyPage({
   const path = (p: string) => localePath(p, l);
 
   const examples = l === "id" ? f.examplesId : f.examplesEn;
+
+  // FR-12.11 — the administrator may override this family's headline and
+  // introduction; the code default is used when they have not.
+  const lead = await pageCopy(
+    `custom-made.${f.slug}`, "heading", l, t(f.leadEn, f.leadId),
+  );
+  const intro = await pageCopy(
+    `custom-made.${f.slug}`, "intro", l, t(f.introEn, f.introId),
+  );
 
   // FR-12.4 — related work, rendered only when a relationship exists.
   const projects = await db.project.findMany({
@@ -88,7 +105,7 @@ export default async function FamilyPage({
             {t(f.nameEn, f.nameId)}
           </h1>
           <p className="max-w-[44ch] font-editorial text-lede italic text-plate-c">
-            {t(f.leadEn, f.leadId)}
+            {lead}
           </p>
         </div>
       </section>
@@ -96,7 +113,7 @@ export default async function FamilyPage({
       <Section>
         <Wrap>
           <p className="mx-auto max-w-[68ch] font-editorial text-lede">
-            {t(f.introEn, f.introId)}
+            {intro}
           </p>
         </Wrap>
       </Section>

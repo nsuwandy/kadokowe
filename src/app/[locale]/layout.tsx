@@ -8,6 +8,7 @@ import { SITE } from "@/lib/site";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
+import { Analytics } from "@/components/Analytics";
 
 /**
  * Root layout for the public site.
@@ -71,6 +72,7 @@ export default async function LocaleLayout({
         <main className="flex-1">{children}</main>
         <SiteFooter locale={typed} />
         <WhatsAppFloat locale={typed} />
+        <Analytics />
       </body>
     </html>
   );
