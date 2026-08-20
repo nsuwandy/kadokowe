@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
-import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
+import { Wrap, Section } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { ProductCard } from "@/components/ProductCard";

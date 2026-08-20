@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
-import { Button, ArrowLink } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 
 export const metadata: Metadata = {
@@ -31,9 +31,15 @@ export default async function OurWorkPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
+  // NFR-1.2 — see the note on the Insights index: the card needs six fields,
+  // not the whole case study.
   const projects = await db.project.findMany({
     where: { visibility: "PUBLISHED" },
     orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
+    select: {
+      slug: true, client: true, heroImage: true, industry: true,
+      titleEn: true, titleId: true, summaryEn: true, summaryId: true,
+    },
   });
 
   const [featured, ...rest] = projects;

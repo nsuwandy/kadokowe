@@ -37,9 +37,16 @@ export default async function InsightsPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
+  // NFR-1.2 — the index renders titles, standfirsts and hero images. Selecting
+  // the whole row would ship every article's full body HTML to build a page
+  // that never displays it, and that payload grows with the archive.
   const articles = await db.article.findMany({
     where: { visibility: "PUBLISHED" },
     orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
+    select: {
+      slug: true, category: true, heroImage: true,
+      titleEn: true, titleId: true, excerptEn: true, excerptId: true,
+    },
   });
 
   const [lead, second, third, ...rest] = articles;
