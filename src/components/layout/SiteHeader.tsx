@@ -24,7 +24,7 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
       <div className="mx-auto flex h-17 max-w-[1440px] items-center gap-4 px-gutter lg:gap-10">
         <Link
           href={localePath("/", locale)}
-          className="font-display text-[1.0625rem] font-bold tracking-[0.14em] whitespace-nowrap"
+          className="-my-2 py-2 font-display text-[1.0625rem] font-bold tracking-[0.14em] whitespace-nowrap"
           aria-label="Kadokowe — home"
         >
           KADO<span className="text-red">KOWE</span>
@@ -81,7 +81,7 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
             aria-expanded={open}
             aria-controls="mobile-nav"
             aria-label={open ? "Close menu" : "Open menu"}
-            className="p-1"
+            className="-mr-2 flex size-11 items-center justify-center"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>

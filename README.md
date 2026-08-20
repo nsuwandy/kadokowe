@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kadokowe
 
-## Getting Started
+Corporate website and Idea Library for Kadokowe, a strategic merchandising
+partner. Built against **SRS v1.4** (`../Kadokowe_Website_SRS.docx`), which is
+the source of record — requirement IDs referenced in code comments (`FR-3.15`,
+`NFR-6.2`) point back to it.
 
-First, run the development server:
+## Running it
 
 ```bash
+npm install
+cp .env.example .env      # then fill in — see below
+npx prisma dev            # local Postgres, prints a DATABASE_URL
+npx prisma migrate dev    # apply the schema
+npm run db:seed           # sample catalogue, the five real case studies
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+English is served at `/`, Indonesian at `/id`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The local Postgres from `npx prisma dev` **does not survive a reboot**. If the
+app cannot reach the database, start it again and re-copy the `DATABASE_URL` it
+prints into `.env`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+`.env.example` lists everything with notes. Nothing is required to boot except
+`DATABASE_URL` — email degrades to console logging without `RESEND_API_KEY`,
+and images fall back to labelled placeholder plates without Cloudinary
+credentials, so a missing key never takes down a form or a page.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | Does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:seed` | Seed sample content |
+| `npm run db:migrate` | Create and apply a migration |
+| `npm run db:studio` | Browse the database |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Layout
 
-## Deploy on Vercel
+```
+prisma/schema.prisma   Data model (SRS §9). Phase 2/3 entities included.
+src/app/[locale]/      Public pages
+src/app/api/           Enquiry and newsletter endpoints
+src/components/        UI primitives and shared components
+src/content/           Code-managed content: taxonomy, Custom Made,
+                       Concept Collections, fixed page copy
+src/lib/i18n.ts        Bilingual field resolution and fallback
+src/proxy.ts           Locale routing (Next 16 calls this `proxy`,
+                       not `middleware`)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Things that will bite you
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Bilingual fields are paired columns**, `nameEn` / `nameId`, not a
+translations table. Read them through `pick()` in `src/lib/i18n.ts` — it
+falls back to English when Indonesian is missing, which is the normal steady
+state for a large catalogue maintained by one person. Reading `record.nameId`
+directly will render blanks.
+
+**Concept Collections have no admin.** They live in
+`src/content/concepts.ts` and default to `published: false`. These are real
+client proposals and nothing strips client identity automatically, so read the
+warning at the top of that file before publishing one.
+
+**The product card has three prohibitions** (`src/components/ProductCard.tsx`):
+no price as a primary element, no commerce action, idea-led line leads. It is
+the most-repeated component on the site, so drift there propagates everywhere.
+SRS §3.2 supplies the review test — *does this look like Kadokowe is selling
+products?*
+
+**`/ideas/{segment}` is a product; `/ideas/{segment}/{term}` is a filtered
+view.** Position one genuinely serves both, which is why it is named
+`[segment]` rather than `[slug]` or `[axis]`.
+
+**Newsletter campaigns are not sent from here.** This app owns capture and
+consent only (FR-15.6); composition and delivery belong to the email service
+provider. Double opt-in, consent timestamps and one-click unsubscribe are
+required because sending marketing email to recipients in Indonesia engages
+Law No. 27 of 2022.
+
+## Still to build for Phase 1a
+
+Admin area with bulk product import (FR-10), Insights article bodies, and the
+homepage teasers for Custom Made and Ready Stock. Kadokowe Quarterly is
+Phase 1b.
