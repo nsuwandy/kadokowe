@@ -24,6 +24,7 @@ export const metadata: Metadata = {
  */
 export default async function OurWorkPage({
   params,
+  searchParams,
 }: PageProps<"/[locale]/our-work">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
@@ -33,15 +34,32 @@ export default async function OurWorkPage({
 
   // NFR-1.2 — see the note on the Insights index: the card needs six fields,
   // not the whole case study.
-  const projects = await db.project.findMany({
-    where: { visibility: "PUBLISHED" },
-    orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
-    select: {
-      slug: true, client: true, heroImage: true, industry: true,
-      titleEn: true, titleId: true, summaryEn: true, summaryId: true,
-    },
-  });
+  // FR-7.5 — filtered by industry. The list of industries comes from the
+  // projects themselves rather than the taxonomy: Our Work should offer the
+  // sectors Kadokowe has actually delivered for, not every sector it could.
+  const sp = await searchParams;
+  const industry = String(sp?.industry ?? "").trim();
 
+  const select = {
+    slug: true, client: true, heroImage: true, industry: true,
+    titleEn: true, titleId: true, summaryEn: true, summaryId: true,
+  } as const;
+
+  const [projects, all] = await Promise.all([
+    db.project.findMany({
+      where: { visibility: "PUBLISHED", ...(industry ? { industry } : {}) },
+      orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
+      select,
+    }),
+    db.project.findMany({
+      where: { visibility: "PUBLISHED", industry: { not: null } },
+      select: { industry: true },
+      distinct: ["industry"],
+      orderBy: { industry: "asc" },
+    }),
+  ]);
+
+  const industries = all.map((p) => p.industry).filter((i): i is string => Boolean(i));
   const [featured, ...rest] = projects;
 
   // Deliberately uneven spans so the grid never settles into a rhythm.
@@ -65,6 +83,50 @@ export default async function OurWorkPage({
               )}
             </p>
           </div>
+
+          {/* FR-7.5 — links rather than a select, so a filtered view is
+              shareable and works without JavaScript. */}
+          {industries.length > 1 && (
+            <nav
+              aria-label={t("Filter by industry", "Saring berdasarkan industri")}
+              className="mb-10 flex flex-wrap gap-2 border-t border-line pt-6"
+            >
+              <Link
+                href={path("/our-work")}
+                aria-current={!industry ? "true" : undefined}
+                className={
+                  !industry
+                    ? "border border-red bg-red px-4 py-2 text-xs font-semibold text-paper"
+                    : "border border-line px-4 py-2 text-xs font-semibold hover:border-ink"
+                }
+              >
+                {t("All work", "Semua karya")}
+              </Link>
+              {industries.map((name) => (
+                <Link
+                  key={name}
+                  href={`${path("/our-work")}?industry=${encodeURIComponent(name)}`}
+                  aria-current={industry === name ? "true" : undefined}
+                  className={
+                    industry === name
+                      ? "border border-red bg-red px-4 py-2 text-xs font-semibold text-paper"
+                      : "border border-line px-4 py-2 text-xs font-semibold hover:border-ink"
+                  }
+                >
+                  {name}
+                </Link>
+              ))}
+            </nav>
+          )}
+
+          {projects.length === 0 && (
+            <p className="border border-dashed border-line px-6 py-16 text-center font-editorial text-lede italic text-muted">
+              {t(
+                "No projects in that industry yet — but the approach travels.",
+                "Belum ada proyek di industri itu — tetapi pendekatannya tetap berlaku.",
+              )}
+            </p>
+          )}
 
           {featured && (
             <Link
