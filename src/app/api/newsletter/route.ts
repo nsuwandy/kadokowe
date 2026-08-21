@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { sendConfirmationEmail } from "@/lib/email";
+import { rateLimit, clientIp, LIMITS } from "@/lib/rate-limit";
 
 /**
  * Newsletter signup — FR-15.2, FR-15.7, FR-15.8.
@@ -21,6 +22,19 @@ const Body = z.object({
 });
 
 export async function POST(request: Request) {
+  // NFR-3.5 — signup sends a confirmation email to an address the submitter
+  // chose, which makes an open endpoint a way to send mail to strangers over
+  // Kadokowe's domain. Throttling protects the sending reputation, not just
+  // the database.
+  const ip = clientIp(request.headers);
+  const allowed = rateLimit(`newsletter:${ip}`, LIMITS.newsletter);
+  if (!allowed.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(allowed.retryAfterSeconds) } },
+    );
+  }
+
   let parsed;
   try {
     parsed = Body.parse(await request.json());

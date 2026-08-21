@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { enquirySchema, TYPE_LABELS, checkUploads } from "@/lib/enquiry-schema";
 import { sendEnquiryAcknowledgement, sendEnquiryNotification } from "@/lib/email";
 import { storeEnquiryFile } from "@/lib/uploads";
+import { rateLimit, clientIp, LIMITS } from "@/lib/rate-limit";
 
 /**
  * Project enquiry — FR-6.8 to FR-6.11.
@@ -14,6 +15,18 @@ import { storeEnquiryFile } from "@/lib/uploads";
  * gets a confirmation.
  */
 export async function POST(request: Request) {
+  // NFR-3.5 — every enquiry writes a row and sends two emails, so an
+  // unthrottled endpoint is both a spam vector and a way to burn the sending
+  // quota the real leads depend on.
+  const ip = clientIp(request.headers);
+  const allowed = rateLimit(`enquiry:${ip}`, LIMITS.enquiry);
+  if (!allowed.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(allowed.retryAfterSeconds) } },
+    );
+  }
+
   let input;
   const uploads: string[] = [];
 

@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { currentAdmin, getSession, verifyCredentials } from "@/lib/auth";
+import { rateLimit, clientIp, LIMITS } from "@/lib/rate-limit";
 
 /**
  * Admin sign-in.
@@ -19,6 +21,16 @@ export default async function LoginPage({
 
   async function signIn(formData: FormData) {
     "use server";
+
+    // NFR-3.5 — throttle before touching the password. The rejection is
+    // deliberately the same "didn't match" screen as a wrong password: telling
+    // an attacker they have hit a limit confirms they found a live endpoint
+    // and tells them exactly how long to wait.
+    const ip = clientIp(await headers());
+    if (!rateLimit(`login:${ip}`, LIMITS.login).ok) {
+      redirect("/admin/login?error=1");
+    }
+
     const email = String(formData.get("email") ?? "");
     const password = String(formData.get("password") ?? "");
 
