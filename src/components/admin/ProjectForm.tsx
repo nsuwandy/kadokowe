@@ -8,6 +8,7 @@ import {
   type SaveState,
 } from "@/lib/editor-shared";
 import { ImageField } from "@/components/admin/ImageField";
+import { GalleryField } from "@/components/admin/GalleryField";
 
 export type ProjectFormValues = {
   id: string;
@@ -20,6 +21,11 @@ export type ProjectFormValues = {
   summaryId: string | null;
   sections: Record<string, string | null>;
   heroImage: string | null;
+  gallery: { publicId: string; altEn: string }[];
+  seoTitleEn: string | null;
+  seoTitleId: string | null;
+  seoDescEn: string | null;
+  seoDescId: string | null;
   featured: boolean;
   visibility: string;
   sortOrder: number;
@@ -192,6 +198,34 @@ export function ProjectForm({
           defaultValue={project?.heroImage}
           hint="Used full-bleed at the top of the story, so landscape works best."
         />
+
+        <GalleryField
+          name="gallery"
+          label="Story images"
+          defaultValue={project?.gallery}
+          hint="FR-7.3 — the product, the packaging, the design work and the production floor. These carry the story more than the copy does."
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search title (English)</span>
+            <input name="seoTitleEn" defaultValue={project?.seoTitleEn ?? ""} className={field} />
+            <span className={hint}>Left blank, the project title is used.</span>
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search title (Indonesian)</span>
+            <input name="seoTitleId" defaultValue={project?.seoTitleId ?? ""} className={field} />
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search description (English)</span>
+            <input name="seoDescEn" defaultValue={project?.seoDescEn ?? ""} className={field} />
+            <span className={hint}>Also the text shown when the link is shared.</span>
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search description (Indonesian)</span>
+            <input name="seoDescId" defaultValue={project?.seoDescId ?? ""} className={field} />
+          </label>
+        </div>
         <label className="flex flex-col gap-2">
           <span className={labelCls}>Position in the list</span>
           <input

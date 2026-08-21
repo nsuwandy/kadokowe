@@ -22,13 +22,28 @@ export function ImageField({
   defaultValue,
   label = "Image",
   hint,
+  value: controlledValue,
+  onChange,
+  compact = false,
 }: {
-  name: string;
+  /** Omitted when controlled — the caller then owns serialisation. */
+  name?: string;
   defaultValue?: string | null;
   label?: string;
   hint?: string;
+  /** Supply with onChange to drive the field from outside, as GalleryField does. */
+  value?: string;
+  onChange?: (value: string) => void;
+  /** Drops the label and preview chrome for use inside a list. */
+  compact?: boolean;
 }) {
-  const [value, setValue] = useState(defaultValue ?? "");
+  const [internal, setInternal] = useState(defaultValue ?? "");
+  const controlled = controlledValue !== undefined;
+  const value = controlled ? controlledValue : internal;
+  const setValue = (v: string) => {
+    if (!controlled) setInternal(v);
+    onChange?.(v);
+  };
   const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
   const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const canUpload = Boolean(preset && cloud);
@@ -37,8 +52,8 @@ export function ImageField({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className={labelCls}>{label}</span>
-      <input type="hidden" name={name} value={value} />
+      {!compact && <span className={labelCls}>{label}</span>}
+      {name && <input type="hidden" name={name} value={value} />}
 
       <div className="flex flex-wrap items-start gap-4">
         <div className="relative h-24 w-32 shrink-0 overflow-hidden border border-line bg-warm">

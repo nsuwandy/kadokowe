@@ -26,7 +26,10 @@ export default async function ProductEditor({
     ? null
     : await db.product.findUnique({
         where: { id },
-        include: { terms: { select: { id: true } } },
+        include: {
+          terms: { select: { id: true } },
+          gallery: { orderBy: { sortOrder: "asc" } },
+        },
       });
 
   if (!isNew && !product) notFound();
@@ -83,6 +86,14 @@ export default async function ProductEditor({
                 tagsEn: product.tagsEn,
                 tagsId: product.tagsId,
                 heroImage: product.heroImage,
+                gallery: product.gallery.map((g) => ({
+                  publicId: g.publicId,
+                  altEn: g.altEn ?? "",
+                })),
+                seoTitleEn: product.seoTitleEn,
+                seoTitleId: product.seoTitleId,
+                seoDescEn: product.seoDescEn,
+                seoDescId: product.seoDescId,
                 featured: product.featured,
                 isNew: product.isNew,
                 visibility: product.visibility,

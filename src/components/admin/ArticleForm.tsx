@@ -18,7 +18,9 @@ export type ArticleFormValues = {
   category: string;
   heroImage: string | null;
   seoTitleEn: string | null;
+  seoTitleId: string | null;
   seoDescEn: string | null;
+  seoDescId: string | null;
   featured: boolean;
   visibility: string;
   productIds: string[];
@@ -183,14 +185,22 @@ export function ArticleForm({
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-2">
-            <span className={labelCls}>Search title</span>
+            <span className={labelCls}>Search title (English)</span>
             <input name="seoTitleEn" defaultValue={article?.seoTitleEn ?? ""} className={field} />
             <span className={hint}>Left blank, the article title is used.</span>
           </label>
           <label className="flex flex-col gap-2">
-            <span className={labelCls}>Search description</span>
+            <span className={labelCls}>Search title (Indonesian)</span>
+            <input name="seoTitleId" defaultValue={article?.seoTitleId ?? ""} className={field} />
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search description (English)</span>
             <input name="seoDescEn" defaultValue={article?.seoDescEn ?? ""} className={field} />
-            <span className={hint}>Left blank, the standfirst is used.</span>
+            <span className={hint}>Left blank, the standfirst is used. Also the text shown when the link is shared.</span>
+          </label>
+          <label className="flex flex-col gap-2">
+            <span className={labelCls}>Search description (Indonesian)</span>
+            <input name="seoDescId" defaultValue={article?.seoDescId ?? ""} className={field} />
           </label>
         </div>
         <label className="flex items-center gap-2 text-sm">

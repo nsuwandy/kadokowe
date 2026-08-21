@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { deleteProduct as deleteAction } from "@/app/admin/products/actions";
 import { ImageField } from "@/components/admin/ImageField";
+import { GalleryField } from "@/components/admin/GalleryField";
 import {
   AVAILABILITY_OPTIONS,
   VISIBILITY_OPTIONS,
@@ -252,6 +253,34 @@ export function ProductForm({
             defaultValue={product?.heroImage}
             hint="Left blank, a labelled placeholder is shown rather than a gap."
           />
+
+          <GalleryField
+            name="gallery"
+            label="More images"
+            defaultValue={product?.gallery}
+            hint="Shown beneath the hero on the product page. Detail shots, packaging, the product in use."
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-2">
+              <span className={labelCls}>Search title (English)</span>
+              <input name="seoTitleEn" defaultValue={product?.seoTitleEn ?? ""} className={field} />
+              <span className={hint}>Left blank, the product name is used.</span>
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className={labelCls}>Search title (Indonesian)</span>
+              <input name="seoTitleId" defaultValue={product?.seoTitleId ?? ""} className={field} />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className={labelCls}>Search description (English)</span>
+              <input name="seoDescEn" defaultValue={product?.seoDescEn ?? ""} className={field} />
+              <span className={hint}>Also the text shown when the link is shared.</span>
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className={labelCls}>Search description (Indonesian)</span>
+              <input name="seoDescId" defaultValue={product?.seoDescId ?? ""} className={field} />
+            </label>
+          </div>
 
           <div className="flex flex-wrap gap-6">
             <label className="flex items-center gap-2 text-sm">

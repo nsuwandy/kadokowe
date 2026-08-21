@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { budgetTierFor } from "@/content/taxonomy";
+import { galleryFrom } from "@/lib/gallery";
 import { type SaveState } from "@/lib/product-form";
 
 /**
@@ -94,15 +95,29 @@ export async function saveProduct(
     tagsEn: list("tagsEn"),
     tagsId: list("tagsId"),
     heroImage: str("heroImage"),
+    seoTitleEn: str("seoTitleEn"),
+    seoTitleId: str("seoTitleId"),
+    seoDescEn: str("seoDescEn"),
+    seoDescId: str("seoDescId"),
     featured: formData.get("featured") === "on",
     isNew: formData.get("isNew") === "on",
     visibility: String(formData.get("visibility") ?? "DRAFT") as never,
   };
 
+  // FR-7.3 — the gallery is replaced wholesale rather than diffed. Rows carry
+  // no stable identity through the form, so matching them up would mean
+  // inventing one; recreating a handful of rows is cheaper than the bookkeeping.
+  const gallery = galleryFrom(formData, "gallery");
+
   try {
     if (isNew) {
       const created = await db.product.create({
-        data: { ...data, slug, terms: { connect: termIds } },
+        data: {
+          ...data,
+          slug,
+          terms: { connect: termIds },
+          gallery: { create: gallery },
+        },
         select: { id: true },
       });
       revalidatePath("/admin/products");
@@ -112,7 +127,12 @@ export async function saveProduct(
 
     await db.product.update({
       where: { id },
-      data: { ...data, slug, terms: { set: termIds } },
+      data: {
+        ...data,
+        slug,
+        terms: { set: termIds },
+        gallery: { deleteMany: {}, create: gallery },
+      },
     });
     revalidatePath("/admin/products");
     revalidatePath("/ideas");

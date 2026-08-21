@@ -31,6 +31,11 @@ export type ProductFormValues = {
   tagsEn: string[];
   tagsId: string[];
   heroImage: string | null;
+  gallery: { publicId: string; altEn: string }[];
+  seoTitleEn: string | null;
+  seoTitleId: string | null;
+  seoDescEn: string | null;
+  seoDescId: string | null;
   featured: boolean;
   isNew: boolean;
   visibility: string;

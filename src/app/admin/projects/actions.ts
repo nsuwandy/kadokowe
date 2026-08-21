@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { galleryFrom } from "@/lib/gallery";
 import { STORY_SECTIONS, type SaveState } from "@/lib/editor-shared";
 
 /** Create or update an Our Work project — FR-7.7, FR-10.3. */
@@ -52,16 +53,28 @@ export async function saveProject(
     summaryId: str("summaryId"),
     ...sections,
     heroImage: str("heroImage"),
+    seoTitleEn: str("seoTitleEn"),
+    seoTitleId: str("seoTitleId"),
+    seoDescEn: str("seoDescEn"),
+    seoDescId: str("seoDescId"),
     sortOrder: sortRaw ? Number(sortRaw) : 0,
     featured: formData.get("featured") === "on",
     visibility: visibility as never,
     publishedAt: visibility === "PUBLISHED" ? new Date() : null,
   };
 
+  // FR-7.3 — replaced wholesale; see the note in the product action.
+  const gallery = galleryFrom(formData, "gallery");
+
   try {
     if (isNew) {
       const created = await db.project.create({
-        data: { ...data, slug, products: { connect: productIds.map((i) => ({ id: i })) } },
+        data: {
+          ...data,
+          slug,
+          products: { connect: productIds.map((i) => ({ id: i })) },
+          gallery: { create: gallery },
+        },
         select: { id: true },
       });
       revalidatePath("/admin/projects");
@@ -71,7 +84,12 @@ export async function saveProject(
 
     await db.project.update({
       where: { id },
-      data: { ...data, slug, products: { set: productIds.map((i) => ({ id: i })) } },
+      data: {
+        ...data,
+        slug,
+        products: { set: productIds.map((i) => ({ id: i })) },
+        gallery: { deleteMany: {}, create: gallery },
+      },
     });
     revalidatePath("/admin/projects");
     revalidatePath("/our-work");

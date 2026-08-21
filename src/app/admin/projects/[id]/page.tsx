@@ -20,7 +20,10 @@ export default async function ProjectEditor({
     ? null
     : await db.project.findUnique({
         where: { id },
-        include: { products: { select: { id: true } } },
+        include: {
+          products: { select: { id: true } },
+          gallery: { orderBy: { sortOrder: "asc" } },
+        },
       });
 
   if (!isNew && !project) notFound();
@@ -70,6 +73,14 @@ export default async function ProjectEditor({
                 summaryId: project.summaryId,
                 sections,
                 heroImage: project.heroImage,
+                gallery: project.gallery.map((g) => ({
+                  publicId: g.publicId,
+                  altEn: g.altEn ?? "",
+                })),
+                seoTitleEn: project.seoTitleEn,
+                seoTitleId: project.seoTitleId,
+                seoDescEn: project.seoDescEn,
+                seoDescId: project.seoDescId,
                 featured: project.featured,
                 visibility: project.visibility,
                 sortOrder: project.sortOrder,
