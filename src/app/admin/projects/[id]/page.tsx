@@ -50,9 +50,17 @@ export default async function ProjectEditor({
 
       <div className="flex flex-wrap items-baseline gap-4">
         <h1 className="text-2xl font-bold">{isNew ? "Add project" : project!.titleEn}</h1>
-        {project && project.visibility === "PUBLISHED" && (
-          <Link href={`/our-work/${project.slug}`} target="_blank" className="text-xs text-muted underline-offset-2 hover:underline">
-            View on site ↗
+        {project && (
+          <Link
+            href={
+              project.visibility === "PUBLISHED"
+                ? `/our-work/${project.slug}`
+                : `/api/draft/enable?next=${encodeURIComponent(`/our-work/${project.slug}`)}`
+            }
+            target="_blank"
+            className="text-xs text-muted underline-offset-2 hover:underline"
+          >
+            {project.visibility === "PUBLISHED" ? "View on site ↗" : "Preview ↗"}
           </Link>
         )}
       </div>

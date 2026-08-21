@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
+import { isPreview, visibilityFilter, PreviewBanner } from "@/lib/preview";
 import { Wrap, Section } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -11,9 +12,9 @@ import { ProductCard } from "@/components/ProductCard";
 
 type Stat = { value: string; labelEn: string; labelId?: string };
 
-async function getProject(slug: string) {
+async function getProject(slug: string, preview = false) {
   return db.project.findFirst({
-    where: { slug, visibility: "PUBLISHED" },
+    where: { slug, ...visibilityFilter(preview) },
     include: {
       gallery: { orderBy: { sortOrder: "asc" } },
       products: {
@@ -76,7 +77,9 @@ export default async function ProjectPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const project = await getProject(slug);
+  // FR-10.12
+  const preview = await isPreview();
+  const project = await getProject(slug, preview);
   if (!project) notFound();
 
   const title = pick(project, "title", l);
@@ -94,6 +97,9 @@ export default async function ProjectPage({
 
   return (
     <>
+      {preview && project.visibility !== "PUBLISHED" && (
+        <PreviewBanner status={project.visibility} />
+      )}
       {/* Full-bleed hero with the title overlaid. */}
       <section className="relative grid min-h-[clamp(340px,50vw,560px)]">
         <Plate

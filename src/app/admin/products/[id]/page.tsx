@@ -49,13 +49,17 @@ export default async function ProductEditor({
         <h1 className="text-2xl font-bold">
           {isNew ? "Add product" : product!.nameEn}
         </h1>
-        {product && product.visibility === "PUBLISHED" && (
+        {product && (
           <Link
-            href={`/ideas/${product.slug}`}
+            href={
+              product.visibility === "PUBLISHED"
+                ? `/ideas/${product.slug}`
+                : `/api/draft/enable?next=${encodeURIComponent(`/ideas/${product.slug}`)}`
+            }
             target="_blank"
             className="text-xs text-muted underline-offset-2 hover:underline"
           >
-            View on site ↗
+            {product.visibility === "PUBLISHED" ? "View on site ↗" : "Preview ↗"}
           </Link>
         )}
       </div>

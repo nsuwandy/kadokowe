@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { livePublished } from "@/lib/articles";
+import { livePublished, isLive } from "@/lib/articles";
+import { isPreview, PreviewBanner } from "@/lib/preview";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
@@ -27,9 +28,9 @@ import { sanitizeArticleHtml } from "@/lib/sanitize";
  */
 export const revalidate = 3600;
 
-async function getArticle(slug: string) {
+async function getArticle(slug: string, preview = false) {
   return db.article.findFirst({
-    where: { slug, ...livePublished() },
+    where: { slug, ...(preview ? {} : livePublished()) },
     include: {
       gallery: { orderBy: { sortOrder: "asc" } },
       projects: {
@@ -100,7 +101,9 @@ export default async function ArticlePage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const article = await getArticle(slug);
+  // FR-10.12 — also the way to check a scheduled piece before its date.
+  const preview = await isPreview();
+  const article = await getArticle(slug, preview);
   if (!article) notFound();
 
   const title = pick(article, "title", l);
@@ -109,6 +112,13 @@ export default async function ArticlePage({
 
   return (
     <>
+      {preview && !isLive(article) && (
+        <PreviewBanner
+          status={
+            article.visibility === "PUBLISHED" ? "scheduled" : article.visibility
+          }
+        />
+      )}
       {/* NFR-6.4 */}
       <JsonLd
         data={articleSchema({

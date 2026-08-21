@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { isLocale, pick, pickArray, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
+import { isPreview, visibilityFilter, PreviewBanner } from "@/lib/preview";
 import { JsonLd, productSchema } from "@/lib/structured-data";
 import { SITE } from "@/lib/site";
 import { Wrap, Section, Eyebrow, Tag } from "@/components/ui/Section";
@@ -27,9 +28,9 @@ const AVAILABILITY_LABEL: Record<string, { en: string; id: string }> = {
   CUSTOM_MADE: { en: "Custom made", id: "Dibuat khusus" },
 };
 
-async function getProduct(slug: string) {
+async function getProduct(slug: string, preview = false) {
   return db.product.findFirst({
-    where: { slug, visibility: "PUBLISHED" },
+    where: { slug, ...visibilityFilter(preview) },
     include: {
       terms: true,
       gallery: { orderBy: { sortOrder: "asc" } },
@@ -67,7 +68,9 @@ export default async function ProductPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const product = await getProduct(segment);
+  // FR-10.12 — a signed-in administrator sees drafts here; anyone else 404s.
+  const preview = await isPreview();
+  const product = await getProduct(segment, preview);
   if (!product) notFound();
 
   // The first three gallery images sit beside the hero; anything beyond them
@@ -116,6 +119,10 @@ export default async function ProductPage({
   ].filter((s) => s.value);
 
   return (
+    <>
+      {preview && product.visibility !== "PUBLISHED" && (
+        <PreviewBanner status={product.visibility} />
+      )}
     <Section>
       {/* NFR-6.4 — no offers block: price must never lead (FR-4.3), and an
           offers block puts one straight into the search result. */}
@@ -321,6 +328,7 @@ export default async function ProductPage({
         )}
       </Wrap>
     </Section>
+    </>
   );
 }
 

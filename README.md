@@ -108,6 +108,7 @@ password, so it is also the recovery route if one is forgotten.
 | Insights | Rich text editor, categories, the FR-8.8 cross-links |
 | Page copy | Override wording on key pages; homepage hero images |
 | Categories | The four browse axes — rename, reorder, add |
+| Preview | Draft and scheduled items open on the real page via "Preview ↗" |
 | Newsletter | Subscribers, search, CSV export, provider sync state |
 | Enquiries | Status, notes, attachments, CSV export |
 | Newsletter | Subscribers with consent evidence, CSV export |
@@ -160,6 +161,9 @@ Being honest about the gap between "implemented" and "proven":
   shared store when there is somewhere to put it.
 - **Article scheduling is accurate to the hour**, because the Insights pages
   are prerendered and revalidate hourly.
+- **`prisma migrate dev` needs `SHADOW_DATABASE_URL`** pointed at a second,
+  separate database. Without it Prisma puts the shadow beside the working
+  database and no migration can be created at all.
 
 ## Deploying
 

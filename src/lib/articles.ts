@@ -19,3 +19,12 @@ export function livePublished(now: Date = new Date()): Prisma.ArticleWhereInput 
     OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
   };
 }
+
+/** Whether an article is visible to the public right now. */
+export function isLive(
+  article: { visibility: string; publishedAt: Date | null },
+  now: Date = new Date(),
+): boolean {
+  if (article.visibility !== "PUBLISHED") return false;
+  return article.publishedAt === null || article.publishedAt <= now;
+}

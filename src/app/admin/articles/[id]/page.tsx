@@ -41,9 +41,17 @@ export default async function ArticleEditor({
 
       <div className="flex flex-wrap items-baseline gap-4">
         <h1 className="text-2xl font-bold">{isNew ? "Add article" : article!.titleEn}</h1>
-        {article && article.visibility === "PUBLISHED" && (
-          <Link href={`/insights/${article.slug}`} target="_blank" className="text-xs text-muted underline-offset-2 hover:underline">
-            View on site ↗
+        {article && (
+          <Link
+            href={
+              article.visibility === "PUBLISHED"
+                ? `/insights/${article.slug}`
+                : `/api/draft/enable?next=${encodeURIComponent(`/insights/${article.slug}`)}`
+            }
+            target="_blank"
+            className="text-xs text-muted underline-offset-2 hover:underline"
+          >
+            {article.visibility === "PUBLISHED" ? "View on site ↗" : "Preview ↗"}
           </Link>
         )}
       </div>
