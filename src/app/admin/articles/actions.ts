@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { galleryFrom } from "@/lib/gallery";
 import type { SaveState } from "@/lib/editor-shared";
 
 /** Create or update an Insights article — FR-8.5, FR-10.3. */
@@ -34,6 +35,15 @@ export async function saveArticle(
   const productIds = formData.getAll("productIds").map(String).filter(Boolean);
   const projectIds = formData.getAll("projectIds").map(String).filter(Boolean);
 
+  // An empty box means "use today when publishing"; an invalid one is
+  // ignored rather than rejected, since the rest of the article is still
+  // worth saving.
+  const publishRaw = String(formData.get("publishAt") ?? "").trim();
+  const parsed = publishRaw ? new Date(publishRaw) : null;
+  const publishAt = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+
+  const gallery = galleryFrom(formData, "gallery");
+
   const data = {
     titleEn,
     titleId: str("titleId"),
@@ -49,7 +59,10 @@ export async function saveArticle(
     seoDescId: str("seoDescId"),
     featured: formData.get("featured") === "on",
     visibility: visibility as never,
-    publishedAt: visibility === "PUBLISHED" ? new Date() : null,
+    // FR-8.5 — an explicit date drives both scheduling and backdating. The
+    // client is backfilling January–September 2026, and stamping every one of
+    // those with today's date would date the whole archive to the import.
+    publishedAt: publishAt ?? (visibility === "PUBLISHED" ? new Date() : null),
   };
 
   try {
@@ -60,6 +73,7 @@ export async function saveArticle(
           slug,
           products: { connect: productIds.map((i) => ({ id: i })) },
           projects: { connect: projectIds.map((i) => ({ id: i })) },
+          gallery: { create: gallery },
         },
         select: { id: true },
       });
@@ -74,6 +88,7 @@ export async function saveArticle(
         ...data,
         slug,
         products: { set: productIds.map((i) => ({ id: i })) },
+        gallery: { deleteMany: {}, create: gallery },
         projects: { set: projectIds.map((i) => ({ id: i })) },
       },
     });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { livePublished } from "@/lib/articles";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
@@ -10,6 +11,17 @@ import { ArrowLink } from "@/components/ui/Button";
 import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { CATEGORIES, categoryBySlug, categoryLabel } from "@/content/insights";
 import type { ArticleCategory } from "@/generated/prisma/enums";
+
+/**
+ * Revalidated hourly so scheduling actually takes effect — FR-8.5.
+ *
+ * These pages are prerendered, so without this an article scheduled for
+ * Tuesday would sit invisible until the next deploy. An hour is the coarsest
+ * granularity that still makes "schedule it for tomorrow morning" behave the
+ * way the operator means it, and it keeps the pages static for almost every
+ * request rather than rendering each one on demand.
+ */
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   return CATEGORIES.flatMap((c) =>
@@ -45,7 +57,7 @@ export default async function InsightsCategoryPage({
 
   const articles = await db.article.findMany({
     where: {
-      visibility: "PUBLISHED",
+      ...livePublished(),
       category: category.key as ArticleCategory,
     },
     orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],

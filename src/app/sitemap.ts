@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
 import { SITE } from "@/lib/site";
 import { AXES, AXIS_KEYS } from "@/content/taxonomy";
+import { livePublished } from "@/lib/articles";
 import { FAMILIES } from "@/content/custom-made";
 import { CATEGORIES } from "@/content/insights";
 import { publishedConcepts } from "@/content/concepts";
@@ -70,7 +71,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [products, projects, articles] = await Promise.all([
       db.product.findMany({ where: { visibility: "PUBLISHED" }, select: { slug: true } }),
       db.project.findMany({ where: { visibility: "PUBLISHED" }, select: { slug: true } }),
-      db.article.findMany({ where: { visibility: "PUBLISHED" }, select: { slug: true } }),
+      // A scheduled article must not be announced before its date.
+      db.article.findMany({ where: livePublished(), select: { slug: true } }),
     ]);
     for (const p of products) entries.push(entry(`/ideas/${p.slug}`, 0.7));
     for (const p of projects) entries.push(entry(`/our-work/${p.slug}`, 0.8));

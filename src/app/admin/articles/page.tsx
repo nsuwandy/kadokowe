@@ -59,6 +59,16 @@ export default async function AdminArticles() {
                   <span className={a.visibility === "PUBLISHED" ? "text-xs font-semibold text-red" : "text-xs text-muted"}>
                     {a.visibility.toLowerCase()}
                   </span>
+                  {/* FR-8.5 — "published" and "published, but not yet" look
+                      identical otherwise, and the difference is the whole
+                      point of scheduling. */}
+                  {a.visibility === "PUBLISHED" &&
+                    a.publishedAt &&
+                    a.publishedAt > new Date() && (
+                      <span className="ml-2 text-[0.625rem] uppercase tracking-[0.1em] text-muted">
+                        scheduled {a.publishedAt.toLocaleDateString("en-GB")}
+                      </span>
+                    )}
                   {a.featured && <span className="ml-2 text-[0.625rem] uppercase text-muted">featured</span>}
                 </td>
               </tr>

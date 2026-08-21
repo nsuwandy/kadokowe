@@ -6,6 +6,7 @@ import { CATEGORIES } from "@/content/insights";
 import { TranslationStatus } from "@/components/admin/TranslationStatus";
 import { ImageField } from "@/components/admin/ImageField";
 import { RichText } from "@/components/admin/RichText";
+import { GalleryField } from "@/components/admin/GalleryField";
 
 export type ArticleFormValues = {
   id: string;
@@ -24,6 +25,8 @@ export type ArticleFormValues = {
   seoDescId: string | null;
   featured: boolean;
   visibility: string;
+  publishedAt: string | null;
+  gallery: { publicId: string; altEn: string }[];
   productIds: string[];
   projectIds: string[];
 };
@@ -124,6 +127,17 @@ export function ArticleForm({
           label="Body (Indonesian)"
           defaultValue={article?.bodyId}
         />
+
+        {/* FR-8.3 names image galleries alongside headings, body copy and
+            pull quotes. Inline images go in the body; this is the set that
+            runs as a group beneath it, which is a different editorial device
+            and is why it is a separate field rather than more toolbar. */}
+        <GalleryField
+          name="gallery"
+          label="Image gallery"
+          defaultValue={article?.gallery}
+          hint="Shown as a group after the article body. Leave empty if the piece needs none."
+        />
       </section>
 
       {/* FR-8.8 — the pattern is invisible from here unless it is explained. */}
@@ -180,6 +194,22 @@ export function ArticleForm({
             <input name="slug" defaultValue={article?.slug ?? ""} className={field} placeholder="made from the title" />
           </label>
         </div>
+
+        <label className="flex flex-col gap-2">
+          <span className={labelCls}>Publish date</span>
+          <input
+            type="datetime-local"
+            name="publishAt"
+            defaultValue={article?.publishedAt ?? ""}
+            className={`${field} max-w-72`}
+          />
+          <span className={hint}>
+            A future date schedules the article: it stays off the site, out of
+            the category pages and out of the sitemap until then. A past date
+            backdates it, which is what you want when adding older pieces.
+            Leave blank to use the moment you publish.
+          </span>
+        </label>
         <ImageField
           name="heroImage"
           label="Hero image"

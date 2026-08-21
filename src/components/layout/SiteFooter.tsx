@@ -2,7 +2,7 @@ import Link from "next/link";
 import { NAV, label, localePath } from "@/lib/nav";
 import type { AppLocale } from "@/lib/i18n";
 import { Wrap } from "@/components/ui/Section";
-import { CONTACT } from "@/lib/site";
+import { CONTACT, COMPANY_PROFILE_URL } from "@/lib/site";
 
 /**
  * Address and social links are administrator-managed optional fields, hidden
@@ -67,6 +67,20 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
                   {CONTACT.phoneDisplay}
                 </a>
               </li>
+              {/* FR-8.7 — hidden entirely when no profile is configured,
+                  rather than offered as a link that goes nowhere. */}
+              {COMPANY_PROFILE_URL && (
+                <li>
+                  <a
+                    href={COMPANY_PROFILE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-plate-c transition-colors hover:text-paper"
+                  >
+                    {t("Company profile (PDF)", "Profil perusahaan (PDF)")}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

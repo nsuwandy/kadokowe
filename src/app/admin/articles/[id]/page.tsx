@@ -20,6 +20,7 @@ export default async function ArticleEditor({
     : await db.article.findUnique({
         where: { id },
         include: {
+          gallery: { orderBy: { sortOrder: "asc" } },
           products: { select: { id: true } },
           projects: { select: { id: true } },
         },
@@ -70,6 +71,16 @@ export default async function ArticleEditor({
                 seoDescId: article.seoDescId,
                 featured: article.featured,
                 visibility: article.visibility,
+                gallery: article.gallery.map((g) => ({
+                  publicId: g.publicId,
+                  altEn: g.altEn ?? "",
+                })),
+                // datetime-local wants "YYYY-MM-DDTHH:mm" in local time.
+                publishedAt: article.publishedAt
+                  ? new Date(article.publishedAt.getTime() - article.publishedAt.getTimezoneOffset() * 60000)
+                      .toISOString()
+                      .slice(0, 16)
+                  : null,
                 productIds: article.products.map((p) => p.id),
                 projectIds: article.projects.map((p) => p.id),
               }

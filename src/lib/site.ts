@@ -9,6 +9,19 @@ export const CONTACT = {
   whatsappUrl: `https://wa.me/${rawNumber}`,
 } as const;
 
+/**
+ * The company profile PDF — FR-8.7.
+ *
+ * A URL rather than a file in the repository. The profile supplied is 28.7 MB,
+ * which would sit in git history permanently and, more to the point, is a
+ * punishing download on the mobile connections SRS §2.8 says most visitors
+ * arrive on. Hosting it on Cloudinary — already in the stack, and able to
+ * serve it compressed — costs nothing extra and can be replaced without a
+ * deploy. The link hides itself when this is unset, so an unconfigured site
+ * offers nothing broken.
+ */
+export const COMPANY_PROFILE_URL = process.env.NEXT_PUBLIC_COMPANY_PROFILE_URL || null;
+
 export const SITE = {
   name: "Kadokowe",
   taglineEn: "More Than Gifts, We Craft Brand Stories.",

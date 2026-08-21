@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { livePublished } from "@/lib/articles";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
@@ -13,10 +14,22 @@ import { NewsletterSignup } from "@/components/NewsletterSignup";
 import { categoryLabel } from "@/content/insights";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
 
+/**
+ * Revalidated hourly so scheduling actually takes effect — FR-8.5.
+ *
+ * These pages are prerendered, so without this an article scheduled for
+ * Tuesday would sit invisible until the next deploy. An hour is the coarsest
+ * granularity that still makes "schedule it for tomorrow morning" behave the
+ * way the operator means it, and it keeps the pages static for almost every
+ * request rather than rendering each one on demand.
+ */
+export const revalidate = 3600;
+
 async function getArticle(slug: string) {
   return db.article.findFirst({
-    where: { slug, visibility: "PUBLISHED" },
+    where: { slug, ...livePublished() },
     include: {
+      gallery: { orderBy: { sortOrder: "asc" } },
       projects: {
         where: { visibility: "PUBLISHED" },
         select: {
@@ -55,7 +68,7 @@ export async function generateMetadata({
 
 export async function generateStaticParams() {
   const articles = await db.article.findMany({
-    where: { visibility: "PUBLISHED" },
+    where: livePublished(),
     select: { slug: true },
   });
   return articles.flatMap((a) =>
@@ -138,6 +151,23 @@ export default async function ArticlePage({
               </p>
             )}
           </div>
+
+          {/* FR-8.3 — the gallery runs after the body as a group. */}
+          {article.gallery.length > 0 && (
+            <ul className="mx-auto mt-12 grid max-w-[900px] gap-4 sm:grid-cols-2">
+              {article.gallery.map((image) => (
+                <li key={image.id}>
+                  <Plate
+                    publicId={image.publicId}
+                    alt={pickOptional(image, "alt", l) ?? title}
+                    caption={pickOptional(image, "caption", l) ?? title}
+                    ratio="4 / 3"
+                    sizes="(min-width: 640px) 45vw, 100vw"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </Wrap>
       </Section>
 
