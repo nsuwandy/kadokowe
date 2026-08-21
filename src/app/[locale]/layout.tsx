@@ -5,6 +5,7 @@ import "../globals.css";
 import { routing } from "@/i18n/routing";
 import { isLocale, htmlLang, type AppLocale } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
+import { JsonLd, organizationSchema } from "@/lib/structured-data";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
@@ -75,6 +76,8 @@ export default async function LocaleLayout({
       className={`${poppins.variable} ${lora.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        {/* NFR-6.4 */}
+        <JsonLd data={organizationSchema()} />
         <SiteHeader locale={typed} />
         <main className="flex-1">{children}</main>
         <SiteFooter locale={typed} />

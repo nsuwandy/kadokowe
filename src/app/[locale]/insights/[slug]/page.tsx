@@ -6,6 +6,8 @@ import { livePublished } from "@/lib/articles";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
+import { JsonLd, articleSchema } from "@/lib/structured-data";
+import { SITE } from "@/lib/site";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -107,6 +109,15 @@ export default async function ArticlePage({
 
   return (
     <>
+      {/* NFR-6.4 */}
+      <JsonLd
+        data={articleSchema({
+          headline: title,
+          description: excerpt,
+          url: `${SITE.url}${path(`/insights/${slug}`)}`,
+          publishedAt: article.publishedAt,
+        })}
+      />
       <Section className="pb-0">
         <Wrap>
           <ArrowLink href={path("/insights")} className="mb-8">

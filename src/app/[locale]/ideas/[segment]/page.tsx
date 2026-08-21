@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { isLocale, pick, pickArray, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { shareMetadata } from "@/lib/share";
+import { JsonLd, productSchema } from "@/lib/structured-data";
+import { SITE } from "@/lib/site";
 import { Wrap, Section, Eyebrow, Tag } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -111,6 +113,16 @@ export default async function ProductPage({
 
   return (
     <Section>
+      {/* NFR-6.4 — no offers block: price must never lead (FR-4.3), and an
+          offers block puts one straight into the search result. */}
+      <JsonLd
+        data={productSchema({
+          name: pick(product, "name", l),
+          description: pickOptional(product, "short", l),
+          url: `${SITE.url}${path(`/ideas/${segment}`)}`,
+          material: product.material,
+        })}
+      />
       <Wrap>
         <ArrowLink href={path("/ideas")} className="mb-8">
           {t("Back to the Idea Library", "Kembali ke Pustaka Ide")}
