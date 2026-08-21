@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { SITE } from "@/lib/site";
+import { unsubscribeAtProvider } from "@/lib/newsletter-provider";
 
 /**
  * One-click unsubscribe — FR-15.3.
@@ -26,6 +27,11 @@ export async function GET(request: Request) {
     where: { id: subscriber.id },
     data: { status: "UNSUBSCRIBED", unsubscribedAt: new Date() },
   });
+
+  // FR-15.4 — mirrored to the provider so a campaign composed there cannot
+  // reach someone who has left. Local status is written first and is
+  // authoritative: if this call fails the person is still unsubscribed.
+  await unsubscribeAtProvider(subscriber.email);
 
   return back("unsubscribed");
 }

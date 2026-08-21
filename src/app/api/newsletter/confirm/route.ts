@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { SITE } from "@/lib/site";
+import { syncSubscriber } from "@/lib/newsletter-provider";
 
 /**
  * Confirms a double opt-in subscription — FR-15.2.
@@ -30,6 +31,21 @@ export async function GET(request: Request) {
       confirmToken: null,
     },
   });
+
+  // FR-15.4 — the provider gets the address only once consent is confirmed,
+  // so an unconfirmed signup can never be mailed from a campaign. The sync is
+  // best-effort and stamped, so a provider outage leaves a record to
+  // reconcile rather than silently losing the subscriber.
+  const synced = await syncSubscriber(
+    subscriber.email,
+    subscriber.consentLocale === "ID" ? "id" : "en",
+  );
+  if (synced) {
+    await db.newsletterSubscriber.update({
+      where: { id: subscriber.id },
+      data: { providerSyncedAt: new Date() },
+    });
+  }
 
   return back("confirmed");
 }
