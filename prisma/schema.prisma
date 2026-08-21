@@ -235,6 +235,10 @@ model Project {
   titleEn String
   titleId String?
   client  String
+  /// Cloudinary public ID for the client's logo, used by the homepage strip
+  /// (FR-2.14). Supplied by the client; until one is set the strip renders
+  /// the client name as a wordmark.
+  clientLogo String?
   industry String?
   /// Shown on the index card.
   summaryEn String?

@@ -73,6 +73,7 @@ export default async function ProjectEditor({
                 summaryId: project.summaryId,
                 sections,
                 heroImage: project.heroImage,
+                clientLogo: project.clientLogo,
                 gallery: project.gallery.map((g) => ({
                   publicId: g.publicId,
                   altEn: g.altEn ?? "",

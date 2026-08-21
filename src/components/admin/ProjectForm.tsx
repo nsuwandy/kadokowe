@@ -22,6 +22,7 @@ export type ProjectFormValues = {
   summaryId: string | null;
   sections: Record<string, string | null>;
   heroImage: string | null;
+  clientLogo: string | null;
   gallery: { publicId: string; altEn: string }[];
   seoTitleEn: string | null;
   seoTitleId: string | null;
@@ -200,6 +201,13 @@ export function ProjectForm({
           label="Hero image"
           defaultValue={project?.heroImage}
           hint="Used full-bleed at the top of the story, so landscape works best."
+        />
+
+        <ImageField
+          name="clientLogo"
+          label="Client logo"
+          defaultValue={project?.clientLogo}
+          hint="Shown in the homepage 'Trusted by' strip. Left blank, the client name is shown instead — which is a finished treatment, not a gap."
         />
 
         <GalleryField

@@ -53,6 +53,7 @@ export async function saveProject(
     summaryId: str("summaryId"),
     ...sections,
     heroImage: str("heroImage"),
+    clientLogo: str("clientLogo"),
     seoTitleEn: str("seoTitleEn"),
     seoTitleId: str("seoTitleId"),
     seoDescEn: str("seoDescEn"),

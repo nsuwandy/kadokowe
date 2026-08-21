@@ -49,11 +49,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // several projects from appearing several times.
   const clientRows = await db.project.findMany({
     where: { visibility: "PUBLISHED" },
-    select: { client: true },
+    select: { client: true, clientLogo: true },
     distinct: ["client"],
     orderBy: { client: "asc" },
   });
-  const clients = clientRows.map((row) => row.client);
+  const clients = clientRows.map((row) => ({ name: row.client, logo: row.clientLogo }));
 
   // FR-2.8 / FR-10.6 — the homepage reads the flags the editors set. Both
   // fall back so the section never renders a hole: "new" widens to the most
