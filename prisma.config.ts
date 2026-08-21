@@ -10,5 +10,17 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    /**
+     * Without this, `prisma migrate dev` provisions its own shadow database
+     * beside the main one. Against the local `prisma dev` server every
+     * connection lands in the same database, so the shadow *is* the working
+     * database — replaying the initial migration into it then fails with
+     * `type "Availability" already exists`, and no migration can be created.
+     *
+     * Pointing it at a separate database makes the replay work. Hosted
+     * Postgres usually permits Prisma to create one itself; Neon does not on
+     * every plan, so this stays explicit and is documented in .env.example.
+     */
+    shadowDatabaseUrl: process.env["SHADOW_DATABASE_URL"],
   },
 });
