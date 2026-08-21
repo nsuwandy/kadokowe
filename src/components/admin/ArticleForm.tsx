@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { VISIBILITY_OPTIONS, emptySaveState, type SaveState } from "@/lib/editor-shared";
 import { CATEGORIES } from "@/content/insights";
+import { TranslationStatus } from "@/components/admin/TranslationStatus";
 import { ImageField } from "@/components/admin/ImageField";
 import { RichText } from "@/components/admin/RichText";
 
@@ -66,6 +67,8 @@ export function ArticleForm({
   return (
     <form action={formAction} className="flex flex-col gap-8">
       <input type="hidden" name="id" value={article?.id ?? "new"} />
+
+      <TranslationStatus />
 
       {state.message && (
         <p role="alert" className="border-l-2 border-red bg-paper px-5 py-3 text-sm">

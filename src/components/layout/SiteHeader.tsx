@@ -136,8 +136,15 @@ function LocaleSwitch({
       role="group"
       aria-label="Language"
     >
-      <Link
-        href={localePath(bare, "en")}
+      {/* Routed through /api/locale rather than linked straight to the other
+          language: the switch has to rewrite the stored preference, or a
+          visitor holding NEXT_LOCALE=id is redirected back to Indonesian the
+          moment they follow an unprefixed English link (FR-11.9). A plain <a>
+          because this is a server round-trip that sets a cookie, not a
+          client-side route change. */}
+      <a
+        href={`/api/locale?to=en&next=${encodeURIComponent(bare)}`}
+        hrefLang="en"
         aria-current={locale === "en" ? "true" : undefined}
         className={cn(
           "px-2.5 py-2",
@@ -145,9 +152,10 @@ function LocaleSwitch({
         )}
       >
         EN
-      </Link>
-      <Link
-        href={localePath(bare, "id")}
+      </a>
+      <a
+        href={`/api/locale?to=id&next=${encodeURIComponent(bare)}`}
+        hrefLang="id"
         aria-current={locale === "id" ? "true" : undefined}
         className={cn(
           "px-2.5 py-2",
@@ -155,7 +163,7 @@ function LocaleSwitch({
         )}
       >
         ID
-      </Link>
+      </a>
       <span className="sr-only">
         {locale === "en" ? "Switch to Bahasa Indonesia" : "Switch to English"}
         {other}

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { deleteProduct as deleteAction } from "@/app/admin/products/actions";
+import { TranslationStatus } from "@/components/admin/TranslationStatus";
 import { ImageField } from "@/components/admin/ImageField";
 import { GalleryField } from "@/components/admin/GalleryField";
 import {
@@ -53,6 +54,8 @@ export function ProductForm({
     <>
       <form action={formAction} className="flex flex-col gap-8">
         <input type="hidden" name="id" value={product?.id ?? "new"} />
+
+      <TranslationStatus />
 
         {state.message && (
           <p

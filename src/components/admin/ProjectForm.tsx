@@ -7,6 +7,7 @@ import {
   emptySaveState,
   type SaveState,
 } from "@/lib/editor-shared";
+import { TranslationStatus } from "@/components/admin/TranslationStatus";
 import { ImageField } from "@/components/admin/ImageField";
 import { GalleryField } from "@/components/admin/GalleryField";
 
@@ -66,6 +67,8 @@ export function ProjectForm({
   return (
     <form action={formAction} className="flex flex-col gap-8">
       <input type="hidden" name="id" value={project?.id ?? "new"} />
+
+      <TranslationStatus />
 
       {state.message && (
         <p role="alert" className="border-l-2 border-red bg-paper px-5 py-3 text-sm">
