@@ -53,3 +53,9 @@ next-env.d.ts
 
 # client-supplied brand files and briefs (never served statically)
 /.uploads/
+
+# Client-supplied photography originals. A shoot runs to hundreds of megabytes
+# and git keeps every version forever; the delivered copies live in Cloudinary.
+# See assets/README.md.
+/assets/photography/*
+!/assets/photography/.gitkeep
