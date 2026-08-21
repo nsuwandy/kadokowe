@@ -98,6 +98,7 @@ there is no public registration and no password reset yet.
 | Insights | Rich text editor, categories, the FR-8.8 cross-links |
 | Page copy | Override wording on key pages; homepage hero images |
 | Categories | The four browse axes — rename, reorder, add |
+| Newsletter | Subscribers, search, CSV export, provider sync state |
 | Enquiries | Status, notes, attachments, CSV export |
 | Newsletter | Subscribers with consent evidence, CSV export |
 
@@ -117,7 +118,11 @@ Every requirement in the spec is now implemented. What remains is
 configuration and content, not code:
 
 - **Cloudinary** — until an account and upload preset are set, every image is
-  a labelled placeholder and the image fields fall back to pasting a public ID
+  a labelled placeholder and the image fields fall back to pasting a public ID.
+  `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` is what switches real delivery on
+- **The company profile PDF** — `NEXT_PUBLIC_COMPANY_PROFILE_URL`. The supplied
+  file is 28.7 MB, which is too large to serve to a phone; compress it before
+  uploading. The footer link stays hidden until this is set
 - **Resend** — without a key, email logs to the console instead of sending
 - **Newsletter provider** — subscribers are captured but nothing sends
 - **Neon** — the local `prisma dev` database does not survive a reboot
@@ -137,8 +142,14 @@ Being honest about the gap between "implemented" and "proven":
 - **No performance measurement** against NFR-1.2's 2.5s mobile LCP. The build
   prerenders 126 pages, which is the right shape, but nothing has been timed on
   a real connection.
-- **Automated tests cover two pure functions**, not pages, actions or routes.
+- **Automated tests cover four pure functions**, not pages, actions or routes.
   The admin forms in particular are verified by hand.
+- **Rate limiting is per-instance.** Counters live in memory, so they do not
+  survive a cold start or apply across instances. It stops sustained guessing
+  down one connection, which is the case that matters, and should move to a
+  shared store when there is somewhere to put it.
+- **Article scheduling is accurate to the hour**, because the Insights pages
+  are prerendered and revalidate hourly.
 
 ## Deploying
 
