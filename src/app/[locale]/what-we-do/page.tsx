@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { PROCESS } from "@/content/home";
 import { CAPABILITIES, EXECUTION_STAGES, WORKFLOWS } from "@/content/what-we-do";
+import { pageCopy } from "@/lib/page-content";
 
 export const metadata: Metadata = {
   title: "What We Do",
@@ -23,6 +24,18 @@ export default async function WhatWeDoPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
+  // FR-10.5 — the operator may override the headline and introduction.
+  const heading = await pageCopy(
+    "what-we-do.intro", "heading", l,
+    t("A strategic merchandising partner, not a vendor.",
+      "Mitra merchandising strategis, bukan vendor."),
+  );
+  const intro = await pageCopy(
+    "what-we-do.intro", "intro", l,
+    t("Seven capabilities that normally sit in separate businesses. Holding them together is what lets one team answer a brief with an idea and then actually produce it.",
+      "Tujuh kemampuan yang biasanya berada di perusahaan berbeda. Menyatukannya memungkinkan satu tim menjawab brief dengan ide lalu benar-benar memproduksinya."),
+  );
+
   return (
     <>
       <Section className="pb-0">
@@ -31,17 +44,11 @@ export default async function WhatWeDoPage({
             <div className="flex flex-col gap-4">
               <Eyebrow accent>{t("What We Do", "Apa Yang Kami Lakukan")}</Eyebrow>
               <h1 className="balance text-xl-display font-bold tracked-tight">
-                {t(
-                  "A strategic merchandising partner, not a vendor.",
-                  "Mitra merchandising strategis, bukan vendor.",
-                )}
+                {heading}
               </h1>
             </div>
             <p className="max-w-[62ch] text-[0.9375rem] leading-relaxed text-muted">
-              {t(
-                "Seven capabilities that normally sit in separate businesses. Holding them together is what lets one team answer a brief with an idea and then actually produce it.",
-                "Tujuh kemampuan yang biasanya berada di perusahaan berbeda. Menyatukannya memungkinkan satu tim menjawab brief dengan ide lalu benar-benar memproduksinya.",
-              )}
+              {intro}
             </p>
           </div>
 

@@ -5,7 +5,7 @@ import { Wrap, Section, Eyebrow, SectionHead } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { OUTCOMES, PROCESS, PRODUCT_CATEGORIES } from "@/content/home";
-import { pageBlocks } from "@/lib/page-content";
+import { pageBlocks, blockCopy } from "@/lib/page-content";
 
 /**
  * Homepage — SRS v1.4 §11.4 and FR-2.1 to FR-2.14.
@@ -26,6 +26,21 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // FR-10.6 / FR-2.2 — administrator-set hero imagery and headline, each
   // falling back to the design default when unset.
   const hero = await pageBlocks("home.hero");
+
+  // FR-10.5 — the "Don't start with a product" section is editable too. Only
+  // the first line of the headline is overridable: the italic second line is
+  // a typographic pair with it, and letting the two drift apart is how this
+  // section stops reading as one sentence.
+  const outcomes = await pageBlocks("home.outcomes");
+  const outcomesHeading = blockCopy(
+    outcomes, "heading", l,
+    t("Don't start with a product.", "Jangan mulai dari produk."),
+  );
+  const outcomesIntro = blockCopy(
+    outcomes, "intro", l,
+    t("Most clients arrive with a campaign, a deadline and a budget — not a product code. These are the six conversations we have most often.",
+      "Sebagian besar klien datang dengan kampanye, tenggat waktu, dan anggaran — bukan kode produk. Inilah enam percakapan yang paling sering kami lakukan."),
+  );
   const heroImage =
     [hero.hero1?.en, hero.hero2?.en, hero.hero3?.en].find((v) => v && v.trim()) ?? null;
   const heroHeading = (l === "id" ? hero.heading?.id : hero.heading?.en) || null;
@@ -102,7 +117,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             eyebrow={t("Where to begin", "Mulai dari mana")}
             title={
               <>
-                {t("Don't start with a product.", "Jangan mulai dari produk.")}
+                {outcomesHeading}
                 <br />
                 <span className="font-editorial italic font-normal text-muted">
                   {t(
@@ -112,10 +127,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 </span>
               </>
             }
-            intro={t(
-              "Most clients arrive with a campaign, a deadline and a budget — not a product code. These are the six conversations we have most often.",
-              "Sebagian besar klien datang dengan kampanye, tenggat waktu, dan anggaran — bukan kode produk. Inilah enam percakapan yang paling sering kami lakukan.",
-            )}
+            intro={outcomesIntro}
           />
 
           <ul className="grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">

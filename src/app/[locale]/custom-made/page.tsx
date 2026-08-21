@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { pageCopy } from "@/lib/page-content";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -33,6 +34,19 @@ export default async function CustomMadePage({
 
   const [first, ...rest] = FAMILIES;
 
+  // FR-10.5 / FR-12.11 — the index headline is overridable like the seven
+  // family pages beneath it.
+  const heading = await pageCopy(
+    "custom-made.intro", "heading", l,
+    t("Made for your brand. Not picked from a catalogue.",
+      "Dibuat untuk merek Anda. Bukan dipilih dari katalog."),
+  );
+  const intro = await pageCopy(
+    "custom-made.intro", "intro", l,
+    t("Where the Idea Library shows what exists, this shows what can be made. Tell us the idea — we handle material, construction, sampling and production.",
+      "Jika Pustaka Ide menunjukkan apa yang sudah ada, bagian ini menunjukkan apa yang bisa dibuat. Sampaikan idenya — kami menangani bahan, konstruksi, sampel, dan produksi."),
+  );
+
   return (
     <>
       <Section className="pb-0">
@@ -41,17 +55,11 @@ export default async function CustomMadePage({
             <div className="flex flex-col gap-4">
               <Eyebrow accent>{t("Custom Made", "Dibuat Khusus")}</Eyebrow>
               <h1 className="balance text-xl-display font-bold tracked-tight">
-                {t(
-                  "Made for your brand. Not picked from a catalogue.",
-                  "Dibuat untuk merek Anda. Bukan dipilih dari katalog.",
-                )}
+                {heading}
               </h1>
             </div>
             <p className="max-w-[62ch] text-[0.9375rem] leading-relaxed text-muted">
-              {t(
-                "Where the Idea Library shows what exists, this shows what can be made. Tell us the idea — we handle material, construction, sampling and production.",
-                "Jika Pustaka Ide menunjukkan apa yang sudah ada, bagian ini menunjukkan apa yang bisa dibuat. Sampaikan idenya — kami menangani bahan, konstruksi, sampel, dan produksi.",
-              )}
+              {intro}
             </p>
           </div>
 

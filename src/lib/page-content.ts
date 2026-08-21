@@ -36,6 +36,10 @@ export const PAGE_FIELDS: Record<string, { name: string; label: string; multilin
   default: [
     { name: "heading", label: "Heading" },
     { name: "intro", label: "Introduction", multiline: true },
+    // FR-10.5 and FR-12.11 both say copy *and imagery*. Without this the
+    // Custom Made family heroes could only ever render the grey placeholder,
+    // because nothing else on those pages carries an image ID.
+    { name: "hero", label: "Hero image", image: true },
   ],
   // FR-10.6 — the homepage hero rotates through these (FR-2.2). Kept as
   // separate slots rather than a gallery so the order is explicit and an
@@ -78,12 +82,31 @@ export async function pageCopy(
   try {
     const row = await db.pageContent.findUnique({ where: { key } });
     if (!row) return fallback;
-    const blocks = row.blocks as PageBlocks | null;
-    const value = blocks?.[field]?.[locale === "id" ? "id" : "en"];
-    return value && value.trim() !== "" ? value : fallback;
+    return blockCopy(row.blocks as PageBlocks | null, field, locale, fallback);
   } catch {
     // A page rendering its code default is a far better outcome than a page
     // that fails because the database was briefly unreachable.
     return fallback;
   }
+}
+
+/**
+ * Resolve one field from blocks already loaded, for pages reading several
+ * fields from the same key — one query instead of one per field.
+ *
+ * Note what this deliberately does not do: an empty Indonesian override falls
+ * back to the *code* default, not to the English override. Callers pass an
+ * already-localised default, so falling back to English here would put
+ * English copy on an Indonesian page — the opposite of the fallback rule
+ * used for database content in src/lib/i18n, because there the English column
+ * is the only other candidate and here a localised default exists.
+ */
+export function blockCopy(
+  blocks: PageBlocks | null | undefined,
+  field: string,
+  locale: AppLocale,
+  fallback: string,
+): string {
+  const value = blocks?.[field]?.[locale === "id" ? "id" : "en"];
+  return value && value.trim() !== "" ? value : fallback;
 }

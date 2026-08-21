@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { pageCopy } from "@/lib/page-content";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { CONTACT, whatsappLink } from "@/lib/site";
@@ -27,6 +28,16 @@ export default async function ContactPage({
   const l = locale as AppLocale;
   const t = (en: string, id: string) => (l === "id" ? id : en);
 
+  // FR-10.5 — overridable from the admin.
+  const heading = await pageCopy(
+    "contact.intro", "heading", l, t("Let's talk.", "Mari bicara."),
+  );
+  const intro = await pageCopy(
+    "contact.intro", "intro", l,
+    t("A campaign, a deadline, a budget — or just a problem you haven't solved yet. Any of those is enough to start.",
+      "Sebuah kampanye, tenggat waktu, anggaran — atau sekadar masalah yang belum terpecahkan. Semuanya cukup untuk memulai."),
+  );
+
   return (
     <Section>
       <Wrap>
@@ -34,13 +45,10 @@ export default async function ContactPage({
           <div className="flex flex-col gap-5">
             <Eyebrow accent>{t("Contact", "Kontak")}</Eyebrow>
             <h1 className="balance text-xl-display font-bold tracked-tight">
-              {t("Let's talk.", "Mari bicara.")}
+              {heading}
             </h1>
             <p className="font-editorial text-lede text-muted">
-              {t(
-                "A campaign, a deadline, a budget — or just a problem you haven't solved yet. Any of those is enough to start.",
-                "Sebuah kampanye, tenggat waktu, anggaran — atau sekadar masalah yang belum terpecahkan. Semuanya cukup untuk memulai.",
-              )}
+              {intro}
             </p>
           </div>
 

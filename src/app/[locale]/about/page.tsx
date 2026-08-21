@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { pageCopy } from "@/lib/page-content";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -28,6 +29,18 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
     { en: "Professional Excellence", id: "Keunggulan Profesional", dEn: "Operating with the rigour of a branding consultant: structured, detailed, perfection-driven.", dId: "Bekerja dengan ketelitian konsultan merek: terstruktur, detail, dan menuntut kesempurnaan." },
   ];
 
+  // FR-10.5 — overridable from the admin; the code copy is the default.
+  const heading = await pageCopy(
+    "about.story", "heading", l,
+    t("Merchandise should be more than gifts.",
+      "Merchandise seharusnya lebih dari sekadar hadiah."),
+  );
+  const intro = await pageCopy(
+    "about.story", "intro", l,
+    t("It should be stories in motion. Walking brand ambassadors. It should deliver ROI, impact and memories — not waste.",
+      "Ia seharusnya menjadi cerita yang bergerak. Duta merek berjalan. Ia harus memberi ROI, dampak, dan kenangan — bukan pemborosan."),
+  );
+
   return (
     <>
       <Section className="pb-0">
@@ -35,16 +48,10 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
           <div className="mx-auto max-w-[820px]">
             <Eyebrow accent>{t("About Kadokowe", "Tentang Kadokowe")}</Eyebrow>
             <h1 className="balance my-4 text-xl-display font-bold tracked-tight">
-              {t(
-                "Merchandise should be more than gifts.",
-                "Merchandise seharusnya lebih dari sekadar hadiah.",
-              )}
+              {heading}
             </h1>
             <p className="font-editorial text-lede italic text-muted">
-              {t(
-                "It should be stories in motion. Walking brand ambassadors. It should deliver ROI, impact and memories — not waste.",
-                "Ia seharusnya menjadi cerita yang bergerak. Duta merek berjalan. Ia harus memberi ROI, dampak, dan kenangan — bukan pemborosan.",
-              )}
+              {intro}
             </p>
           </div>
         </Wrap>
