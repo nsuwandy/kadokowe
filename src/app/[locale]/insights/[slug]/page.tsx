@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { shareMetadata } from "@/lib/share";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -42,10 +43,14 @@ export async function generateMetadata({
   const article = await getArticle(slug);
   if (!article) return {};
   const l = locale as AppLocale;
-  return {
+  return shareMetadata({
     title: pick(article, "seoTitle", l) || pick(article, "title", l),
     description: pick(article, "seoDesc", l) || pick(article, "excerpt", l),
-  };
+    image: article.heroImage,
+    path: localePath(`/insights/${slug}`, l),
+    locale: l,
+    type: "article",
+  });
 }
 
 export async function generateStaticParams() {

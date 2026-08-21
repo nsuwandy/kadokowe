@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickArray, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { shareMetadata } from "@/lib/share";
 import { Wrap, Section, Eyebrow, Tag } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -46,10 +47,13 @@ export async function generateMetadata({
   const product = await getProduct(segment);
   if (!product) return {};
   const l = locale as AppLocale;
-  return {
+  return shareMetadata({
     title: pick(product, "seoTitle", l) || pick(product, "name", l),
     description: pick(product, "seoDesc", l) || pick(product, "short", l),
-  };
+    image: product.heroImage,
+    path: localePath(`/ideas/${segment}`, l),
+    locale: l,
+  });
 }
 
 export default async function ProductPage({

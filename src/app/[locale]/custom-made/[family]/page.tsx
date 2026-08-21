@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { shareMetadata } from "@/lib/share";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { FAMILIES, familyBySlug } from "@/content/custom-made";
-import { pageCopy } from "@/lib/page-content";
+import { pageCopy, pageBlocks } from "@/lib/page-content";
 
 export function generateStaticParams() {
   return FAMILIES.flatMap((f) =>
@@ -30,10 +31,14 @@ export async function generateMetadata({
   const description = await pageCopy(
     `custom-made.${f.slug}`, "heading", l, l === "id" ? f.leadId : f.leadEn,
   );
-  return {
+  const blocks = await pageBlocks(`custom-made.${f.slug}`);
+  return shareMetadata({
     title: l === "id" ? f.nameId : f.nameEn,
     description,
-  };
+    image: blocks.hero?.en ?? null,
+    path: localePath(`/custom-made/${family}`, l),
+    locale: l,
+  });
 }
 
 /**
@@ -64,6 +69,12 @@ export default async function FamilyPage({
 
   // FR-12.11 — the administrator may override this family's headline and
   // introduction; the code default is used when they have not.
+  // FR-12.11 — imagery is administrator-managed alongside the copy. The image
+  // ID is language-independent, so it is read from the English slot rather
+  // than duplicated per language.
+  const familyBlocks = await pageBlocks(`custom-made.${f.slug}`);
+  const heroImage = familyBlocks.hero?.en ?? null;
+
   const lead = await pageCopy(
     `custom-made.${f.slug}`, "heading", l, t(f.leadEn, f.leadId),
   );
@@ -87,9 +98,11 @@ export default async function FamilyPage({
       {/* Hero */}
       <section className="relative grid min-h-[clamp(300px,44vw,480px)]">
         <Plate
+          publicId={heroImage}
           tone="dark"
           ratio="auto"
           sizes="100vw"
+          alt={l === "id" ? f.nameId : f.nameEn}
           caption={f.shot}
           className="absolute inset-0 h-full"
           priority

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { shareMetadata } from "@/lib/share";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -22,10 +23,13 @@ export async function generateMetadata({
   const c = conceptBySlug(slug);
   if (!isLocale(locale) || !c) return {};
   const l = locale as AppLocale;
-  return {
+  return shareMetadata({
     title: l === "id" ? c.titleId : c.titleEn,
     description: l === "id" ? c.themeId : c.themeEn,
-  };
+    image: c.heroImage ?? null,
+    path: localePath(`/ideas/concepts/${slug}`, l),
+    locale: l,
+  });
 }
 
 /**
@@ -72,9 +76,11 @@ export default async function ConceptPage({
     <>
       <section className="relative grid min-h-[clamp(300px,44vw,480px)]">
         <Plate
+          publicId={c.heroImage}
           tone="dark"
           ratio="auto"
           sizes="100vw"
+          alt={l === "id" ? c.titleId : c.titleEn}
           caption={c.shots?.[0] ?? c.titleEn}
           className="absolute inset-0 h-full"
           priority

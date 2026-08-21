@@ -47,7 +47,14 @@ export const metadata: Metadata = {
   },
   description:
     "Kadokowe is a strategic merchandising partner. We turn campaigns, budgets and deadlines into merchandise that carries a brand story — strategy, design, sourcing and production under one roof.",
-  openGraph: { type: "website", siteName: SITE.name },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    title: `${SITE.name} — ${SITE.taglineEn}`,
+  },
+  // NFR-6.6 — the site-level card. Detail pages override this with their own
+  // title, description and image via src/lib/share.
+  twitter: { card: "summary_large_image", title: `${SITE.name} — ${SITE.taglineEn}` },
 };
 
 export function generateStaticParams() {

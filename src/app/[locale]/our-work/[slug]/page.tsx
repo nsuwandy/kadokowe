@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
+import { shareMetadata } from "@/lib/share";
 import { Wrap, Section } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -34,10 +35,14 @@ export async function generateMetadata({
   const project = await getProject(slug);
   if (!project) return {};
   const l = locale as AppLocale;
-  return {
+  return shareMetadata({
     title: pick(project, "seoTitle", l) || pick(project, "title", l),
     description: pick(project, "seoDesc", l) || pick(project, "summary", l),
-  };
+    image: project.heroImage,
+    path: localePath(`/our-work/${slug}`, l),
+    locale: l,
+    type: "article",
+  });
 }
 
 export async function generateStaticParams() {

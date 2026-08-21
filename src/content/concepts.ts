@@ -32,6 +32,9 @@ export type Concept = {
   directionId?: string;
   /** Shot list while photography is pending. */
   shots?: string[];
+  /** Cloudinary public ID for the hero, once photography exists. Code-managed
+   *  like the rest of this file (FR-13.7); also used as the share image. */
+  heroImage?: string;
   /** Slugs of related products in the Idea Library. */
   products?: string[];
   /** Slug of the Our Work project this became, if it was produced. */
