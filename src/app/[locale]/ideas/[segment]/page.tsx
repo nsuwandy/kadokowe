@@ -70,6 +70,10 @@ export default async function ProductPage({
   const product = await getProduct(segment);
   if (!product) notFound();
 
+  // The first three gallery images sit beside the hero; anything beyond them
+  // is treated as branded mockups for "Make It Yours" (FR-4.9).
+  const mockups = product.gallery.slice(3);
+
   const name = pick(product, "name", l);
   const why = pickOptional(product, "why", l);
   const tags = pickArray(product, "tags", l);
@@ -225,21 +229,41 @@ export default async function ProductPage({
               </div>
             )}
 
-            {product.customisation.length > 0 && (
+            {/* FR-4.9 — "Make It Yours", named to match the same section on the
+                Custom Made family pages so the two read as one idea. Mockups
+                are any gallery images past the three shown beside the hero:
+                they exist to show the product carrying a brand, which is the
+                point of the section and what the chips alone cannot do. */}
+            {(product.customisation.length > 0 || mockups.length > 0) && (
               <div className="flex flex-col gap-3">
-                <Eyebrow>
-                  {t("Customisation possibilities", "Kemungkinan kustomisasi")}
-                </Eyebrow>
-                <ul className="flex flex-wrap gap-2">
-                  {product.customisation.map((c) => (
-                    <li
-                      key={c}
-                      className="border border-line bg-warm px-4 py-2 text-xs font-semibold"
-                    >
-                      {c}
-                    </li>
-                  ))}
-                </ul>
+                <Eyebrow>{t("Make It Yours", "Jadikan Milik Anda")}</Eyebrow>
+                {product.customisation.length > 0 && (
+                  <ul className="flex flex-wrap gap-2">
+                    {product.customisation.map((c) => (
+                      <li
+                        key={c}
+                        className="border border-line bg-warm px-4 py-2 text-xs font-semibold"
+                      >
+                        {c}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {mockups.length > 0 && (
+                  <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {mockups.map((image) => (
+                      <li key={image.id}>
+                        <Plate
+                          publicId={image.publicId}
+                          alt={pickOptional(image, "alt", l) ?? pick(product, "name", l)}
+                          caption={pickOptional(image, "caption", l) ?? undefined}
+                          ratio="4 / 3"
+                          sizes="(min-width: 640px) 20vw, 45vw"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
