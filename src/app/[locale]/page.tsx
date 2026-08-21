@@ -5,6 +5,15 @@ import { Wrap, Section, Eyebrow, SectionHead } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { OUTCOMES, PROCESS, PRODUCT_CATEGORIES } from "@/content/home";
+import { publishedConcepts } from "@/content/concepts";
+import { ClientLogos } from "@/components/ClientLogos";
+import { ProductCard } from "@/components/ProductCard";
+import { db } from "@/lib/db";
+
+const HOME_PRODUCT_SELECT = {
+  slug: true, nameEn: true, nameId: true, shortEn: true, shortId: true,
+  tagsEn: true, tagsId: true, heroImage: true, availability: true,
+} as const;
 import { pageBlocks, blockCopy } from "@/lib/page-content";
 
 /**
@@ -31,6 +40,52 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // the first line of the headline is overridable: the italic second line is
   // a typographic pair with it, and letting the two drift apart is how this
   // section stops reading as one sentence.
+  // FR-13.6 — only offered when a collection is actually published; the link
+  // would otherwise lead to an empty page.
+  const hasConcepts = publishedConcepts().length > 0;
+
+  // FR-2.14 — drawn from published projects, so the strip cannot name a
+  // client whose work is not on the site. distinct() keeps a client with
+  // several projects from appearing several times.
+  const clientRows = await db.project.findMany({
+    where: { visibility: "PUBLISHED" },
+    select: { client: true },
+    distinct: ["client"],
+    orderBy: { client: "asc" },
+  });
+  const clients = clientRows.map((row) => row.client);
+
+  // FR-2.8 / FR-10.6 — the homepage reads the flags the editors set. Both
+  // fall back so the section never renders a hole: "new" widens to the most
+  // recent products, and the featured project to the newest published one.
+  const [flaggedNew, recentProducts, flaggedProject, recentProject] = await Promise.all([
+    db.product.findMany({
+      where: { visibility: "PUBLISHED", isNew: true },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: HOME_PRODUCT_SELECT,
+    }),
+    db.product.findMany({
+      where: { visibility: "PUBLISHED" },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: HOME_PRODUCT_SELECT,
+    }),
+    db.project.findFirst({
+      where: { visibility: "PUBLISHED", featured: true },
+      orderBy: { sortOrder: "asc" },
+      select: { slug: true },
+    }),
+    db.project.findFirst({
+      where: { visibility: "PUBLISHED" },
+      orderBy: [{ sortOrder: "asc" }, { publishedAt: "desc" }],
+      select: { slug: true },
+    }),
+  ]);
+
+  const newProducts = flaggedNew.length > 0 ? flaggedNew : recentProducts;
+  const featuredProject = flaggedProject ?? recentProject;
+
   const outcomes = await pageBlocks("home.outcomes");
   const outcomesHeading = blockCopy(
     outcomes, "heading", l,
@@ -168,9 +223,19 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               "Bukan katalog. Kumpulan titik awal — dapat ditelusuri berdasarkan produk, tujuan, industri, atau anggaran.",
             )}
             action={
-              <ArrowLink href={path("/ideas")}>
-                {t("Explore the Idea Library", "Jelajahi Pustaka Ide")}
-              </ArrowLink>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                <ArrowLink href={path("/ideas")}>
+                  {t("Explore the Idea Library", "Jelajahi Pustaka Ide")}
+                </ArrowLink>
+                {/* FR-13.6 — surfaced within the Ideas section rather than
+                    given a band of its own: collections are a way into the
+                    library, not a competing destination. */}
+                {hasConcepts && (
+                  <ArrowLink href={path("/ideas/concepts")}>
+                    {t("See Concept Collections", "Lihat Koleksi Konsep")}
+                  </ArrowLink>
+                )}
+              </div>
             }
           />
 
@@ -209,7 +274,10 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </Wrap>
       </Section>
 
-      {/* 04 — Featured project. Full-width, dark. */}
+      {/* 04 — Featured project. Full-width, dark. Rendered only when a
+          published project exists: an empty database is a normal starting
+          state, and a band linking nowhere is worse than one absent band. */}
+      {featuredProject && (
       <section className="grid min-h-[560px] bg-ink text-warm lg:grid-cols-[1.1fr_0.9fr]">
         <div className="relative min-h-[42vh] lg:min-h-0">
           <Plate
@@ -256,7 +324,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             ))}
           </dl>
           <Button
-            href={path("/our-work/breaking-the-tumbler-trap")}
+            href={path(`/our-work/${featuredProject.slug}`)}
             variant="onDark"
             className="self-start"
           >
@@ -264,6 +332,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </Button>
         </div>
       </section>
+      )}
 
       {/* Custom Made + Ready Stock teasers.
           The revision brief asks for small previews, not more full sections
@@ -387,11 +456,28 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               </li>
             ))}
           </ol>
-          <ArrowLink href={path("/what-we-do")} className="self-start">
-            {t("See how we make it happen", "Lihat bagaimana kami mewujudkannya")}
+          {/* FR-14.6 — anchored to the section itself. Landing at the top of
+              What We Do and expecting the visitor to find it is how a teaser
+              stops teasing anything in particular. */}
+          <ArrowLink
+            href={`${path("/what-we-do")}#from-idea-to-reality`}
+            className="self-start"
+          >
+            {t(
+              "From idea to reality — see how we make it happen",
+              "Dari ide ke kenyataan — lihat bagaimana kami mewujudkannya",
+            )}
           </ArrowLink>
         </div>
       </section>
+
+      {/* FR-2.14 — the proof band, placed after the featured project so it
+          reads as corroboration of work just shown rather than a claim made
+          before anything has been demonstrated. */}
+      <ClientLogos
+        clients={clients}
+        heading={t("Trusted by", "Dipercaya oleh")}
+      />
 
       {/* 07 — New products. Horizontal rail. */}
       <Section>
@@ -402,20 +488,17 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             </h2>
             <ArrowLink href={path("/ideas")}>{t("See all", "Lihat semua")}</ArrowLink>
           </div>
+          {/* FR-2.8, FR-10.6 — real catalogue entries, not a fixed list. The
+              product editor offers "Show in New discoveries"; before this the
+              tick did nothing and the rail named five products that were not
+              necessarily in the catalogue at all. */}
           <ul className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
-            {[
-              ["Insulated Takeaway Bag", "Tas Bawa Pulang Berinsulasi"],
-              ["Cold DTF Jacket", "Jaket Cold DTF"],
-              ["Smart Series Organiser", "Organiser Seri Pintar"],
-              ["Silicone Keychain", "Gantungan Kunci Silikon"],
-              ["3-in-1 Ballpoint", "Pulpen 3-in-1"],
-            ].map(([en, id]) => (
+            {newProducts.map((product) => (
               <li
-                key={en}
+                key={product.slug}
                 className="w-[clamp(230px,26vw,320px)] shrink-0 snap-start"
               >
-                <Plate ratio="3 / 3.4" caption={en} sizes="300px" />
-                <p className="mt-3 text-base font-semibold">{t(en, id)}</p>
+                <ProductCard product={product} locale={l} sizes="300px" />
               </li>
             ))}
           </ul>
