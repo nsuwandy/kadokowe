@@ -36,7 +36,8 @@ credentials, so a missing key never takes down a form or a page.
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Unit checks for upload limits and term ordering |
+| `npm test` | Unit checks for upload limits, term ordering, galleries and rate limits |
+| `npm run admin:set` | Create an admin account, or reset a password |
 | `npm run db:seed` | Seed sample content |
 | `npm run db:migrate` | Create and apply a migration |
 | `npm run db:studio` | Browse the database |
@@ -86,9 +87,18 @@ Law No. 27 of 2022.
 
 ## Admin
 
-`/admin`, English only, not linked from the public site. Create the first
-account with a script that calls `hashPassword` from `src/lib/auth.ts` —
-there is no public registration and no password reset yet.
+`/admin`, English only, not linked from the public site. There is no public
+registration and no password reset in the UI — accounts are managed from the
+command line:
+
+```bash
+npm run admin:set -- you@kadokowe.com "Your Name"
+```
+
+It prompts for the password twice without echoing it (an argument would land
+in shell history), requires at least 12 characters, and stores a bcrypt hash
+at cost 12. Running it against an address that already exists resets that
+password, so it is also the recovery route if one is forgotten.
 
 | Section | Does |
 |---|---|
