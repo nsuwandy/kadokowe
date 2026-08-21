@@ -29,6 +29,9 @@ export function NewsletterSignup({
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
+  // FR-15.8 — forwarded so the server decides; a check that only runs in the
+  // browser guards the path a bot never takes.
+  const [companyWebsite, setCompanyWebsite] = useState("");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,7 +41,7 @@ export function NewsletterSignup({
       const res = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, locale, sourcePage }),
+        body: JSON.stringify({ email, locale, sourcePage, companyWebsite }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "failed");
@@ -127,9 +130,8 @@ export function NewsletterSignup({
               autoComplete="off"
               aria-hidden="true"
               className="absolute h-0 w-0 opacity-0"
-              onChange={(e) => {
-                if (e.target.value) setState("error");
-              }}
+              value={companyWebsite}
+              onChange={(e) => setCompanyWebsite(e.target.value)}
             />
             <button
               type="submit"

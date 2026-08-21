@@ -19,6 +19,12 @@ const Body = z.object({
   email: z.string().email().max(254),
   locale: z.enum(["en", "id"]).default("en"),
   sourcePage: z.string().max(200).optional(),
+  // FR-15.8 — the honeypot has to be checked here, not only in the form. A
+  // bot posting straight to this route never runs the form's JavaScript, so
+  // a client-side check guards the one path an attacker does not take.
+  // Permissive on purpose: rejecting at parse time returns 400, which tells
+  // the bot to try again with the field removed.
+  companyWebsite: z.string().max(500).optional(),
 });
 
 export async function POST(request: Request) {
@@ -46,6 +52,12 @@ export async function POST(request: Request) {
   const locale = parsed.locale === "id" ? "ID" : "EN";
 
   try {
+    // Accept and discard, so a bot sees the same success a person does and
+    // has no signal to retry differently.
+    if (parsed.companyWebsite) {
+      return NextResponse.json({ ok: true });
+    }
+
     const existing = await db.newsletterSubscriber.findUnique({
       where: { email },
     });
