@@ -1,5 +1,5 @@
-import { CldImage } from "next-cloudinary";
 import { cn } from "@/lib/cn";
+import { CloudImage } from "./CloudImage";
 
 /**
  * An image surface with a built-in empty state.
@@ -35,6 +35,14 @@ export function Plate({
   priority?: boolean;
   className?: string;
 }) {
+  // Without a cloud name next-cloudinary cannot build a URL and renders
+  // nothing at all, which would leave a bare coloured box where a photograph
+  // should be. Falling back to the labelled placeholder means a
+  // misconfigured or not-yet-configured Cloudinary degrades to the same
+  // empty state as a product that simply has no photograph yet.
+  const imageId =
+    publicId && process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ? publicId : null;
+
   const tones = {
     light: "plate",
     dark: "bg-linear-150 from-[#2a2426] via-[#171314] to-ink",
@@ -46,11 +54,10 @@ export function Plate({
       className={cn("relative overflow-hidden", tones[tone], className)}
       style={{ aspectRatio: ratio }}
     >
-      {publicId ? (
-        <CldImage
-          src={publicId}
+      {imageId ? (
+        <CloudImage
+          publicId={imageId}
           alt={alt ?? ""}
-          fill
           sizes={sizes}
           priority={priority}
           className="object-cover"
