@@ -178,3 +178,39 @@ they look:
 
 Run `npx prisma migrate deploy` against the production database before the
 first deploy.
+
+### First deploy, in order
+
+The order matters — DNS last, because pointing a domain at a project that
+cannot boot just makes the failure public.
+
+1. **Neon** — create the database. Create a *second* one for
+   `SHADOW_DATABASE_URL`; `prisma migrate dev` needs it and Neon does not
+   always let Prisma make its own. Take the pooled connection string for
+   `DATABASE_URL`.
+2. **Cloudinary** — account, then an unsigned upload preset for the admin
+   image picker. Both the public cloud name and the API key/secret are needed:
+   the key and secret are what upload enquiry attachments, which no longer
+   touch the filesystem.
+3. **Resend** — API key, and verify the sending domain or confirmation emails
+   land in spam.
+4. **Import the repo into Vercel.** Set every variable from `.env.example`.
+   `NEXT_PUBLIC_SITE_URL` must be the final `https://` origin — it builds
+   canonical tags, share URLs, the sitemap and the newsletter confirmation
+   link, so a stale value means subscribers confirm against localhost.
+5. **Migrate**: `npx prisma migrate deploy` with `DATABASE_URL` pointed at Neon.
+6. **Create the administrator**: `npm run admin:set -- you@kadokowe.com "Name"`,
+   same environment.
+7. **Deploy**, and check the `*.vercel.app` URL end to end before going near
+   the domain.
+8. **Point the domain.** Add it in Vercel, copy the records Vercel shows into
+   the registrar's DNS. Leave MX records alone or you break the client's email.
+
+### After the first deploy
+
+- Turn on **daily backups with 30-day retention** in Neon (NFR-4.2), then
+  write and actually rehearse the restore (NFR-4.3). An untested restore is
+  a hope, not a procedure.
+- Measure LCP and CLS on a real connection (NFR-1.2, NFR-1.5).
+- Check it on iOS Safari. Nothing has been tested outside one Chromium build,
+  and links reach buyers over WhatsApp.
