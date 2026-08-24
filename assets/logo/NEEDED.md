@@ -1,6 +1,8 @@
 # The supplied logo cannot be used on the site as it is
 
 `kadokowe-wordmark-supplied.jpeg` — 1024×271, progressive JPEG, 3 components.
+Currently held outside the project at `Kadokowe/brand-assets/`, because macOS
+quarantine attributes make it unreadable to the build. See `../README.md`.
 
 ## What is wrong with it
 

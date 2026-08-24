@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { currentAdmin } from "@/lib/auth";
-
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(process.cwd(), ".uploads");
+import { resolveEnquiryFile } from "@/lib/uploads";
 
 /**
  * Serve a client-supplied file to a signed-in administrator — NFR-3.7.
  *
  * These are client brand files and briefs, so they must never be reachable by
- * guessing a URL. Two defences: the route requires a session, and the
- * requested name is checked against a strict pattern and re-resolved inside
- * the upload directory, so a traversal attempt cannot escape it.
+ * guessing a URL. Three defences: the route requires a session, the requested
+ * name must match the exact shape storeEnquiryFile produces, and the storage
+ * layer re-resolves the path inside its own directory before reading.
+ *
+ * Where files live in Cloudinary they are stored as authenticated assets with
+ * no public delivery URL, and this route redirects to a signature that expires
+ * in a minute — long enough to download, short enough that a link pasted into
+ * a chat is dead on arrival.
  */
 export async function GET(
   _request: Request,
@@ -27,21 +29,18 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const full = path.join(UPLOAD_DIR, file);
-  if (path.dirname(path.resolve(full)) !== path.resolve(UPLOAD_DIR)) {
-    return new NextResponse("Not found", { status: 404 });
+  const resolved = await resolveEnquiryFile(file);
+  if (!resolved) return new NextResponse("Not found", { status: 404 });
+
+  if (resolved.kind === "url") {
+    return NextResponse.redirect(resolved.url, { status: 302 });
   }
 
-  try {
-    const data = await readFile(full);
-    return new NextResponse(new Uint8Array(data), {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${file}"`,
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-  } catch {
-    return new NextResponse("Not found", { status: 404 });
-  }
+  return new NextResponse(new Uint8Array(resolved.data), {
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": `attachment; filename="${file}"`,
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }

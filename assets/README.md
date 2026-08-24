@@ -33,11 +33,22 @@ change in git, so it is obvious which one the site was built against.
 
 ## Status: the supplied logo is not usable yet
 
-`logo/kadokowe-wordmark-supplied.jpeg` arrived as a JPEG with a painted-on
-transparency checkerboard, which would render as a literal grey grid behind the
-logo. An SVG or a real transparent PNG is needed before it can go anywhere near
-the site — see `logo/NEEDED.md` for what to request and one casing discrepancy
-worth settling first.
+It is also **not in this folder**, and not in git. The supplied JPEG carries
+macOS `com.apple.quarantine` and `com.apple.macl` attributes that make it
+unreadable to anything but the app that created it — including the build, which
+it broke outright with a Turbopack panic on `EPERM`. It now sits outside the
+project at `Kadokowe/brand-assets/`.
+
+To bring it back in, clear the attributes from your own terminal first:
+
+```bash
+xattr -c ~/Kadokowe/brand-assets/kadokowe-wordmark-supplied.jpeg
+```
+
+Then it can be moved into `logo/`. Even then it is not usable on the site: the
+transparency around the letterforms is a painted checkerboard, not an alpha
+channel. See `logo/NEEDED.md` for what to request instead, and one casing
+discrepancy worth settling first.
 
 ## Using the logo
 

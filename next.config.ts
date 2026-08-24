@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  /**
+   * Keep the source-asset shelf out of the build trace.
+   *
+   * assets/ holds client-supplied originals — logo masters, brand files —
+   * that nothing imports. The tracer walks them anyway, and one of them broke
+   * the build outright: a JPEG carrying macOS quarantine attributes returned
+   * EPERM on read and took the whole compile down with a Turbopack panic. The
+   * folder has no business in the trace regardless, and excluding it means a
+   * file dropped there can never break a deploy again.
+   */
+  outputFileTracingExcludes: {
+    "*": ["./assets/**"],
+  },
+
   experimental: {
     /**
      * Build-time database concurrency.
