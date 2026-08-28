@@ -98,7 +98,16 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
         </div>
 
         <div className="mt-10 flex flex-wrap justify-between gap-4 border-t border-[#2e2829] pt-6 text-xs text-muted">
-          <span>© {new Date().getFullYear()} Kadokowe</span>
+          {/* Set beside the copyright rather than on a line of its own: the
+              bottom bar is a two-part balance, and a third row for a build
+              credit would give it more weight than a build credit should
+              have. Localised like everything else down here — an English-only
+              line is precisely the thing that would look out of place on the
+              Indonesian site. */}
+          <span>
+            © {new Date().getFullYear()} Kadokowe ·{" "}
+            {t("Made by", "Dibuat oleh")} Nicolas Suwandy
+          </span>
           <div className="flex gap-6">
             <Link
               href={localePath("/privacy", locale)}
