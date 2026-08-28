@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { importTemplateCsv } from "@/lib/product-import";
@@ -24,6 +25,13 @@ export default async function ImportPage() {
           existing product is updated, a new one is created. Everything imports as
           a draft unless you set <code className="bg-warm px-1">visibility</code> to
           PUBLISHED.
+        </p>
+        <p className="mt-3 text-xs text-muted">
+          No spreadsheet to start from?{" "}
+          <Link href="/admin/products/grid" className="font-semibold text-red hover:underline">
+            Type the products into a table instead
+          </Link>{" "}
+          — the fields that have to be exact are chosen from a list there.
         </p>
       </div>
 

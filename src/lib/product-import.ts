@@ -1,5 +1,11 @@
 import Papa from "papaparse";
 import { budgetTierFor } from "@/content/taxonomy";
+import {
+  AVAILABILITY_VALUES,
+  VISIBILITY_VALUES,
+  IMPORT_COLUMNS,
+  type ImportColumn,
+} from "./product-grid";
 
 /**
  * Bulk product import — FR-10.11.
@@ -12,20 +18,20 @@ import { budgetTierFor } from "@/content/taxonomy";
  * Validation is per row, not per file. A 900-row spreadsheet with three bad
  * rows should import 897 and report the three by line number — rejecting the
  * whole file would mean hunting for the problem with no clue where it is.
+ *
+ * Two front ends feed this module: the CSV upload and the on-screen grid.
+ * Both funnel through `normalizeRecords`, so a row typed into the grid is
+ * validated by exactly the same code as a row read from a file. Two importers
+ * would drift, and the one used less often would drift silently.
  */
 
-export const IMPORT_COLUMNS = [
-  "slug", "name_en", "name_id", "short_en", "short_id", "why_en", "why_id",
-  "category", "purposes", "industries", "availability", "indicative_price",
-  "material", "dimensions", "capacity", "colours", "moq", "lead_time",
-  "customisation", "tags_en", "tags_id", "hero_image", "featured", "is_new",
-  "visibility",
-] as const;
+// The column list and the two closed value sets live in product-grid so the
+// grid can read them without pulling papaparse into the browser bundle.
+export { IMPORT_COLUMNS, AVAILABILITY_VALUES, VISIBILITY_VALUES } from "./product-grid";
+export type { ImportColumn } from "./product-grid";
 
-const AVAILABILITY = new Set([
-  "READY_STOCK", "LOCAL_PRODUCTION", "IMPORT_SOURCING", "CUSTOM_MADE",
-]);
-const VISIBILITY = new Set(["DRAFT", "PUBLISHED", "HIDDEN"]);
+const AVAILABILITY = new Set<string>(AVAILABILITY_VALUES);
+const VISIBILITY = new Set<string>(VISIBILITY_VALUES);
 
 export type ParsedRow = {
   line: number;
@@ -62,6 +68,9 @@ export type ParseResult = {
   missingColumns: string[];
 };
 
+/** One record as it arrives from either front end: every value a raw string. */
+export type ImportRecord = Partial<Record<ImportColumn, string>>;
+
 const list = (v: string | undefined) =>
   (v ?? "").split(/[|;]/).map((s) => s.trim()).filter(Boolean);
 
@@ -73,7 +82,7 @@ const text = (v: string | undefined) => {
 const bool = (v: string | undefined) =>
   ["1", "true", "yes", "y"].includes((v ?? "").trim().toLowerCase());
 
-function slugify(input: string) {
+export function slugifyName(input: string) {
   return input
     .toLowerCase()
     .normalize("NFKD")
@@ -83,30 +92,23 @@ function slugify(input: string) {
     .replace(/-+/g, "-");
 }
 
-export function parseProductCsv(csv: string): ParseResult {
-  const parsed = Papa.parse<Record<string, string>>(csv, {
-    header: true,
-    skipEmptyLines: "greedy",
-    transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, "_"),
-  });
-
-  const headers = parsed.meta.fields ?? [];
-  // Only these two are structurally required; everything else has a sensible
-  // default, because demanding a full row for every product would make the
-  // import unusable for a partially-written catalogue.
-  const required = ["name_en", "short_en"];
-  const missingColumns = required.filter((c) => !headers.includes(c));
-  if (missingColumns.length > 0) {
-    return { rows: [], errors: [], missingColumns };
-  }
-
+/**
+ * Validate and normalise records from either front end.
+ *
+ * `firstLine` is what the operator sees as row 1 of their own data: line 2 in
+ * a CSV (the header occupies line 1), row 1 in the grid. Reporting a problem
+ * against a number they cannot find on screen is the same as not reporting it.
+ */
+export function normalizeRecords(
+  records: ImportRecord[],
+  firstLine: number,
+): { rows: ParsedRow[]; errors: RowError[] } {
   const rows: ParsedRow[] = [];
   const errors: RowError[] = [];
   const seen = new Set<string>();
 
-  parsed.data.forEach((raw, i) => {
-    // +2: one for the header row, one because humans count from 1.
-    const line = i + 2;
+  records.forEach((raw, i) => {
+    const line = i + firstLine;
 
     const nameEn = (raw.name_en ?? "").trim();
     if (!nameEn) {
@@ -120,22 +122,22 @@ export function parseProductCsv(csv: string): ParseResult {
       return;
     }
 
-    const slug = (raw.slug ?? "").trim() || slugify(nameEn);
+    const slug = (raw.slug ?? "").trim() || slugifyName(nameEn);
     if (seen.has(slug)) {
-      errors.push({ line, slug, problem: `Duplicate slug "${slug}" — it also appears earlier in this file.` });
+      errors.push({ line, slug, problem: `Duplicate slug "${slug}" — it also appears earlier in this import.` });
       return;
     }
     seen.add(slug);
 
     const availability = (raw.availability ?? "").trim().toUpperCase() || "LOCAL_PRODUCTION";
     if (!AVAILABILITY.has(availability)) {
-      errors.push({ line, slug, problem: `Availability "${raw.availability}" is not one of: ${[...AVAILABILITY].join(", ")}.` });
+      errors.push({ line, slug, problem: `Availability "${raw.availability}" is not one of: ${AVAILABILITY_VALUES.join(", ")}.` });
       return;
     }
 
     const visibility = (raw.visibility ?? "").trim().toUpperCase() || "DRAFT";
     if (!VISIBILITY.has(visibility)) {
-      errors.push({ line, slug, problem: `Visibility "${raw.visibility}" is not one of: ${[...VISIBILITY].join(", ")}.` });
+      errors.push({ line, slug, problem: `Visibility "${raw.visibility}" is not one of: ${VISIBILITY_VALUES.join(", ")}.` });
       return;
     }
 
@@ -190,6 +192,28 @@ export function parseProductCsv(csv: string): ParseResult {
     });
   });
 
+  return { rows, errors };
+}
+
+export function parseProductCsv(csv: string): ParseResult {
+  const parsed = Papa.parse<Record<string, string>>(csv, {
+    header: true,
+    skipEmptyLines: "greedy",
+    transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, "_"),
+  });
+
+  const headers = parsed.meta.fields ?? [];
+  // Only these two are structurally required; everything else has a sensible
+  // default, because demanding a full row for every product would make the
+  // import unusable for a partially-written catalogue.
+  const required = ["name_en", "short_en"];
+  const missingColumns = required.filter((c) => !headers.includes(c));
+  if (missingColumns.length > 0) {
+    return { rows: [], errors: [], missingColumns };
+  }
+
+  // +2: one for the header row, one because humans count from 1.
+  const { rows, errors } = normalizeRecords(parsed.data as ImportRecord[], 2);
   return { rows, errors, missingColumns: [] };
 }
 
