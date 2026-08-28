@@ -12,7 +12,8 @@
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "tsx tests/term-order.test.ts && tsx tests/enquiry-uploads.test.ts && tsx tests/gallery.test.ts && tsx tests/rate-limit.test.ts",
-    "admin:set": "tsx --env-file=.env scripts/admin.ts"
+    "admin:set": "tsx --env-file=.env scripts/admin.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
