@@ -185,12 +185,13 @@ export default async function ProductsPage({
         </Wrap>
       </Section>
 
-      {/* Idea Board is Phase 2 — shown here as a signposted next step rather
-          than a dead control, so the page explains where it is going. */}
+      {/* This band promised an Idea Board that "replaces the shopping cart
+          entirely: no totals, no checkout". The cart now exists, so the copy
+          described the opposite of the site it sits on. */}
       <Section>
         <Wrap>
           <div className="flex flex-col items-start gap-5 bg-warm p-8 md:p-14">
-            <Eyebrow accent>{t("Coming next", "Segera hadir")}</Eyebrow>
+            <Eyebrow accent>{t("How this works", "Cara kerjanya")}</Eyebrow>
             <h2 className="max-w-[22ch] text-lg-display font-bold tracked-tight">
               {t(
                 "Collect what interests you. Then hand it to us.",
@@ -199,8 +200,8 @@ export default async function ProductsPage({
             </h2>
             <p className="max-w-[62ch] text-[0.9375rem] leading-relaxed text-muted">
               {t(
-                "Products will be saveable to a named Idea Board and submitted as a single brief. It replaces the shopping cart entirely: no totals, no checkout, just a conversation starter.",
-                "Produk akan dapat disimpan ke Papan Ide bernama dan dikirim sebagai satu brief. Ini menggantikan keranjang belanja sepenuhnya: tanpa total, tanpa checkout, hanya pembuka percakapan.",
+                "Add products to your request with the packaging and branding you have in mind. Send it over and we come back with a written quotation — and you keep a PDF of exactly what you asked for. Nothing is charged here.",
+                "Tambahkan produk ke permintaan Anda beserta kemasan dan branding yang Anda inginkan. Kirimkan kepada kami dan kami akan kembali dengan penawaran tertulis — dan Anda menyimpan PDF berisi persis apa yang Anda minta. Tidak ada pembayaran di sini.",
               )}
             </p>
           </div>

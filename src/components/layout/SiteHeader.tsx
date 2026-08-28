@@ -15,6 +15,7 @@ import {
 } from "@/lib/nav";
 import { type AppLocale, otherLocale } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
+import { CartLink } from "@/components/cart/CartLink";
 
 export function SiteHeader({
   locale,
@@ -107,6 +108,8 @@ export function SiteHeader({
             ),
           )}
 
+          <CartLink locale={locale} />
+
           <LocaleSwitch locale={locale} other={other} bare={bare} />
 
           <Link
@@ -189,7 +192,8 @@ export function SiteHeader({
               </li>
             ))}
           </ul>
-          <div className="mt-4 border-t border-line pt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-line pt-4">
+            <CartLink locale={locale} />
             <LocaleSwitch locale={locale} other={other} bare={bare} />
           </div>
         </nav>

@@ -18,9 +18,30 @@ const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.MAIL_FROM ?? "Kadokowe <onboarding@resend.dev>";
 const resend = apiKey ? new Resend(apiKey) : null;
 
-type Mail = { to: string; subject: string; html: string; replyTo?: string };
+/**
+ * Everything interpolated into these templates comes from a public form, so
+ * it is escaped rather than trusted. An unescaped brand name is a script tag
+ * in whatever mail client the client happens to read this in.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-async function send({ to, subject, html, replyTo }: Mail) {
+type Attachment = { filename: string; content: Buffer };
+type Mail = {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string;
+  attachments?: Attachment[];
+};
+
+async function send({ to, subject, html, replyTo, attachments }: Mail) {
   if (!resend) {
     console.info(`[email skipped — no RESEND_API_KEY] to=${to} subject=${subject}`);
     return { skipped: true as const };
@@ -31,6 +52,7 @@ async function send({ to, subject, html, replyTo }: Mail) {
     subject,
     html,
     replyTo,
+    attachments,
   });
   if (error) throw new Error(error.message);
   return { skipped: false as const };
@@ -176,5 +198,76 @@ export async function sendEnquiryNotification({
       ${description ? `<p style="margin:0 0 8px;color:#7c766f;font-size:13px">Project</p><p style="margin:0 0 20px">${description}</p>` : ""}
       <p style="font-size:12px;color:#7c766f;margin:0">Reference: ${enquiryId}</p>
     `),
+  });
+}
+
+
+/**
+ * A submitted cart — FR-6.x.
+ *
+ * The quotation request goes out as an attachment rather than as a table in
+ * the body, because it is the same document the buyer downloaded. Kadokowe
+ * and the customer discussing two different renderings of one basket is how a
+ * conversation opens with a disagreement about what was actually asked for.
+ *
+ * Reply-to is the buyer, so answering the notification answers them.
+ */
+export async function sendCartNotification({
+  reference,
+  brand,
+  name,
+  email,
+  phone,
+  message,
+  lines,
+  total,
+  pdf,
+  attachments,
+}: {
+  reference: string;
+  brand: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  message?: string | null;
+  lines: { name: string; quantity: number; packaging: string | null }[];
+  total: string;
+  pdf: Buffer;
+  attachments: number;
+}) {
+  const to = process.env.ENQUIRY_NOTIFY_TO;
+  if (!to) {
+    console.info(`[cart notification skipped — no ENQUIRY_NOTIFY_TO] ${reference}`);
+    return { skipped: true as const };
+  }
+
+  const rows = lines
+    .map(
+      (l) =>
+        `<tr><td style="padding:6px 12px 6px 0">${escapeHtml(l.name)}</td>` +
+        `<td style="padding:6px 12px 6px 0;text-align:right">${l.quantity}</td>` +
+        `<td style="padding:6px 0;color:#6b6664">${escapeHtml(l.packaging ?? "Product only")}</td></tr>`,
+    )
+    .join("");
+
+  return send({
+    to,
+    replyTo: email,
+    subject: `Quotation request ${reference} — ${brand}`,
+    html: `
+      <h2 style="margin:0 0 4px">Quotation request ${escapeHtml(reference)}</h2>
+      <p style="margin:0 0 16px;color:#6b6664">The full request is attached as a PDF.</p>
+      <p style="margin:0 0 4px"><strong>${escapeHtml(brand)}</strong></p>
+      <p style="margin:0 0 16px">
+        ${escapeHtml(name)} · <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>
+        ${phone ? ` · ${escapeHtml(phone)}` : ""}
+      </p>
+      <table style="border-collapse:collapse;font-size:14px">${rows}</table>
+      <p style="margin:16px 0 0"><strong>Total:</strong> ${escapeHtml(total)}</p>
+      ${message ? `<p style="margin:16px 0 0;white-space:pre-wrap">${escapeHtml(message)}</p>` : ""}
+      ${attachments > 0 ? `<p style="margin:16px 0 0;color:#6b6664">${attachments} brand file${attachments === 1 ? "" : "s"} uploaded with this request.</p>` : ""}
+      <p style="margin:24px 0 0;color:#6b6664;font-size:12px">${SITE.url}/admin/enquiries</p>
+    `,
+    attachments: [{ filename: `kadokowe-request-${reference}.pdf`, content: pdf }],
   });
 }

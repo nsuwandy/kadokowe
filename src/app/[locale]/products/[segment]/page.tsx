@@ -11,6 +11,8 @@ import { Wrap, Section, Eyebrow, Tag } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { ProductCard } from "@/components/ProductCard";
+import { AddToCart } from "@/components/cart/AddToCart";
+import { packagingFor } from "@/lib/packaging";
 
 /**
  * Product detail — FR-4.4 to FR-4.13.
@@ -72,6 +74,8 @@ export default async function ProductPage({
   const preview = await isPreview();
   const product = await getProduct(segment, preview);
   if (!product) notFound();
+
+  const packaging = await packagingFor(product.id, l);
 
   // The first three gallery images sit beside the hero; anything beyond them
   // is treated as branded mockups for "Make It Yours" (FR-4.9).
@@ -289,18 +293,37 @@ export default async function ProductPage({
               </div>
             )}
 
-            {/* FR-4.10 / FR-4.11 — the only action, and it is not commerce. */}
+            {/* The cart collects products into one request. It is still not
+                commerce — nothing is charged and nothing is reserved — so the
+                line beneath says what it actually does. */}
             <div className="flex flex-col gap-3 pt-2">
+              <AddToCart
+                slug={product.slug}
+                options={packaging}
+                basePrice={product.indicativePrice}
+                basePriceMax={product.indicativePriceMax}
+                labels={{
+                  heading: t("Packaging & branding", "Kemasan & branding"),
+                  none: t("Product only", "Produk saja"),
+                  quantity: t("Quantity", "Jumlah"),
+                  add: t("Add to cart", "Tambahkan ke keranjang"),
+                  added: t("Added.", "Ditambahkan."),
+                  viewCart: t("View cart", "Lihat keranjang"),
+                  quoted: t("Quoted", "Ditawarkan"),
+                  from: t("Per unit", "Per unit"),
+                }}
+              />
               <Button
                 href={path(`/start-a-project?product=${product.slug}`)}
+                variant="ghost"
                 className="w-full"
               >
-                {t("Develop This For My Brand →", "Kembangkan Ini Untuk Merek Saya →")}
+                {t("Or tell us about the project →", "Atau ceritakan proyeknya →")}
               </Button>
               <p className="text-center font-editorial text-xs italic text-muted">
                 {t(
-                  "No cart. No checkout. We quote once we understand the campaign.",
-                  "Tanpa keranjang. Tanpa checkout. Kami menawarkan harga setelah memahami kampanye Anda.",
+                  "Nothing is charged here. The cart becomes a brief we quote against.",
+                  "Tidak ada pembayaran di sini. Keranjang menjadi brief yang kami tawarkan harganya.",
                 )}
               </p>
             </div>
