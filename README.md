@@ -206,6 +206,19 @@ cannot boot just makes the failure public.
 8. **Point the domain.** Add it in Vercel, copy the records Vercel shows into
    the registrar's DNS. Leave MX records alone or you break the client's email.
 
+### Holding page
+
+The domain usually goes live before the catalogue does, and an empty
+catalogue is a worse first impression than no site at all. Set
+`COMING_SOON=1` in Vercel and every public route shows a holding page
+instead; unset it and redeploy to launch.
+
+The admin stays reachable throughout, so content can be loaded behind the
+curtain. `COMING_SOON_BYPASS` is a shared token — send the client
+`https://kadokowe.com/?preview=TOKEN` and they see the real site from then
+on. It is a curtain, not access control: anyone with the link gets through,
+and what it protects is the first impression, not the data.
+
 ### After the first deploy
 
 - Turn on **daily backups with 30-day retention** in Neon (NFR-4.2), then
