@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/products/grid", label: "Bulk table" },
   { href: "/admin/products/import", label: "Import CSV" },
   { href: "/admin/products/photos", label: "Photos" },
+  { href: "/admin/packaging", label: "Packaging" },
   { href: "/admin/craft", label: "Custom Made" },
   { href: "/admin/projects", label: "Our Work" },
   { href: "/admin/articles", label: "Insights" },
