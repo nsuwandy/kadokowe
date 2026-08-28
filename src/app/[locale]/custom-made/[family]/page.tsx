@@ -68,8 +68,6 @@ export default async function FamilyPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const examples = l === "id" ? f.examplesId : f.examplesEn;
-
   // FR-12.11 — the administrator may override this family's headline and
   // introduction; the code default is used when they have not.
   // FR-12.11 — imagery is administrator-managed alongside the copy. The image
