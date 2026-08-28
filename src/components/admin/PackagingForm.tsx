@@ -58,7 +58,7 @@ export function PackagingForm({
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-warm text-left">
-              {["Name (English)", "Name (Indonesian)", "Price", "Uplift per unit", "Grouped under", ""].map((h) => (
+              {["Name (English)", "Name (Indonesian)", "Price", "Fallback uplift", "Grouped under", ""].map((h) => (
                 <th key={h} className="px-3 py-2 text-[0.625rem] font-bold uppercase tracking-[0.1em]">
                   {h}
                 </th>
@@ -105,7 +105,7 @@ export function PackagingForm({
                         inputMode="numeric"
                         value={row.priceDelta}
                         onChange={(e) => update(i, { priceDelta: e.target.value })}
-                        placeholder="Rp per unit"
+                        placeholder="Rp per unit (fallback)"
                         className={field}
                       />
                     ) : (

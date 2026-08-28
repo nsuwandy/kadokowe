@@ -54,11 +54,15 @@ export default async function AdminPackaging() {
       <div>
         <h1 className="text-2xl font-bold">Packaging &amp; add-ons</h1>
         <p className="mt-2 max-w-[74ch] text-sm text-muted">
-          Offered on every product, and priced once here rather than per
-          product. An add-on with a fixed uplift is added to the cart total; one
-          set to <strong className="font-semibold text-ink">Ask for a
-          quotation</strong> has no list price, and a cart containing one is
-          sent as a request rather than an estimate.
+          Offered on every product. The price here is a{" "}
+          <strong className="font-semibold text-ink">fallback</strong>: each
+          product sets its own uplift in its editor, because engraving a steel
+          tumbler and engraving a pen are not the same job. This figure is what
+          a product uses until it has been given one of its own — leave it at
+          nothing if you would rather price everything individually.
+          An add-on set to <strong className="font-semibold text-ink">Ask for a
+          quotation</strong> has no list price at all, and a cart containing one
+          is sent as a request rather than an estimate.
         </p>
       </div>
 

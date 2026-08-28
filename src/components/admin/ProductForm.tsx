@@ -14,6 +14,7 @@ import {
   type ProductFormValues,
   type SaveState,
   type TermOption,
+  type ProductPackagingRow,
 } from "@/lib/product-form";
 
 /**
@@ -32,10 +33,12 @@ export function ProductForm({
   action,
   product,
   terms,
+  packaging,
 }: {
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   product: ProductFormValues | null;
   terms: TermOption[];
+  packaging: ProductPackagingRow[];
 }) {
   const [state, formAction, pending] = useActionState(action, emptySaveState);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -230,6 +233,55 @@ export function ProductForm({
                 Needed for Indonesian search to find this product.
               </span>
             </label>
+          </div>
+        </section>
+
+        {/* --- Packaging & branding ---------------------------------------- */}
+        <section className="flex flex-col gap-5 bg-paper p-6">
+          <h2 className="text-sm font-semibold">Packaging &amp; branding</h2>
+          <p className={`${hint} max-w-[70ch]`}>
+            What each add-on costs{" "}
+            <strong className="font-semibold text-ink">on this product</strong>.
+            Engraving a steel tumbler and engraving a pen are not the same job,
+            so the price is set here rather than once for the whole catalogue.
+            Leave a box empty to fall back to the catalogue default shown beside
+            it.
+          </p>
+
+          <div className="flex flex-col">
+            {packaging.map((option) => (
+              <div
+                key={option.id}
+                className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line py-3 ${option.isChild ? "pl-6" : ""}`}
+              >
+                <span className="min-w-[14rem] flex-1 text-sm">
+                  {option.isChild && <span className="text-muted">└ </span>}
+                  {option.name}
+                </span>
+
+                {option.quoteOnly ? (
+                  /* No box at all rather than a disabled one: an empty field
+                     reads as a number someone forgot to fill in, and this one
+                     can never have a number. */
+                  <span className="text-xs text-muted">Quoted separately</span>
+                ) : (
+                  <>
+                    <input
+                      name={`packaging_${option.id}`}
+                      inputMode="numeric"
+                      defaultValue={option.priceDelta}
+                      placeholder={option.defaultDelta === null ? "0" : String(option.defaultDelta)}
+                      className="w-36 border border-line bg-paper px-3 py-2 text-sm tabular-nums outline-none focus:border-red"
+                    />
+                    <span className="w-44 text-xs text-muted">
+                      {option.defaultDelta
+                        ? `Catalogue default Rp ${option.defaultDelta.toLocaleString("id-ID")}`
+                        : "No catalogue default"}
+                    </span>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         </section>
 

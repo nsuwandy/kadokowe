@@ -108,6 +108,25 @@ export async function saveProduct(
   // inventing one; recreating a handful of rows is cheaper than the bookkeeping.
   const gallery = galleryFrom(formData, "gallery");
 
+  /**
+   * Per-product packaging prices.
+   *
+   * A blank box means "use the catalogue default", not "free", so it writes no
+   * row rather than a zero. Storing zero would make an add-on free the moment
+   * someone cleared a field to reset it — the opposite of what clearing a
+   * field means everywhere else in this admin.
+   */
+  const packagingPrices: { optionId: string; priceDelta: number }[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("packaging_")) continue;
+    const raw = String(value).replace(/[^\d]/g, "");
+    if (raw === "") continue;
+    packagingPrices.push({
+      optionId: key.slice("packaging_".length),
+      priceDelta: Number(raw),
+    });
+  }
+
   try {
     if (isNew) {
       const created = await db.product.create({
@@ -116,6 +135,7 @@ export async function saveProduct(
           slug,
           terms: { connect: termIds },
           gallery: { create: gallery },
+          packaging: { create: packagingPrices },
         },
         select: { id: true },
       });
@@ -131,6 +151,9 @@ export async function saveProduct(
         slug,
         terms: { set: termIds },
         gallery: { deleteMany: {}, create: gallery },
+        // Replaced wholesale, like the gallery: the form is the truth, and a
+        // price removed in the form has to disappear rather than linger.
+        packaging: { deleteMany: {}, create: packagingPrices },
       },
     });
     revalidatePath("/admin/products");

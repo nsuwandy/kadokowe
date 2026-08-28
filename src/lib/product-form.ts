@@ -69,3 +69,21 @@ export const AXIS_LABELS: Record<string, string> = {
   INDUSTRY: "Industry",
   BUDGET: "Budget tier (set automatically from price)",
 };
+
+/**
+ * One add-on as offered on a single product.
+ *
+ * The price is per product, not per option. Engraving a steel tumbler and
+ * engraving a pen are not the same job, and one catalogue-wide figure for
+ * "laser engrave" would be wrong on almost every row it touched. The
+ * catalogue figure survives as a default for anything not yet priced.
+ */
+export type ProductPackagingRow = {
+  id: string;
+  name: string;
+  quoteOnly: boolean;
+  /** Blank when this product has not set its own. */
+  priceDelta: string;
+  defaultDelta: number | null;
+  isChild: boolean;
+};

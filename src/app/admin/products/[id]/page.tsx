@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ProductForm } from "@/components/admin/ProductForm";
+import type { ProductPackagingRow } from "@/lib/product-form";
 import { saveProduct } from "../actions";
 
 /**
@@ -33,6 +34,53 @@ export default async function ProductEditor({
       });
 
   if (!isNew && !product) notFound();
+
+  // Every option, plus whatever this product has already priced. The
+  // catalogue figure is carried through as the placeholder, so a blank box is
+  // visibly "falls back to Rp X" rather than "costs nothing".
+  const [options, overrides] = await Promise.all([
+    db.packagingOption.findMany({
+      where: { visibility: "PUBLISHED" },
+      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+      select: {
+        id: true, nameEn: true, pricing: true, priceDelta: true, parentId: true,
+      },
+    }),
+    isNew
+      ? Promise.resolve([])
+      : db.productPackaging.findMany({
+          where: { productId: id },
+          select: { optionId: true, priceDelta: true },
+        }),
+  ]);
+
+  const overrideBy = new Map(overrides.map((o) => [o.optionId, o.priceDelta]));
+  const shapeOption = (o: (typeof options)[number], isChild: boolean): ProductPackagingRow => {
+    const own = overrideBy.get(o.id);
+    return {
+      id: o.id,
+      name: o.nameEn,
+      quoteOnly: o.pricing === "QUOTE",
+      priceDelta: own === undefined || own === null ? "" : String(own),
+      defaultDelta: o.priceDelta,
+      isChild,
+    };
+  };
+
+  // Each group followed by what is inside it, as on the Packaging page.
+  const childrenOf = new Map<string, typeof options>();
+  for (const o of options) {
+    if (!o.parentId) continue;
+    const list = childrenOf.get(o.parentId) ?? [];
+    list.push(o);
+    childrenOf.set(o.parentId, list);
+  }
+  const packaging: ProductPackagingRow[] = options
+    .filter((o) => !o.parentId)
+    .flatMap((o) => [
+      shapeOption(o, false),
+      ...(childrenOf.get(o.id) ?? []).map((c) => shapeOption(c, true)),
+    ]);
 
   const terms = await db.taxonomyTerm.findMany({
     orderBy: [{ axis: "asc" }, { sortOrder: "asc" }],
@@ -67,6 +115,7 @@ export default async function ProductEditor({
       <ProductForm
         action={saveProduct}
         terms={terms}
+        packaging={packaging}
         product={
           product
             ? {
