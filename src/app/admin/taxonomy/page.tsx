@@ -32,7 +32,7 @@ export default async function AdminTaxonomy({
       <div>
         <h1 className="text-2xl font-bold">Browse categories</h1>
         <p className="mt-2 max-w-[70ch] text-sm text-muted">
-          The four ways a visitor can browse the Idea Library. Renaming a term
+          The four ways a visitor can browse the Product Library. Renaming a term
           changes it everywhere immediately; the web address stays fixed so
           existing links keep working.
         </p>

@@ -69,7 +69,7 @@ export async function saveTerms(
     }
 
     revalidatePath("/admin/taxonomy");
-    revalidatePath("/ideas", "layout");
+    revalidatePath("/products", "layout");
     return { ok: true, message: "Saved." };
   } catch {
     return { ok: false, message: "Could not save. Try again." };
@@ -102,5 +102,5 @@ export async function deleteTerm(id: string): Promise<void> {
 
   await db.taxonomyTerm.delete({ where: { id } });
   revalidatePath("/admin/taxonomy");
-  revalidatePath("/ideas", "layout");
+  revalidatePath("/products", "layout");
 }

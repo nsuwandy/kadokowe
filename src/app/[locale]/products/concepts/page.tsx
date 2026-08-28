@@ -19,7 +19,7 @@ export const metadata: Metadata = {
  *
  * The section occupies the space between what is possible and what was
  * delivered:
- *   Idea Library      — what products are possible
+ *   Product Library      — what products are possible
  *   Concept Collections — how Kadokowe thinks about a brief
  *   Our Work          — what Kadokowe actually executed
  *
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  */
 export default async function ConceptsPage({
   params,
-}: PageProps<"/[locale]/ideas/concepts">) {
+}: PageProps<"/[locale]/products/concepts">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
@@ -61,9 +61,9 @@ export default async function ConceptsPage({
           <dl className="mb-12 grid gap-px border border-line bg-line sm:grid-cols-3">
             {[
               {
-                k: t("Idea Library", "Pustaka Ide"),
+                k: t("Product Library", "Pustaka Produk"),
                 v: t("What products are possible.", "Produk apa yang mungkin."),
-                href: "/ideas",
+                href: "/products",
               },
               {
                 k: t("Concept Collections", "Koleksi Konsep"),
@@ -103,7 +103,7 @@ export default async function ConceptsPage({
               {concepts.map((c, i) => (
                 <li key={c.slug}>
                   <Link
-                    href={path(`/ideas/concepts/${c.slug}`)}
+                    href={path(`/products/concepts/${c.slug}`)}
                     className={`group grid gap-6 lg:gap-12 ${
                       i % 2 === 0
                         ? "lg:grid-cols-[1.15fr_0.85fr]"

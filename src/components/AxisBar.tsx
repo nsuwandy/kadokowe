@@ -40,7 +40,7 @@ export async function AxisBar({
         return (
           <Link
             key={key}
-            href={localePath(`/ideas/${key}/${firstTerms[i]}`, locale)}
+            href={localePath(`/products/${key}/${firstTerms[i]}`, locale)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex-auto px-5 py-4 text-center font-display text-[0.6875rem] font-semibold uppercase tracking-[0.14em] transition-colors",
@@ -77,7 +77,7 @@ export async function TermChips({
         return (
           <Link
             key={term.slug}
-            href={localePath(`/ideas/${axis}/${term.slug}`, locale)}
+            href={localePath(`/products/${axis}/${term.slug}`, locale)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "border px-4 py-2.5 text-xs font-semibold transition-colors",

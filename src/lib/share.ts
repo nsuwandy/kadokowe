@@ -35,7 +35,7 @@ export function shareMetadata({
   description?: string | null;
   /** Cloudinary public ID. */
   image?: string | null;
-  /** Locale-prefixed path, e.g. "/id/ideas/tote-bag". */
+  /** Locale-prefixed path, e.g. "/id/products/tote-bag". */
   path: string;
   locale: AppLocale;
   type?: "website" | "article";

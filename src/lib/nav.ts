@@ -29,18 +29,18 @@ export type NavItem = {
 export const NAV: NavItem[] = [
   { href: "/what-we-do", en: "What We Do", id: "Apa Yang Kami Lakukan" },
   {
-    href: "/ideas",
-    en: "Ideas",
-    id: "Ide",
+    href: "/products",
+    en: "Products",
+    id: "Produk",
     // Concept Collections had no route into it from the header at all: the
-    // only way in was a link inside the Ideas section of the homepage, which
+    // only way in was a link inside the Products section of the homepage, which
     // meant the section was effectively unreachable to anyone who scrolled
-    // past it. SRS §8.13 places it between the Idea Library and Our Work as
+    // past it. SRS §8.13 places it between the Product Library and Our Work as
     // one of the three ways of looking at the work, so it belongs here.
     children: [
-      { href: "/ideas", en: "Idea Library", id: "Pustaka Ide" },
+      { href: "/products", en: "Product Library", id: "Pustaka Produk" },
       {
-        href: "/ideas/concepts",
+        href: "/products/concepts",
         en: "Concept Collections",
         id: "Koleksi Konsep",
         gate: "concepts",

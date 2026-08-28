@@ -70,7 +70,7 @@ export async function writeParsedRows(
   }
 
   revalidatePath("/admin/products");
-  revalidatePath("/ideas");
+  revalidatePath("/products");
 
   return { imported, issues };
 }

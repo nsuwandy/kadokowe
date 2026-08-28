@@ -7,7 +7,7 @@ import { localePath } from "@/lib/nav";
 import type { AppLocale } from "@/lib/i18n";
 
 /**
- * Idea Library search — FR-3.7.
+ * Product Library search — FR-3.7.
  *
  * Navigates to a real URL rather than filtering in place, so a search result
  * is shareable and indexable like every other view in the library. Someone who
@@ -32,15 +32,15 @@ export function SearchBox({
     const q = value.trim();
     router.push(
       q
-        ? `${localePath("/ideas/search", locale)}?q=${encodeURIComponent(q)}`
-        : localePath("/ideas", locale),
+        ? `${localePath("/products/search", locale)}?q=${encodeURIComponent(q)}`
+        : localePath("/products", locale),
     );
   }
 
   return (
     <form onSubmit={submit} role="search" className="flex w-full">
       <label htmlFor="idea-search" className="sr-only">
-        {t("Search the Idea Library", "Cari di Pustaka Ide")}
+        {t("Search the Product Library", "Cari di Pustaka Produk")}
       </label>
       <div className="flex w-full items-center border border-line bg-paper focus-within:border-red">
         <Search size={16} className="ml-4 shrink-0 text-muted" aria-hidden />

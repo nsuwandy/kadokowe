@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 /**
  * Our Work index — FR-7.1, FR-7.5, FR-7.6.
  *
- * FR-7.1 requires treatment distinct from Idea Library listings. The
+ * FR-7.1 requires treatment distinct from Product Library listings. The
  * distinction is enforced by layout rather than by styling: the featured
  * project takes a full-bleed dark band, and the remainder use uneven column
  * spans, so the page cannot be mistaken for a product grid even at a glance.

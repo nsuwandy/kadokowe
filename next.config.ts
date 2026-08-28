@@ -15,6 +15,23 @@ const nextConfig: NextConfig = {
     "*": ["./assets/**"],
   },
 
+  /**
+   * The Product Library used to live at /ideas.
+   *
+   * The rename happened while the site was still behind the coming-soon
+   * curtain, so nothing is indexed and nothing should be linked — but the
+   * client has had the staging URLs, and a permanent redirect costs one config
+   * entry against a 404 on a link already sent to someone.
+   */
+  async redirects() {
+    return [
+      { source: "/ideas", destination: "/products", permanent: true },
+      { source: "/ideas/:path*", destination: "/products/:path*", permanent: true },
+      { source: "/id/ideas", destination: "/id/products", permanent: true },
+      { source: "/id/ideas/:path*", destination: "/id/products/:path*", permanent: true },
+    ];
+  },
+
   experimental: {
     /**
      * Build-time database concurrency.

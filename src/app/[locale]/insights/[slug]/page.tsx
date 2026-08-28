@@ -241,7 +241,7 @@ export default async function ArticlePage({
               <h2 className="text-lg-display font-bold tracked-tight">
                 {t("Explore alternative ideas", "Jelajahi ide alternatif")}
               </h2>
-              <ArrowLink href={path("/ideas")}>
+              <ArrowLink href={path("/products")}>
                 {t("All ideas", "Semua ide")}
               </ArrowLink>
             </div>

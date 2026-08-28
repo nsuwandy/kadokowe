@@ -47,12 +47,12 @@ export default function NotFound() {
             That page isn&apos;t here.
           </h1>
           <p style={{ color: "#7c766f", lineHeight: 1.6, margin: "0 0 2rem" }}>
-            It may have moved, or the link may be wrong. The Idea Library is a
+            It may have moved, or the link may be wrong. The Product Library is a
             good place to pick the thread back up.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             <Link
-              href="/ideas"
+              href="/products"
               style={{
                 background: "#bf0001",
                 color: "#fff",
@@ -64,7 +64,7 @@ export default function NotFound() {
                 textTransform: "uppercase",
               }}
             >
-              Explore ideas
+              Explore products
             </Link>
             <Link
               href="/"

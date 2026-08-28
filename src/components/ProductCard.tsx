@@ -52,7 +52,7 @@ export function ProductCard({
 
   return (
     <Link
-      href={localePath(`/ideas/${product.slug}`, locale)}
+      href={localePath(`/products/${product.slug}`, locale)}
       className={cn("group flex flex-col gap-3", wide && "sm:col-span-2")}
     >
       <div className="relative">

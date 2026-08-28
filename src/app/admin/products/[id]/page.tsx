@@ -53,8 +53,8 @@ export default async function ProductEditor({
           <Link
             href={
               product.visibility === "PUBLISHED"
-                ? `/ideas/${product.slug}`
-                : `/api/draft/enable?next=${encodeURIComponent(`/ideas/${product.slug}`)}`
+                ? `/products/${product.slug}`
+                : `/api/draft/enable?next=${encodeURIComponent(`/products/${product.slug}`)}`
             }
             target="_blank"
             className="text-xs text-muted underline-offset-2 hover:underline"

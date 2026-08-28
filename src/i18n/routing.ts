@@ -3,8 +3,8 @@ import { defineRouting } from "next-intl/routing";
 /**
  * Locale routing — SRS v1.4 FR-11.2, FR-11.5.
  *
- * `as-needed` keeps English on unprefixed paths (/ideas) and puts Indonesian
- * behind /id (/id/ideas). Each language therefore has a distinct, indexable
+ * `as-needed` keeps English on unprefixed paths (/products) and puts Indonesian
+ * behind /id (/id/products). Each language therefore has a distinct, indexable
  * URL as FR-11.5 requires, without burdening the default language with a
  * redundant segment.
  *

@@ -54,7 +54,7 @@ export const HOME_SECTIONS = [
   },
   {
     key: "home.ideas",
-    label: "03 · The Idea Library",
+    label: "03 · The Product Library",
     note: "The preview of the catalogue.",
   },
   {

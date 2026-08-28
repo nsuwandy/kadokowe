@@ -18,7 +18,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-}: PageProps<"/[locale]/ideas/concepts/[slug]">): Promise<Metadata> {
+}: PageProps<"/[locale]/products/concepts/[slug]">): Promise<Metadata> {
   const { locale, slug } = await params;
   const c = conceptBySlug(slug);
   if (!isLocale(locale) || !c) return {};
@@ -27,7 +27,7 @@ export async function generateMetadata({
     title: l === "id" ? c.titleId : c.titleEn,
     description: l === "id" ? c.themeId : c.themeEn,
     image: c.heroImage ?? null,
-    path: localePath(`/ideas/concepts/${slug}`, l),
+    path: localePath(`/products/concepts/${slug}`, l),
     locale: l,
   });
 }
@@ -42,7 +42,7 @@ export async function generateMetadata({
  */
 export default async function ConceptPage({
   params,
-}: PageProps<"/[locale]/ideas/concepts/[slug]">) {
+}: PageProps<"/[locale]/products/concepts/[slug]">) {
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
   const c = conceptBySlug(slug);
@@ -97,7 +97,7 @@ export default async function ConceptPage({
 
       <Section>
         <Wrap>
-          <ArrowLink href={path("/ideas/concepts")} className="mb-10">
+          <ArrowLink href={path("/products/concepts")} className="mb-10">
             {t("All collections", "Semua koleksi")}
           </ArrowLink>
 
@@ -150,7 +150,7 @@ export default async function ConceptPage({
               <h2 className="text-lg-display font-bold tracked-tight">
                 {t("Products in this collection", "Produk dalam koleksi ini")}
               </h2>
-              <ArrowLink href={path("/ideas")}>
+              <ArrowLink href={path("/products")}>
                 {t("All ideas", "Semua ide")}
               </ArrowLink>
             </div>

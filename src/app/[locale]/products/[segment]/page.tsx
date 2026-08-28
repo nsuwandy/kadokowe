@@ -15,7 +15,7 @@ import { ProductCard } from "@/components/ProductCard";
 /**
  * Product detail — FR-4.4 to FR-4.13.
  *
- * URL note: /ideas/{segment} is a product slug, while /ideas/{segment}/{term}
+ * URL note: /products/{segment} is a product slug, while /products/{segment}/{term}
  * is an axis-filtered view. SRS §6.2 specifies both shapes, so position one
  * serves double duty and the segment is named neutrally rather than as
  * `[slug]` or `[axis]`.
@@ -44,7 +44,7 @@ async function getProduct(slug: string, preview = false) {
 
 export async function generateMetadata({
   params,
-}: PageProps<"/[locale]/ideas/[segment]">): Promise<Metadata> {
+}: PageProps<"/[locale]/products/[segment]">): Promise<Metadata> {
   const { locale, segment } = await params;
   if (!isLocale(locale)) return {};
   const product = await getProduct(segment);
@@ -54,14 +54,14 @@ export async function generateMetadata({
     title: pick(product, "seoTitle", l) || pick(product, "name", l),
     description: pick(product, "seoDesc", l) || pick(product, "short", l),
     image: product.heroImage,
-    path: localePath(`/ideas/${segment}`, l),
+    path: localePath(`/products/${segment}`, l),
     locale: l,
   });
 }
 
 export default async function ProductPage({
   params,
-}: PageProps<"/[locale]/ideas/[segment]">) {
+}: PageProps<"/[locale]/products/[segment]">) {
   const { locale, segment } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
@@ -130,13 +130,13 @@ export default async function ProductPage({
         data={productSchema({
           name: pick(product, "name", l),
           description: pickOptional(product, "short", l),
-          url: `${SITE.url}${path(`/ideas/${segment}`)}`,
+          url: `${SITE.url}${path(`/products/${segment}`)}`,
           material: product.material,
         })}
       />
       <Wrap>
-        <ArrowLink href={path("/ideas")} className="mb-8">
-          {t("Back to the Idea Library", "Kembali ke Pustaka Ide")}
+        <ArrowLink href={path("/products")} className="mb-8">
+          {t("Back to the Product Library", "Kembali ke Pustaka Produk")}
         </ArrowLink>
 
         <div className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
@@ -206,7 +206,7 @@ export default async function ProductPage({
                   {purposes.map((p) => (
                     <li key={p.id}>
                       <a
-                        href={path(`/ideas/purpose/${p.slugEn}`)}
+                        href={path(`/products/purpose/${p.slugEn}`)}
                         className="block border border-line bg-warm px-4 py-2 text-xs font-semibold transition-colors hover:border-ink"
                       >
                         {pick(p, "name", l)}
@@ -313,7 +313,7 @@ export default async function ProductPage({
               <h2 className="text-lg-display font-bold tracked-tight">
                 {t("Explore alternative ideas", "Jelajahi ide alternatif")}
               </h2>
-              <ArrowLink href={path("/ideas")}>
+              <ArrowLink href={path("/products")}>
                 {t("All ideas", "Semua ide")}
               </ArrowLink>
             </div>

@@ -35,7 +35,7 @@ export type Concept = {
   /** Cloudinary public ID for the hero, once photography exists. Code-managed
    *  like the rest of this file (FR-13.7); also used as the share image. */
   heroImage?: string;
-  /** Slugs of related products in the Idea Library. */
+  /** Slugs of related products in the Product Library. */
   products?: string[];
   /** Slug of the Our Work project this became, if it was produced. */
   project?: string;

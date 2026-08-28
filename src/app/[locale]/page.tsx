@@ -260,7 +260,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             {OUTCOMES.map((o) => (
               <li key={o.slug} className="bg-paper">
                 <a
-                  href={path(`/ideas/purpose/${o.slug}`)}
+                  href={path(`/products/purpose/${o.slug}`)}
                   className="group flex h-full flex-col transition-colors hover:bg-warm"
                 >
                   <Plate
@@ -285,11 +285,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </Wrap>
       </Section>
 
-      {/* 03 — Idea Library preview. Asymmetric collage that breaks the grid. */}
+      {/* 03 — Product Library preview. Asymmetric collage that breaks the grid. */}
       <Section tone="warm">
         <Wrap>
           <SectionHead
-            eyebrow={copy("home.ideas", "eyebrow", "The Idea Library", "Pustaka Ide")}
+            eyebrow={copy("home.ideas", "eyebrow", "The Product Library", "Pustaka Produk")}
             title={copy(
               "home.ideas", "heading",
               "Ideas worth branding.", "Ide yang layak dijadikan merek.",
@@ -301,14 +301,14 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             )}
             action={
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                <ArrowLink href={path("/ideas")}>
-                  {t("Explore the Idea Library", "Jelajahi Pustaka Ide")}
+                <ArrowLink href={path("/products")}>
+                  {t("Explore the Product Library", "Jelajahi Pustaka Produk")}
                 </ArrowLink>
                 {/* FR-13.6 — surfaced within the Ideas section rather than
                     given a band of its own: collections are a way into the
                     library, not a competing destination. */}
                 {hasConcepts && (
-                  <ArrowLink href={path("/ideas/concepts")}>
+                  <ArrowLink href={path("/products/concepts")}>
                     {t("See Concept Collections", "Lihat Koleksi Konsep")}
                   </ArrowLink>
                 )}
@@ -461,7 +461,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             </a>
 
             <a
-              href={path("/ideas/ready-stock/all")}
+              href={path("/products/ready-stock/all")}
               className="group flex flex-col gap-3 bg-paper p-8 transition-colors hover:bg-warm md:p-12"
             >
               <Eyebrow accent>{t("Need it fast?", "Butuh cepat?")}</Eyebrow>
@@ -501,7 +501,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           {PRODUCT_CATEGORIES.map((c) => (
             <li key={c.slug} className="bg-paper">
               <a
-                href={path(`/ideas/product/${c.slug}`)}
+                href={path(`/products/product/${c.slug}`)}
                 className="group flex h-full min-h-[118px] flex-col justify-between gap-1 p-5 transition-colors hover:bg-red"
               >
                 <span className="text-[0.9375rem] font-semibold transition-colors group-hover:text-paper">
@@ -592,7 +592,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <h2 className="text-lg-display font-bold tracked-tight">
               {copy("home.new", "heading", "New discoveries", "Temuan terbaru")}
             </h2>
-            <ArrowLink href={path("/ideas")}>{t("See all", "Lihat semua")}</ArrowLink>
+            <ArrowLink href={path("/products")}>{t("See all", "Lihat semua")}</ArrowLink>
           </div>
           {/* FR-2.8, FR-10.6 — real catalogue entries, not a fixed list. The
               product editor offers "Show in New discoveries"; before this the

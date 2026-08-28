@@ -221,8 +221,8 @@ export default async function ProjectPage({
               <h2 className="text-lg-display font-bold tracked-tight">
                 {t("Products from this project", "Produk dari proyek ini")}
               </h2>
-              <ArrowLink href={path("/ideas")}>
-                {t("Explore the Idea Library", "Jelajahi Pustaka Ide")}
+              <ArrowLink href={path("/products")}>
+                {t("Explore the Product Library", "Jelajahi Pustaka Produk")}
               </ArrowLink>
             </div>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">

@@ -104,7 +104,7 @@ export function ProductForm({
             <textarea name="whyEn" rows={4} defaultValue={product?.whyEn ?? ""} className={field} />
             <span className={hint}>
               Kadokowe&apos;s perspective — why this product works and who for.
-              The single thing that separates the Idea Library from a price list.
+              The single thing that separates the Product Library from a price list.
             </span>
           </label>
 

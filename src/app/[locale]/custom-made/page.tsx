@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 /**
  * Custom Made index — FR-12.1.
  *
- * The distinction this page has to carry: the Idea Library shows what already
+ * The distinction this page has to carry: the Product Library shows what already
  * exists, Custom Made shows what can be made. Family names are prefixed
- * "Custom" partly to keep them apart from Idea Library categories and partly
+ * "Custom" partly to keep them apart from Product Library categories and partly
  * because the prefix states the promise.
  */
 export default async function CustomMadePage({
@@ -43,8 +43,8 @@ export default async function CustomMadePage({
   );
   const intro = await pageCopy(
     "custom-made.intro", "intro", l,
-    t("Where the Idea Library shows what exists, this shows what can be made. Tell us the idea — we handle material, construction, sampling and production.",
-      "Jika Pustaka Ide menunjukkan apa yang sudah ada, bagian ini menunjukkan apa yang bisa dibuat. Sampaikan idenya — kami menangani bahan, konstruksi, sampel, dan produksi."),
+    t("Where the Product Library shows what exists, this shows what can be made. Tell us the idea — we handle material, construction, sampling and production.",
+      "Jika Pustaka Produk menunjukkan apa yang sudah ada, bagian ini menunjukkan apa yang bisa dibuat. Sampaikan idenya — kami menangani bahan, konstruksi, sampel, dan produksi."),
   );
 
   return (

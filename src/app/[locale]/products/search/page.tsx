@@ -22,7 +22,7 @@ const PRODUCT_SELECT = {
 } as const;
 
 /**
- * Idea Library search — FR-3.7, FR-11.7.
+ * Product Library search — FR-3.7, FR-11.7.
  *
  * Matches across names, short lines, "Why We Like It", material and tags in
  * both languages. Searching only the current language would make half the
@@ -34,7 +34,7 @@ const PRODUCT_SELECT = {
 export default async function SearchPage({
   params,
   searchParams,
-}: PageProps<"/[locale]/ideas/search">) {
+}: PageProps<"/[locale]/products/search">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
@@ -83,7 +83,7 @@ export default async function SearchPage({
   return (
     <Section>
       <Wrap>
-        <Eyebrow accent>{t("The Idea Library", "Pustaka Ide")}</Eyebrow>
+        <Eyebrow accent>{t("The Product Library", "Pustaka Produk")}</Eyebrow>
         <h1 className="my-3 text-xl-display font-bold tracked-tight balance">
           {q ? t(`Results for “${q}”`, `Hasil untuk “${q}”`) : t("Search", "Cari")}
         </h1>
@@ -103,7 +103,7 @@ export default async function SearchPage({
                 )
               : t("Type something to search", "Ketik sesuatu untuk mencari")}
           </span>
-          <ArrowLink href={path("/ideas")}>
+          <ArrowLink href={path("/products")}>
             {t("Browse everything", "Telusuri semua")}
           </ArrowLink>
         </div>
@@ -143,7 +143,7 @@ export default async function SearchPage({
               )}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-4">
-              <ArrowLink href={path("/ideas/purpose/corporate-gifts")}>
+              <ArrowLink href={path("/products/purpose/corporate-gifts")}>
                 {t("Browse by purpose", "Telusuri berdasarkan tujuan")}
               </ArrowLink>
               <ArrowLink href={path("/start-a-project")}>
@@ -157,7 +157,7 @@ export default async function SearchPage({
           <Pagination
             page={page}
             total={total}
-            basePath={path("/ideas/search")}
+            basePath={path("/products/search")}
             locale={l}
             extraParams={`q=${encodeURIComponent(q)}`}
           />

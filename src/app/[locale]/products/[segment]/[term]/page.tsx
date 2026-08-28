@@ -11,14 +11,14 @@ import { AXES, isAxisKey, type AxisKey } from "@/content/taxonomy";
 import { Pagination, PAGE_SIZE } from "@/components/Pagination";
 
 /**
- * Axis-filtered Idea Library view — /ideas/{axis}/{term}.
+ * Axis-filtered Product Library view — /products/{axis}/{term}.
  *
  * A shareable, indexable URL per filtered view (FR-3.11). Position one is the
  * axis here and a product slug one level up; see the note in the sibling
  * route.
  *
  * `ready-stock` is handled as a pseudo-axis so FR-3.16 gets a real URL
- * (/ideas/ready-stock/all) without inventing a fifth taxonomy — availability
+ * (/products/ready-stock/all) without inventing a fifth taxonomy — availability
  * is a product field, not a browse axis.
  */
 
@@ -52,7 +52,7 @@ function readyStockCopy(l: AppLocale) {
 
 export async function generateMetadata({
   params,
-}: PageProps<"/[locale]/ideas/[segment]/[term]">): Promise<Metadata> {
+}: PageProps<"/[locale]/products/[segment]/[term]">): Promise<Metadata> {
   const { locale, segment } = await params;
   if (!isLocale(locale)) return {};
   const l = locale as AppLocale;
@@ -65,10 +65,10 @@ export async function generateMetadata({
   return { title: l === "id" ? axis.id : axis.en };
 }
 
-export default async function FilteredIdeasPage({
+export default async function FilteredProductsPage({
   params,
   searchParams,
-}: PageProps<"/[locale]/ideas/[segment]/[term]">) {
+}: PageProps<"/[locale]/products/[segment]/[term]">) {
   const { locale, segment, term } = await params;
   const sp = await searchParams;
   const page = Math.max(1, Number(sp?.page ?? 1) || 1);
@@ -208,7 +208,7 @@ export default async function FilteredIdeasPage({
         <Pagination
           page={page}
           total={total}
-          basePath={path(`/ideas/${segment}/${term}`)}
+          basePath={path(`/products/${segment}/${term}`)}
           locale={l}
         />
       </Wrap>

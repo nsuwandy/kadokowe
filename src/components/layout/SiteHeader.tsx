@@ -38,7 +38,7 @@ export function SiteHeader({
   /**
    * Which submenu entry the visitor is actually on.
    *
-   * Longest match wins, or /ideas/concepts would mark the Idea Library as the
+   * Longest match wins, or /products/concepts would mark the Product Library as the
    * current page as well as itself — two items highlighted, one of them
    * wrong.
    */

@@ -2,7 +2,7 @@
  * Custom Made — SRS v1.4 §8.12, FR-12.
  *
  * Seven families, renamed from the revision brief's proposal to remove three
- * exact collisions with Idea Library categories (Bags & Carry, Apparel,
+ * exact collisions with Product Library categories (Bags & Carry, Apparel,
  * Packaging). A visitor clicking "Packaging" in two places had no way to know
  * which they would get. The "Custom" prefix separates them and states the
  * section's promise in the label itself.

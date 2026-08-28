@@ -44,9 +44,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths: [string, number][] = [
     ["", 1],
     ["/what-we-do", 0.9],
-    ["/ideas", 0.9],
-    ["/ideas/concepts", 0.7],
-    ["/ideas/ready-stock/all", 0.7],
+    ["/products", 0.9],
+    ["/products/concepts", 0.7],
+    ["/products/ready-stock/all", 0.7],
     ["/custom-made", 0.9],
     ["/our-work", 0.9],
     ["/insights", 0.8],
@@ -60,12 +60,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const key of AXIS_KEYS) {
     for (const term of AXES[key].terms) {
-      entries.push(entry(`/ideas/${key}/${term.slug}`, 0.6));
+      entries.push(entry(`/products/${key}/${term.slug}`, 0.6));
     }
   }
   for (const f of FAMILIES) entries.push(entry(`/custom-made/${f.slug}`, 0.8));
   for (const c of CATEGORIES) entries.push(entry(`/insights/category/${c.slug}`, 0.6));
-  for (const c of publishedConcepts()) entries.push(entry(`/ideas/concepts/${c.slug}`, 0.6));
+  for (const c of publishedConcepts()) entries.push(entry(`/products/concepts/${c.slug}`, 0.6));
 
   try {
     const [products, projects, articles] = await Promise.all([
@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // A scheduled article must not be announced before its date.
       db.article.findMany({ where: livePublished(), select: { slug: true } }),
     ]);
-    for (const p of products) entries.push(entry(`/ideas/${p.slug}`, 0.7));
+    for (const p of products) entries.push(entry(`/products/${p.slug}`, 0.7));
     for (const p of projects) entries.push(entry(`/our-work/${p.slug}`, 0.8));
     for (const a of articles) entries.push(entry(`/insights/${a.slug}`, 0.7));
   } catch (error) {

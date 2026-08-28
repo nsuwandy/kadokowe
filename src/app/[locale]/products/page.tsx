@@ -14,15 +14,15 @@ import { AXIS_KEYS } from "@/content/taxonomy";
 import { getAllAxes, axisLabel } from "@/lib/taxonomy";
 
 export const metadata: Metadata = {
-  title: "The Idea Library",
+  title: "The Product Library",
   description:
     "Not a catalogue — a working set of starting points. Browse merchandise ideas by product, purpose, industry or budget.",
 };
 
-export default async function IdeasPage({
+export default async function ProductsPage({
   params,
   searchParams,
-}: PageProps<"/[locale]/ideas">) {
+}: PageProps<"/[locale]/products">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;
@@ -61,7 +61,7 @@ export default async function IdeasPage({
     <>
       <Section className="pb-0">
         <Wrap>
-          <Eyebrow accent>{t("The Idea Library", "Pustaka Ide")}</Eyebrow>
+          <Eyebrow accent>{t("The Product Library", "Pustaka Produk")}</Eyebrow>
           <h1 className="my-3 text-xl-display font-bold tracked-tight balance">
             {t("Explore possibilities.", "Jelajahi kemungkinan.")}
           </h1>
@@ -84,7 +84,7 @@ export default async function IdeasPage({
               is a product field; giving it equal billing with the four browse
               axes would misrepresent how the library is organised. */}
           <Link
-            href={path("/ideas/ready-stock/all")}
+            href={path("/products/ready-stock/all")}
             className="group mb-10 flex flex-wrap items-center justify-between gap-4 border border-line bg-warm px-6 py-5 transition-colors hover:border-red"
           >
             <span className="flex flex-col gap-1">
@@ -120,7 +120,7 @@ export default async function IdeasPage({
                     {terms.slice(0, 6).map((term) => (
                       <li key={term.slug}>
                         <Link
-                          href={path(`/ideas/${key}/${term.slug}`)}
+                          href={path(`/products/${key}/${term.slug}`)}
                           className="text-[0.8125rem] text-muted transition-colors hover:text-ink"
                         >
                           {term.label}
@@ -129,7 +129,7 @@ export default async function IdeasPage({
                     ))}
                   </ul>
                   <ArrowLink
-                    href={path(`/ideas/${key}/${terms[0].slug}`)}
+                    href={path(`/products/${key}/${terms[0].slug}`)}
                     className="mt-auto pt-2"
                   >
                     {t("Browse", "Telusuri")}
@@ -179,7 +179,7 @@ export default async function IdeasPage({
           <Pagination
             page={page}
             total={totalProducts}
-            basePath={path("/ideas")}
+            basePath={path("/products")}
             locale={l}
           />
         </Wrap>
@@ -220,8 +220,8 @@ function EmptyCatalogue({ locale }: { locale: AppLocale }) {
     <div className="border border-dashed border-line px-6 py-16 text-center">
       <p className="font-editorial text-lede italic text-muted">
         {t(
-          "The Idea Library is being prepared.",
-          "Pustaka Ide sedang disiapkan.",
+          "The Product Library is being prepared.",
+          "Pustaka Produk sedang disiapkan.",
         )}
       </p>
       <p className="mx-auto mt-3 max-w-[52ch] text-[0.875rem] text-muted">

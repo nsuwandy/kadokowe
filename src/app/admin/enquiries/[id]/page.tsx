@@ -82,7 +82,7 @@ export default async function EnquiryDetail({
           <ul className="flex flex-wrap gap-2">
             {enquiry.products.map((p) => (
               <li key={p.productId}>
-                <Link href={`/ideas/${p.product.slug}`} target="_blank" className="border border-line px-3 py-1.5 text-xs font-semibold hover:border-ink">
+                <Link href={`/products/${p.product.slug}`} target="_blank" className="border border-line px-3 py-1.5 text-xs font-semibold hover:border-ink">
                   {p.product.nameEn} ↗
                 </Link>
               </li>

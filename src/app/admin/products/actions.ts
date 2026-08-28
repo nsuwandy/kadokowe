@@ -121,7 +121,7 @@ export async function saveProduct(
         select: { id: true },
       });
       revalidatePath("/admin/products");
-      revalidatePath("/ideas");
+      revalidatePath("/products");
       redirect(`/admin/products/${created.id}?saved=1`);
     }
 
@@ -135,8 +135,8 @@ export async function saveProduct(
       },
     });
     revalidatePath("/admin/products");
-    revalidatePath("/ideas");
-    revalidatePath(`/ideas/${slug}`);
+    revalidatePath("/products");
+    revalidatePath(`/products/${slug}`);
     return { ok: true, message: "Saved." };
   } catch (error) {
     // redirect() throws by design; let it through rather than reporting it.
@@ -159,6 +159,6 @@ export async function deleteProduct(formData: FormData) {
 
   await db.product.delete({ where: { id } });
   revalidatePath("/admin/products");
-  revalidatePath("/ideas");
+  revalidatePath("/products");
   redirect("/admin/products");
 }

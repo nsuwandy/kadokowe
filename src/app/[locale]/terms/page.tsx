@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  * Deliberately short. This site sells nothing and takes no payment, so the
  * terms that matter are about the accuracy of what is shown and the status of
  * an enquiry — specifically that indicative pricing is not an offer, which
- * matters because the whole Idea Library shows budget tiers. Should be
+ * matters because the whole Product Library shows budget tiers. Should be
  * reviewed by someone qualified before launch.
  */
 export default async function TermsPage({ params }: PageProps<"/[locale]/terms">) {
