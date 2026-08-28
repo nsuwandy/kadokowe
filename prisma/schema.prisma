@@ -595,3 +595,104 @@ model BrandAsset {
 
   @@index([clientId, type])
 }
+
+// ---------------------------------------------- Custom Made (admin-managed)
+
+/// FR-12.x. Custom Made began as code constants, which meant a new family or a
+/// new example needed a developer. These four models move it into the admin.
+///
+/// The CustomMadeFamily enum above is deliberately left alone: it tags
+/// products, and rewriting that relation would touch the catalogue for no gain
+/// here. A family added in the admin is a page, not a product tag.
+model CraftFamily {
+  id     String @id @default(cuid())
+  slug   String @unique
+  nameEn String
+  nameId String?
+
+  /// Family-level positioning line, above the introduction.
+  leadEn  String?
+  leadId  String?
+  introEn String?
+  introId String?
+
+  heroImage String?
+
+  /// "Understanding your options" — broad material families only (FR-12.3),
+  /// and "Make it yours". Both are short label/description lists with no media
+  /// of their own, so they are stored as JSON rather than earning a table.
+  options  Json?
+  branding Json?
+
+  sortOrder  Int        @default(0)
+  visibility Visibility @default(DRAFT)
+
+  items    CraftItem[]
+  machines CraftMachine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, sortOrder])
+}
+
+/// One entry under "What can we create?" — for example "Tote and shopper".
+/// Carries its own media, which is what the hover slideshow shows.
+model CraftItem {
+  id       String @id @default(cuid())
+  familyId String
+  family   CraftFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  nameEn String
+  nameId String?
+  /// Optional line shown under the name inside the slideshow.
+  noteEn String?
+  noteId String?
+
+  sortOrder Int         @default(0)
+  media     CraftMedia[]
+
+  @@index([familyId, sortOrder])
+}
+
+enum CraftMediaKind {
+  IMAGE
+  VIDEO
+}
+
+/// A slide. Video is a distinct kind rather than a guess from the file
+/// extension, because Cloudinary serves the two from different delivery paths
+/// and picking the wrong one returns a broken asset rather than an error.
+model CraftMedia {
+  id     String @id @default(cuid())
+  itemId String
+  item   CraftItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  kind     CraftMediaKind @default(IMAGE)
+  publicId String
+  altEn    String?
+  altId    String?
+
+  sortOrder Int @default(0)
+
+  @@index([itemId, sortOrder])
+}
+
+/// FR-14 adjacent: what the work is actually made on — UV printing, heat
+/// emboss, foil, engraving. Kept per family because the honest answer differs
+/// between packaging and apparel.
+model CraftMachine {
+  id       String @id @default(cuid())
+  familyId String
+  family   CraftFamily @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  nameEn String
+  nameId String?
+  descEn String?
+  descId String?
+  image  String?
+
+  sortOrder Int @default(0)
+
+  @@index([familyId, sortOrder])
+}

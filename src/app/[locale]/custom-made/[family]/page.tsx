@@ -10,6 +10,9 @@ import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { FAMILIES, familyBySlug } from "@/content/custom-made";
 import { pageCopy, pageBlocks } from "@/lib/page-content";
+import { getCraftFamily } from "@/lib/craft";
+import { CraftShowcase } from "@/components/CraftShowcase";
+import { isPreview } from "@/lib/preview";
 
 export function generateStaticParams() {
   return FAMILIES.flatMap((f) =>
@@ -73,7 +76,12 @@ export default async function FamilyPage({
   // ID is language-independent, so it is read from the English slot rather
   // than duplicated per language.
   const familyBlocks = await pageBlocks(`custom-made.${f.slug}`);
-  const heroImage = familyBlocks.hero?.en ?? null;
+
+  // The family now lives in the database; the code constant remains as the
+  // fallback so an unseeded environment renders the pages it always had.
+  const preview = await isPreview();
+  const craft = (await getCraftFamily(f.slug, l, preview))!;
+  const heroImage = craft.heroImage ?? familyBlocks.hero?.en ?? null;
 
   const lead = await pageCopy(
     `custom-made.${f.slug}`, "heading", l, t(f.leadEn, f.leadId),
@@ -131,30 +139,31 @@ export default async function FamilyPage({
         </Wrap>
       </Section>
 
-      {/* What can we create? */}
+      {/* What can we create? — each entry opens its own slideshow (FR-12.2). */}
       <Section tone="warm" className="py-14 md:py-20">
         <Wrap>
           <Eyebrow accent>{t("What can we create?", "Apa yang bisa kami buat?")}</Eyebrow>
-          <ul className="mt-7 grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {examples.map((ex, i) => (
-              <li key={ex} className="flex flex-col bg-paper">
-                <Plate
-                  ratio="4 / 3"
-                  caption={ex}
-                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                />
-                <span className="px-5 py-4 text-[0.9375rem] font-semibold">
-                  {ex}
-                </span>
-                <span className="sr-only">{i + 1}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-7">
+            <CraftShowcase
+              items={craft.items}
+              labels={{
+                heading: t("What can we create?", "Apa yang bisa kami buat?"),
+                empty: t(
+                  "Examples for this family are being photographed.",
+                  "Contoh untuk keluarga ini sedang difoto.",
+                ),
+                previous: t("Previous", "Sebelumnya"),
+                next: t("Next", "Berikutnya"),
+                close: t("Close", "Tutup"),
+                counter: t("{n} of {total}", "{n} dari {total}"),
+              }}
+            />
+          </div>
         </Wrap>
       </Section>
 
       {/* Understanding your options — broad families only (FR-12.3). */}
-      {f.options && (
+      {craft.options.length > 0 && (
         <Section>
           <Wrap>
             <div className="grid gap-8 md:grid-cols-[0.8fr_1.2fr] md:gap-16">
@@ -170,16 +179,14 @@ export default async function FamilyPage({
                 </p>
               </div>
               <ul className="flex flex-col">
-                {f.options.map((o) => (
+                {craft.options.map((o) => (
                   <li
-                    key={o.en}
+                    key={o.name}
                     className="grid gap-1 border-t border-line py-5 last:border-b sm:grid-cols-[0.7fr_1.3fr] sm:gap-6"
                   >
-                    <span className="text-[0.9375rem] font-semibold">
-                      {t(o.en, o.id)}
-                    </span>
+                    <span className="text-[0.9375rem] font-semibold">{o.name}</span>
                     <span className="text-[0.875rem] leading-relaxed text-muted">
-                      {t(o.descEn, o.descId)}
+                      {o.description}
                     </span>
                   </li>
                 ))}
@@ -190,7 +197,7 @@ export default async function FamilyPage({
       )}
 
       {/* Make it yours */}
-      <Section tone={f.options ? "warm" : "paper"}>
+      <Section tone={craft.options.length > 0 ? "warm" : "paper"}>
         <Wrap>
           <Eyebrow accent>{t("Make it yours", "Jadikan milik Anda")}</Eyebrow>
           <h2 className="mt-3 mb-7 max-w-[24ch] text-lg-display font-bold tracked-tight">
@@ -200,7 +207,7 @@ export default async function FamilyPage({
             )}
           </h2>
           <ul className="flex flex-wrap gap-2">
-            {f.branding.map((b) => (
+            {craft.branding.map((b) => (
               <li
                 key={b}
                 className="border border-line bg-paper px-5 py-3 text-[0.8125rem] font-semibold"
@@ -211,6 +218,44 @@ export default async function FamilyPage({
           </ul>
         </Wrap>
       </Section>
+
+      {/* How it is made — the equipment behind this family. Rendered only when
+          the operator has listed any, so a family with nothing to show does
+          not carry an empty heading. */}
+      {craft.machines.length > 0 && (
+        <Section tone="ink">
+          <Wrap>
+            <Eyebrow accent>{t("How it is made", "Bagaimana dibuat")}</Eyebrow>
+            <h2 className="mt-3 mb-8 max-w-[26ch] text-lg-display font-bold tracked-tight">
+              {t(
+                "The processes behind the finish.",
+                "Proses di balik hasil akhirnya.",
+              )}
+            </h2>
+            <ul className="grid gap-px border border-[#2e2829] bg-[#2e2829] sm:grid-cols-2 lg:grid-cols-3">
+              {craft.machines.map((m) => (
+                <li key={m.id} className="flex flex-col gap-3 bg-ink p-5">
+                  {m.image && (
+                    <Plate
+                      publicId={m.image}
+                      alt={m.name}
+                      tone="dark"
+                      ratio="4 / 3"
+                      sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                    />
+                  )}
+                  <span className="text-[0.9375rem] font-semibold">{m.name}</span>
+                  {m.description && (
+                    <span className="text-[0.8125rem] leading-relaxed text-plate-c">
+                      {m.description}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Wrap>
+        </Section>
+      )}
 
       {/* See what we've made — FR-12.4 */}
       {projects.length > 0 && (

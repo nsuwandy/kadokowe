@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -24,10 +25,26 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
       <div className="mx-auto flex h-17 max-w-[1440px] items-center gap-4 px-gutter lg:gap-10">
         <Link
           href={localePath("/", locale)}
-          className="-my-2 py-2 font-display text-[1.0625rem] font-bold tracking-[0.14em] whitespace-nowrap"
+          className="-my-2 flex items-center py-2"
           aria-label="Kadokowe — home"
         >
-          KADO<span className="text-red">KOWE</span>
+          {/* The supplied lockup includes the tagline, which is illegible at
+              header size and already set as live text on the homepage, so this
+              is the wordmark alone. Served from /public rather than Cloudinary:
+              it is on every page, never changes, and a round trip to a CDN for
+              39KB costs more than it saves.
+
+              width/height are declared so the header reserves the space before
+              the image loads — otherwise the nav jumps as it arrives, which is
+              the layout shift NFR-1.5 caps at 0.1. */}
+          <Image
+            src="/kadokowe-wordmark.png"
+            alt="Kadokowe"
+            width={600}
+            height={121}
+            priority
+            className="h-7 w-auto sm:h-8"
+          />
         </Link>
 
         <nav className="ml-auto hidden items-center gap-5 lg:flex xl:gap-7">

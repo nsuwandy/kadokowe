@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/products/import", label: "Import" },
   { href: "/admin/products/photos", label: "Photos" },
+  { href: "/admin/craft", label: "Custom Made" },
   { href: "/admin/projects", label: "Our Work" },
   { href: "/admin/articles", label: "Insights" },
   { href: "/admin/pages", label: "Page copy" },
