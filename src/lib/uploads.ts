@@ -93,8 +93,10 @@ export async function storeEnquiryFile(file: File): Promise<string> {
     return `${id}::${label}`;
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, id), buffer);
+  // Development only — see the note on resolveEnquiryFile for why these
+  // filesystem calls are hidden from the build tracer.
+  await mkdir(/*turbopackIgnore: true*/ UPLOAD_DIR, { recursive: true });
+  await writeFile(path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, id), buffer);
   return `${id}::${label}`;
 }
 
@@ -120,12 +122,29 @@ export async function resolveEnquiryFile(
     return { kind: "url", url };
   }
 
-  const full = path.join(UPLOAD_DIR, id);
+  /**
+   * The disk backend below never runs in production — reaching it means
+   * Cloudinary is unconfigured, which on a serverless host would lose the file
+   * anyway. It is marked turbopackIgnore because UPLOAD_DIR is computed at
+   * runtime, and a filesystem path the tracer cannot resolve statically makes
+   * it trace the entire project into the function bundle: every source file
+   * and the whole public folder shipped as server code, slowing deploys and
+   * eventually breaching the size limit.
+   *
+   * The paths are still validated at runtime, which is what actually matters
+   * for safety; the comments only stop the build-time tracer from guessing.
+   */
+  const full = path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, id);
   // Re-resolve inside the directory so a traversal attempt cannot escape it,
   // even though the caller has already checked the shape of the name.
-  if (path.dirname(path.resolve(full)) !== path.resolve(UPLOAD_DIR)) return null;
+  if (
+    path.dirname(path.resolve(/*turbopackIgnore: true*/ full)) !==
+    path.resolve(/*turbopackIgnore: true*/ UPLOAD_DIR)
+  ) {
+    return null;
+  }
   try {
-    return { kind: "bytes", data: await readFile(full) };
+    return { kind: "bytes", data: await readFile(/*turbopackIgnore: true*/ full) };
   } catch {
     return null;
   }
