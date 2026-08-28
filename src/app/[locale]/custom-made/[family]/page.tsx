@@ -27,12 +27,13 @@ export async function generateMetadata({
   const f = familyBySlug(family);
   if (!isLocale(locale) || !f) return {};
   const l = locale as AppLocale;
-  // Respect the copy override here too — an operator who rewrites the
-  // headline expects the search result to match it, and metadata reading
-  // from a different source than the page is the kind of drift nobody
-  // notices until it is embarrassing.
+  // The introduction, not the headline. A meta description is the snippet
+  // shown under the result, and a seven-word headline leaves Google to invent
+  // one from the page — usually from whatever text happens to be first.
+  // Respects the operator's override, so a rewritten introduction reaches the
+  // search result rather than drifting from it.
   const description = await pageCopy(
-    `custom-made.${f.slug}`, "heading", l, l === "id" ? f.leadId : f.leadEn,
+    `custom-made.${f.slug}`, "intro", l, l === "id" ? f.introId : f.introEn,
   );
   const blocks = await pageBlocks(`custom-made.${f.slug}`);
   return shareMetadata({

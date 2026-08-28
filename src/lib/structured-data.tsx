@@ -18,13 +18,29 @@ type Json = Record<string, unknown>;
 export function organizationSchema(): Json {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    // Organization *and* LocalBusiness: the business is national in reach but
+    // physically in Surabaya, and a search for a supplier in a named city is
+    // answered from local signals. The previous schema gave the country and
+    // nothing else, which is no help at all to a query naming a city.
+    "@type": ["Organization", "LocalBusiness"],
     name: SITE.name,
     url: SITE.url,
     description: SITE.taglineEn,
     email: CONTACT.email,
     telephone: CONTACT.phoneDisplay,
-    address: { "@type": "PostalAddress", addressCountry: "ID" },
+    address: {
+      "@type": "PostalAddress",
+      // A street address belongs here too. Without one Google will not treat
+      // this as a verified local business, and no amount of markup
+      // substitutes for a Google Business Profile — see the note in README.
+      addressLocality: "Surabaya",
+      addressRegion: "Jawa Timur",
+      addressCountry: "ID",
+    },
+    areaServed: [
+      { "@type": "City", name: "Surabaya" },
+      { "@type": "Country", name: "Indonesia" },
+    ],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "sales",

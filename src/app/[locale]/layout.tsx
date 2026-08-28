@@ -47,8 +47,11 @@ export const metadata: Metadata = {
     default: `${SITE.name} — ${SITE.taglineEn}`,
     template: `%s — ${SITE.name}`,
   },
+  // Names the city and the things people actually search for. The previous
+  // description said who Kadokowe is without saying what it makes or where it
+  // is, which reads well and matches nothing anyone types.
   description:
-    "Kadokowe is a strategic merchandising partner. We turn campaigns, budgets and deadlines into merchandise that carries a brand story — strategy, design, sourcing and production under one roof.",
+    "Corporate merchandise, custom gift boxes and branded packaging, made in Surabaya. Kadokowe is a strategic merchandising partner — strategy, design, sourcing and production under one roof.",
   openGraph: {
     type: "website",
     siteName: SITE.name,
