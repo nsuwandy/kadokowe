@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 /** Labels are what the operator calls things, not what the schema calls them. */
 const LINKS = [
   { href: "/admin", label: "Dashboard", exact: true },
+  { href: "/admin/home", label: "Homepage" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/products/grid", label: "Bulk table" },
   { href: "/admin/products/import", label: "Import CSV" },

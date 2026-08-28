@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { isLocale, type AppLocale } from "@/lib/i18n";
+import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { Wrap, Section, Eyebrow, SectionHead } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
@@ -7,6 +7,7 @@ import { Plate } from "@/components/ui/Plate";
 import { OUTCOMES, PROCESS, PRODUCT_CATEGORIES } from "@/content/home";
 import { publishedConcepts } from "@/content/concepts";
 import { ClientLogos } from "@/components/ClientLogos";
+import { HeroRotator } from "@/components/HeroRotator";
 import { ProductCard } from "@/components/ProductCard";
 import { db } from "@/lib/db";
 
@@ -14,7 +15,9 @@ const HOME_PRODUCT_SELECT = {
   slug: true, nameEn: true, nameId: true, shortEn: true, shortId: true,
   tagsEn: true, tagsId: true, heroImage: true, availability: true,
 } as const;
-import { pageBlocks, blockCopy } from "@/lib/page-content";
+import { homeBlocks, blockCopy } from "@/lib/page-content";
+import { livePublished } from "@/lib/articles";
+import { CATEGORIES } from "@/content/insights";
 
 /**
  * Homepage — SRS v1.4 §11.4 and FR-2.1 to FR-2.14.
@@ -32,14 +35,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  // FR-10.6 / FR-2.2 — administrator-set hero imagery and headline, each
-  // falling back to the design default when unset.
-  const hero = await pageBlocks("home.hero");
-
-  // FR-10.5 — the "Don't start with a product" section is editable too. Only
-  // the first line of the headline is overridable: the italic second line is
-  // a typographic pair with it, and letting the two drift apart is how this
-  // section stops reading as one sentence.
   // FR-13.6 — only offered when a collection is actually published; the link
   // would otherwise lead to an empty page.
   const hasConcepts = publishedConcepts().length > 0;
@@ -58,47 +53,89 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   // FR-2.8 / FR-10.6 — the homepage reads the flags the editors set. Both
   // fall back so the section never renders a hole: "new" widens to the most
   // recent products, and the featured project to the newest published one.
-  const [flaggedNew, recentProducts, flaggedProject, recentProject] = await Promise.all([
-    db.product.findMany({
-      where: { visibility: "PUBLISHED", isNew: true },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: HOME_PRODUCT_SELECT,
-    }),
-    db.product.findMany({
-      where: { visibility: "PUBLISHED" },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: HOME_PRODUCT_SELECT,
-    }),
-    db.project.findFirst({
-      where: { visibility: "PUBLISHED", featured: true },
-      orderBy: { sortOrder: "asc" },
-      select: { slug: true },
-    }),
-    db.project.findFirst({
-      where: { visibility: "PUBLISHED" },
-      orderBy: [{ sortOrder: "asc" }, { publishedAt: "desc" }],
-      select: { slug: true },
-    }),
-  ]);
+  // FR-2.14 — the featured band renders the project itself, not a fixed
+  // story. Selecting only the slug is what let the band keep one client's
+  // headline and statistics while linking to a different project entirely.
+  const PROJECT_SELECT = {
+    slug: true, titleEn: true, titleId: true, client: true,
+    summaryEn: true, summaryId: true, stats: true, heroImage: true,
+  } as const;
+
+  const [flaggedNew, recentProducts, flaggedProject, recentProject, latestArticles, blocks] =
+    await Promise.all([
+      db.product.findMany({
+        where: { visibility: "PUBLISHED", isNew: true },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: HOME_PRODUCT_SELECT,
+      }),
+      db.product.findMany({
+        where: { visibility: "PUBLISHED" },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: HOME_PRODUCT_SELECT,
+      }),
+      db.project.findFirst({
+        where: { visibility: "PUBLISHED", featured: true },
+        orderBy: { sortOrder: "asc" },
+        select: PROJECT_SELECT,
+      }),
+      db.project.findFirst({
+        where: { visibility: "PUBLISHED" },
+        orderBy: [{ sortOrder: "asc" }, { publishedAt: "desc" }],
+        select: PROJECT_SELECT,
+      }),
+      // FR-2.11 — the three most recent live articles. Previously a fixed
+      // list of three invented headlines, all linking to the index: the
+      // homepage advertised articles that did not exist.
+      db.article.findMany({
+        where: livePublished(),
+        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+        take: 3,
+        select: {
+          slug: true, titleEn: true, titleId: true,
+          category: true, heroImage: true,
+        },
+      }),
+      // FR-10.5 / FR-10.6 — every editable line on the page, in one query.
+      homeBlocks(),
+    ]);
 
   const newProducts = flaggedNew.length > 0 ? flaggedNew : recentProducts;
   const featuredProject = flaggedProject ?? recentProject;
+  const featuredStats =
+    (featuredProject?.stats as
+      | { value: string; labelEn: string; labelId?: string }[]
+      | null) ?? [];
 
-  const outcomes = await pageBlocks("home.outcomes");
-  const outcomesHeading = blockCopy(
-    outcomes, "heading", l,
-    t("Don't start with a product.", "Jangan mulai dari produk."),
+  const categoryLabel = (key: string) => {
+    const c = CATEGORIES.find((x) => x.key === key);
+    return c ? t(c.en, c.id) : key;
+  };
+
+  /** An editable line: the administrator's override, or the design default. */
+  const copy = (key: string, field: string, en: string, id: string) =>
+    blockCopy(blocks[key], field, l, t(en, id));
+
+  const outcomesHeading = copy(
+    "home.outcomes", "heading",
+    "Don't start with a product.", "Jangan mulai dari produk.",
   );
-  const outcomesIntro = blockCopy(
-    outcomes, "intro", l,
-    t("Most clients arrive with a campaign, a deadline and a budget — not a product code. These are the six conversations we have most often.",
-      "Sebagian besar klien datang dengan kampanye, tenggat waktu, dan anggaran — bukan kode produk. Inilah enam percakapan yang paling sering kami lakukan."),
+  const outcomesIntro = copy(
+    "home.outcomes", "intro",
+    "Most clients arrive with a campaign, a deadline and a budget — not a product code. These are the six conversations we have most often.",
+    "Sebagian besar klien datang dengan kampanye, tenggat waktu, dan anggaran — bukan kode produk. Inilah enam percakapan yang paling sering kami lakukan.",
   );
-  const heroImage =
-    [hero.hero1?.en, hero.hero2?.en, hero.hero3?.en].find((v) => v && v.trim()) ?? null;
+
+  // FR-2.2 — up to three hero photographs, faded one into the next. Only the
+  // first was ever shown before, which made slots 2 and 3 controls that
+  // reported success and changed nothing.
+  const hero = blocks["home.hero"] ?? {};
+  const heroImages = [hero.hero1?.en, hero.hero2?.en, hero.hero3?.en]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean);
   const heroHeading = (l === "id" ? hero.heading?.id : hero.heading?.en) || null;
+  const heroIntro = (l === "id" ? hero.intro?.id : hero.intro?.en) || null;
 
   return (
     <>
@@ -108,7 +145,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           <div className="flex items-center gap-3">
             <span className="h-0.5 w-10 bg-red" aria-hidden />
             <Eyebrow>
-              {t("Strategic Merchandising Partner", "Mitra Merchandising Strategis")}
+              {copy(
+                "home.hero", "eyebrow",
+                "Strategic Merchandising Partner",
+                "Mitra Merchandising Strategis",
+              )}
             </Eyebrow>
           </div>
 
@@ -126,6 +167,14 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               </>
             )}
           </h1>
+
+          {/* Offered in the editor from the start; until now it was written
+              into the database and rendered nowhere. */}
+          {heroIntro && (
+            <p className="max-w-[52ch] font-editorial text-lede italic text-muted">
+              {heroIntro}
+            </p>
+          )}
 
           <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-muted">
             {[
@@ -151,17 +200,34 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </div>
         </div>
 
-        <div className="order-1 min-h-[46vh] lg:order-2 lg:min-h-0">
-          <Plate
-            tone="dark"
-            ratio="auto"
-            priority
-            publicId={heroImage}
-            alt=""
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            caption="Hero — rotating: custom gift set, packaging detail, event merchandise, production floor"
-            className="h-full min-h-[46vh] lg:min-h-full"
-          />
+        <div className="relative order-1 min-h-[46vh] lg:order-2 lg:min-h-0">
+          {heroImages.length > 1 ? (
+            <HeroRotator
+              slides={heroImages.map((publicId, i) => (
+                <Plate
+                  key={publicId}
+                  tone="dark"
+                  ratio="auto"
+                  priority={i === 0}
+                  publicId={publicId}
+                  alt=""
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="h-full min-h-[46vh] lg:min-h-full"
+                />
+              ))}
+            />
+          ) : (
+            <Plate
+              tone="dark"
+              ratio="auto"
+              priority
+              publicId={heroImages[0] ?? null}
+              alt=""
+              sizes="(min-width: 1024px) 50vw, 100vw"
+              caption="Hero — rotating: custom gift set, packaging detail, event merchandise, production floor"
+              className="h-full min-h-[46vh] lg:min-h-full"
+            />
+          )}
         </div>
       </section>
 
@@ -169,7 +235,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <Section>
         <Wrap>
           <SectionHead
-            eyebrow={t("Where to begin", "Mulai dari mana")}
+            eyebrow={copy("home.outcomes", "eyebrow", "Where to begin", "Mulai dari mana")}
             title={
               <>
                 {outcomesHeading}
@@ -216,9 +282,13 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <Section tone="warm">
         <Wrap>
           <SectionHead
-            eyebrow={t("The Idea Library", "Pustaka Ide")}
-            title={t("Ideas worth branding.", "Ide yang layak dijadikan merek.")}
-            intro={t(
+            eyebrow={copy("home.ideas", "eyebrow", "The Idea Library", "Pustaka Ide")}
+            title={copy(
+              "home.ideas", "heading",
+              "Ideas worth branding.", "Ide yang layak dijadikan merek.",
+            )}
+            intro={copy(
+              "home.ideas", "intro",
               "Not a catalogue. A working set of starting points — browsable by product, by purpose, by industry, or by budget.",
               "Bukan katalog. Kumpulan titik awal — dapat ditelusuri berdasarkan produk, tujuan, industri, atau anggaran.",
             )}
@@ -283,46 +353,44 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           <Plate
             tone="red"
             ratio="auto"
+            publicId={featuredProject.heroImage}
             sizes="(min-width: 1024px) 55vw, 100vw"
-            caption="Foldable printed bags in public use across the city"
+            caption="Featured project"
             className="h-full min-h-[42vh] lg:min-h-full"
           />
         </div>
         <div className="flex flex-col justify-center gap-6 px-gutter py-12 lg:py-16">
           <Eyebrow className="text-plate-c">
-            {t(
-              "Our Work — Pakuwon, Urban Sport Digital Game",
-              "Karya Kami — Pakuwon, Urban Sport Digital Game",
-            )}
+            {t("Our Work", "Karya Kami")} — {featuredProject.client}
           </Eyebrow>
           <h2 className="balance text-xl-display font-bold tracked-tight text-paper">
-            {t("Breaking the Tumbler Trap", "Keluar dari Jebakan Tumbler")}
+            {pick(featuredProject, "title", l)}
           </h2>
-          <blockquote className="max-w-[46ch] border-l-2 border-red pl-5 font-editorial text-lede italic text-plate-a">
-            {t(
-              "The budget would only buy a poor tumbler. So we proposed a fully printed foldable bag instead — same money, far more use, and branding that stayed visible long after the event closed.",
-              "Anggaran hanya cukup untuk tumbler berkualitas rendah. Maka kami mengusulkan tas lipat bercetak penuh — biaya sama, manfaat jauh lebih besar, dan merek tetap terlihat lama setelah acara usai.",
-            )}
-          </blockquote>
-          <dl className="flex flex-wrap gap-10 pt-2">
-            {[
-              { v: "1,500", l: t("Units delivered", "Unit dikirim") },
-              { v: "Rp 15K", l: t("Budget per piece", "Anggaran per unit") },
-              { v: "0", l: t("Forgotten tumblers", "Tumbler terlupakan") },
-            ].map((s) => (
-              <div key={s.l}>
-                <dt className="sr-only">{s.l}</dt>
-                <dd>
-                  <span className="block text-3xl font-bold tracked-tight tabular-nums text-paper">
-                    {s.v}
-                  </span>
-                  <span className="text-[0.625rem] uppercase tracking-[0.15em] text-muted">
-                    {s.l}
-                  </span>
-                </dd>
-              </div>
-            ))}
-          </dl>
+          {pickOptional(featuredProject, "summary", l) && (
+            <blockquote className="max-w-[46ch] border-l-2 border-red pl-5 font-editorial text-lede italic text-plate-a">
+              {pickOptional(featuredProject, "summary", l)}
+            </blockquote>
+          )}
+          {featuredStats.length > 0 && (
+            <dl className="flex flex-wrap gap-10 pt-2">
+              {featuredStats.map((stat) => {
+                const label = l === "id" && stat.labelId ? stat.labelId : stat.labelEn;
+                return (
+                  <div key={stat.labelEn}>
+                    <dt className="sr-only">{label}</dt>
+                    <dd>
+                      <span className="block text-3xl font-bold tracked-tight tabular-nums text-paper">
+                        {stat.value}
+                      </span>
+                      <span className="text-[0.625rem] uppercase tracking-[0.15em] text-muted">
+                        {label}
+                      </span>
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          )}
           <Button
             href={path(`/our-work/${featuredProject.slug}`)}
             variant="onDark"
@@ -348,13 +416,15 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             >
               <Eyebrow accent>{t("Custom Made", "Dibuat Khusus")}</Eyebrow>
               <h2 className="balance max-w-[20ch] text-lg-display font-bold tracked-tight transition-colors group-hover:text-red">
-                {t(
+                {copy(
+                  "home.teasers", "customHeading",
                   "Made for your brand. Not picked from a catalogue.",
                   "Dibuat untuk merek Anda. Bukan dipilih dari katalog.",
                 )}
               </h2>
               <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-muted">
-                {t(
+                {copy(
+                  "home.teasers", "customIntro",
                   "Bags, textiles, plush, silicone, apparel and packaging — developed from scratch around an idea rather than selected from stock.",
                   "Tas, tekstil, plush, silikon, pakaian, dan kemasan — dikembangkan dari nol berdasarkan ide, bukan dipilih dari stok.",
                 )}
@@ -371,10 +441,14 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             >
               <Eyebrow accent>{t("Need it fast?", "Butuh cepat?")}</Eyebrow>
               <h2 className="text-md-display font-semibold transition-colors group-hover:text-red">
-                {t("Ready when you are.", "Siap saat Anda siap.")}
+                {copy(
+                  "home.teasers", "readyHeading",
+                  "Ready when you are.", "Siap saat Anda siap.",
+                )}
               </h2>
               <p className="text-[0.9375rem] leading-relaxed text-muted">
-                {t(
+                {copy(
+                  "home.teasers", "readyIntro",
                   "Merchandise already in our warehouse, ready for customisation and rush deadlines.",
                   "Merchandise yang sudah ada di gudang kami, siap dikustomisasi untuk tenggat mendesak.",
                 )}
@@ -392,7 +466,10 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <Section className="pb-0">
         <Wrap className="mb-8">
           <Eyebrow accent>
-            {t("Browse by product", "Telusuri berdasarkan produk")}
+            {copy(
+              "home.categories", "eyebrow",
+              "Browse by product", "Telusuri berdasarkan produk",
+            )}
           </Eyebrow>
         </Wrap>
         <ul className="grid grid-cols-2 gap-px border-y border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
@@ -419,15 +496,19 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <div className="relative min-h-[40vh] lg:min-h-[460px]">
           <Plate
             ratio="auto"
+            publicId={blocks["home.process"]?.hero?.en ?? null}
             sizes="(min-width: 1024px) 50vw, 100vw"
             caption="Studio — design review, mockups on the table"
             className="h-full min-h-[40vh] lg:min-h-full"
           />
         </div>
         <div className="flex flex-col justify-center gap-6 bg-warm px-gutter py-12 lg:py-20">
-          <Eyebrow accent>{t("How we work", "Cara kami bekerja")}</Eyebrow>
+          <Eyebrow accent>
+            {copy("home.process", "eyebrow", "How we work", "Cara kami bekerja")}
+          </Eyebrow>
           <h2 className="balance text-lg-display font-bold tracked-tight">
-            {t(
+            {copy(
+              "home.process", "heading",
               "Our real product is the process. The merchandise is what comes out of it.",
               "Produk kami yang sesungguhnya adalah prosesnya. Merchandise adalah hasilnya.",
             )}
@@ -484,7 +565,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <Wrap>
           <div className="mb-7 flex flex-wrap items-baseline justify-between gap-4">
             <h2 className="text-lg-display font-bold tracked-tight">
-              {t("New discoveries", "Temuan terbaru")}
+              {copy("home.new", "heading", "New discoveries", "Temuan terbaru")}
             </h2>
             <ArrowLink href={path("/ideas")}>{t("See all", "Lihat semua")}</ArrowLink>
           </div>
@@ -510,22 +591,25 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <Plate
           tone="dark"
           ratio="auto"
+          publicId={blocks["home.behind"]?.hero?.en ?? null}
           sizes="100vw"
           caption="Production floor — UV printing, engraving, QC bench"
           className="absolute inset-0 h-full"
         />
         <div className="relative z-2 flex max-w-[640px] flex-col gap-4 self-end px-gutter py-12 lg:py-16">
           <Eyebrow className="text-red">
-            {t("Behind the scenes", "Di balik layar")}
+            {copy("home.behind", "eyebrow", "Behind the scenes", "Di balik layar")}
           </Eyebrow>
           <h2 className="balance text-lg-display font-bold tracked-tight text-warm">
-            {t(
+            {copy(
+              "home.behind", "heading",
               "In-house machines for the rush. Trusted factories for the scale.",
               "Mesin sendiri untuk pesanan kilat. Pabrik tepercaya untuk skala besar.",
             )}
           </h2>
           <p className="max-w-[62ch] text-[0.9375rem] leading-relaxed text-plate-c">
-            {t(
+            {copy(
+              "home.behind", "intro",
               "UV, DTF, sublimation and engraving run under our own roof, so a small run does not wait in a queue. Beyond that we bridge to local production and global sourcing — which is how a rush order ships in five days and a large campaign still lands on time.",
               "UV, DTF, sublimasi, dan gravir berjalan di tempat kami sendiri, sehingga pesanan kecil tidak perlu mengantre. Selebihnya kami menjembatani produksi lokal dan pengadaan global — itulah sebabnya pesanan kilat terkirim dalam lima hari dan kampanye besar tetap tepat waktu.",
             )}
@@ -533,14 +617,23 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </section>
 
-      {/* 09 — Insights. Editorial cards. */}
+      {/* 09 — Insights. Editorial cards.
+          Real articles, newest first. This was a fixed list of three invented
+          headlines that all linked to the index, so the homepage promised
+          writing that did not exist and the client could not change it. */}
+      {latestArticles.length > 0 && (
       <Section tone="warm">
         <Wrap>
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-col gap-3">
-              <Eyebrow accent>{t("Ideas & Insights", "Ide & Wawasan")}</Eyebrow>
+              <Eyebrow accent>
+                {copy("home.insights", "eyebrow", "Ideas & Insights", "Ide & Wawasan")}
+              </Eyebrow>
               <h2 className="text-lg-display font-bold tracked-tight">
-                {t("What we are watching.", "Yang sedang kami amati.")}
+                {copy(
+                  "home.insights", "heading",
+                  "What we are watching.", "Yang sedang kami amati.",
+                )}
               </h2>
             </div>
             <ArrowLink href={path("/insights")}>
@@ -548,44 +641,23 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             </ArrowLink>
           </div>
           <ul className="grid gap-6 md:grid-cols-3 md:gap-8">
-            {[
-              {
-                cat: t("Gifting Strategy", "Strategi Hadiah"),
-                title: t(
-                  "Why your company doesn't need another tumbler",
-                  "Mengapa perusahaan Anda tidak butuh tumbler lagi",
-                ),
-                shot: "Editorial — material samples",
-              },
-              {
-                cat: t("Ideas & Trends", "Ide & Tren"),
-                title: t(
-                  "What NFC merchandise actually does for a campaign",
-                  "Apa yang sebenarnya dilakukan merchandise NFC",
-                ),
-                shot: "Editorial — NFC chip in production",
-              },
-              {
-                cat: t("Behind the Making", "Di Balik Pembuatan"),
-                title: t(
-                  "Five days from brief to delivery: how rush orders really run",
-                  "Lima hari dari brief ke pengiriman",
-                ),
-                shot: "Editorial — factory visit",
-              },
-            ].map((a) => (
-              <li key={a.title}>
-                <a href={path("/insights")} className="group flex flex-col gap-3">
+            {latestArticles.map((article) => (
+              <li key={article.slug}>
+                <a
+                  href={path(`/insights/${article.slug}`)}
+                  className="group flex flex-col gap-3"
+                >
                   <Plate
                     ratio="16 / 9.5"
-                    caption={a.shot}
+                    publicId={article.heroImage}
+                    caption="Editorial"
                     sizes="(min-width: 768px) 33vw, 100vw"
                   />
                   <span className="text-[0.5625rem] font-bold uppercase tracking-[0.16em] text-red">
-                    {a.cat}
+                    {categoryLabel(article.category)}
                   </span>
                   <h3 className="text-[1.0625rem] font-semibold leading-snug transition-colors group-hover:text-red">
-                    {a.title}
+                    {pick(article, "title", l)}
                   </h3>
                 </a>
               </li>
@@ -593,24 +665,27 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </ul>
         </Wrap>
       </Section>
+      )}
 
       {/* 10 — Closing CTA. Red band. */}
       <section className="bg-red py-14 text-paper md:py-24">
         <Wrap className="flex flex-col items-start gap-8">
           <h2 className="balance text-mega font-bold tracked-tight">
-            {t(
+            {copy(
+              "home.cta", "heading",
               "Your campaign deserves more than generic.",
               "Kampanye Anda layak mendapat lebih dari sekadar generik.",
             )}
           </h2>
           <p className="max-w-[48ch] font-editorial text-lede italic text-paper/85">
-            {t(
+            {copy(
+              "home.cta", "intro",
               "Tell us the problem, the budget or the deadline. We will work out what to make.",
               "Sampaikan masalah, anggaran, atau tenggat waktunya. Kami yang akan menentukan apa yang harus dibuat.",
             )}
           </p>
           <Button href={path("/start-a-project")} variant="onRed">
-            {t("Let's Create Something.", "Mari Ciptakan Sesuatu.")}
+            {copy("home.cta", "cta", "Let's Create Something.", "Mari Ciptakan Sesuatu.")}
           </Button>
         </Wrap>
       </section>
