@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { CONTACT, SITE } from "@/lib/site";
 
 /**
@@ -25,9 +26,17 @@ export const metadata: Metadata = {
 export default function ComingSoonPage() {
   return (
     <main className="flex min-h-screen flex-col justify-between bg-ink px-gutter py-12 text-warm">
-      <span className="font-display text-base font-bold tracking-[0.14em]">
-        KADO<span className="text-red">KOWE</span>
-      </span>
+      {/* Same white lockup as the footer — this page is on the same ink
+          ground, and it is what a visitor sees while the curtain is up. */}
+      <Image
+        src="/kadokowe-wordmark-white.svg"
+        alt="Kadokowe"
+        width={131}
+        height={24}
+        unoptimized
+        priority
+        className="h-7 w-auto self-start"
+      />
 
       <div className="flex max-w-[46rem] flex-col gap-7 py-16">
         <span className="eyebrow text-red">Coming soon · Segera hadir</span>

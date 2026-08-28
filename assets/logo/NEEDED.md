@@ -1,4 +1,11 @@
-# The supplied logo cannot be used on the site as it is
+# Logo status
+
+**Resolved for the header and the footer.** A white vector was supplied and is
+in use on ink; the dark wordmark was extracted from the first file and is in
+use on white. What follows is the record of why the original file could not be
+used directly.
+
+## The first file: unusable as supplied
 
 `kadokowe-wordmark-supplied.jpeg` — 1024×271, progressive JPEG, 3 components.
 Currently held outside the project at `Kadokowe/brand-assets/`, because macOS
@@ -53,3 +60,13 @@ Those are two different wordmarks. The logo is the authority, so the header
 should either use the supplied artwork or be reset in lower case to match.
 Worth confirming with Kadokowe before changing, since the header is on every
 page and the two are currently inconsistent.
+
+
+## Still outstanding
+
+- **A mark on its own** — the bow without the wordmark, for the favicon and
+  the iOS icon, where the full lockup is illegible at 16–32px. Drop it in as
+  `src/app/icon.png` and `src/app/apple-icon.png` and Next picks it up.
+- **A dark vector.** The header currently uses a 39KB PNG extracted from the
+  raster-in-an-SVG. The white version arrived as a real vector; the same
+  artwork in dark would let the header match it.

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { NAV, label, localePath } from "@/lib/nav";
 import type { AppLocale } from "@/lib/i18n";
@@ -17,9 +18,18 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
       <Wrap>
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
           <div>
-            <div className="mb-4 font-display text-[1.0625rem] font-bold tracking-[0.14em] text-paper">
-              KADO<span className="text-red">KOWE</span>
-            </div>
+            {/* The white lockup, for the ink ground. A real vector this time,
+                so it is served as SVG and stays crisp at any size — and
+                unoptimized, because running an SVG through the image pipeline
+                rasterises it for no gain. */}
+            <Image
+              src="/kadokowe-wordmark-white.svg"
+              alt="Kadokowe"
+              width={131}
+              height={24}
+              unoptimized
+              className="mb-4 h-7 w-auto"
+            />
             <p className="max-w-[32ch] font-editorial text-[1.0625rem] italic text-plate-c">
               {t(
                 "More than gifts. We craft brand stories.",
