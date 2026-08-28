@@ -26,7 +26,14 @@ export const SITE = {
   name: "Kadokowe",
   taglineEn: "More Than Gifts, We Craft Brand Stories.",
   taglineId: "Lebih Dari Sekadar Hadiah, Kami Merangkai Cerita Merek.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  /**
+   * Normalised without a trailing slash, because six call sites build URLs by
+   * concatenating a leading-slash path onto it. A value pasted from a browser
+   * address bar usually carries one, and the result is a double slash in
+   * canonical tags, share URLs and the newsletter confirmation link — none of
+   * which fails loudly. Fixed here rather than at each consumer.
+   */
+  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, ""),
 } as const;
 
 /**

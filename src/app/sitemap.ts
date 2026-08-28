@@ -27,7 +27,7 @@ import { publishedConcepts } from "@/content/concepts";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = SITE.url.replace(/\/$/, "");
+  const base = SITE.url;
 
   const entry = (path: string, priority = 0.7): MetadataRoute.Sitemap[number] => ({
     url: `${base}${path}`,
