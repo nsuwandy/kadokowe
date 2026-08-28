@@ -208,6 +208,19 @@ cannot boot just makes the failure public.
 8. **Point the domain.** Add it in Vercel, copy the records Vercel shows into
    the registrar's DNS. Leave MX records alone or you break the client's email.
 
+### Seeding after a deploy
+
+Seeding writes straight to the database, so the running app never learns
+anything changed. Pages that are prerendered — Insights, and the article
+pages — keep serving the snapshot taken at build time, which is empty if the
+build ran before the seed. **Redeploy after seeding**, or wait for the hourly
+revalidation.
+
+Our Work does not have this problem because its industry filter makes it
+render per request, and content published through the admin does not either
+because the save actions call `revalidatePath`. It is specific to writing to
+the database behind the application's back.
+
 ### Holding page
 
 The domain usually goes live before the catalogue does, and an empty
