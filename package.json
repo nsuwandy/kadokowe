@@ -11,7 +11,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/term-order.test.ts && tsx tests/enquiry-uploads.test.ts && tsx tests/gallery.test.ts && tsx tests/rate-limit.test.ts && tsx tests/contact.test.ts",
+    "test": "tsx tests/term-order.test.ts && tsx tests/enquiry-uploads.test.ts && tsx tests/gallery.test.ts && tsx tests/rate-limit.test.ts && tsx tests/contact.test.ts && tsx tests/photo-import.test.ts",
     "admin:set": "tsx --env-file=.env scripts/admin.ts",
     "postinstall": "prisma generate"
   },
@@ -26,6 +26,7 @@
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.1",
     "clsx": "^2.1.1",
+    "fflate": "^0.8.3",
     "iron-session": "^8.0.4",
     "lucide-react": "^1.33.0",
     "next": "16.3.1",
