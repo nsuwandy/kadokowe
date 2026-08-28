@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "./db";
+import { OUTCOMES } from "@/content/home";
 import type { AppLocale } from "./i18n";
 
 /**
@@ -93,8 +94,66 @@ export const HOME_SECTIONS = [
   },
 ] as const;
 
+/**
+ * The About page, section by section, in the order they are scrolled through.
+ *
+ * Same shape as HOME_SECTIONS and for the same reason: the sections only make
+ * sense in the order the page reads, and an operator looking for "the bit with
+ * the founders' photograph" finds it by where it sits.
+ */
+export const ABOUT_SECTIONS = [
+  {
+    key: "about.story",
+    label: "01 · Opening",
+    note: "The headline and standfirst at the top of the page.",
+  },
+  {
+    key: "about.problem",
+    label: "02 · The problem we saw",
+    note: "The founders' photograph and the two paragraphs beside it.",
+  },
+  {
+    key: "about.people",
+    label: "03 · The people",
+    note: "Portraits and biographies. Clearing a field restores the original — it does not remove the person; that needs a developer.",
+  },
+  {
+    key: "about.vision",
+    label: "04 · Vision & Mission",
+    note: "The two italic statements.",
+  },
+  {
+    key: "about.values",
+    label: "05 · Core values",
+    note: "Five values and their one-line explanations. Clearing a field restores the original wording; the number of values is fixed.",
+  },
+  {
+    key: "about.closing",
+    label: "06 · Closing band",
+    note: "The red band at the foot of the page.",
+  },
+] as const;
+
 /** Fields each page key exposes, so the editor knows what to render. */
-export const PAGE_FIELDS: Record<string, { name: string; label: string; multiline?: boolean; image?: boolean }[]> = {
+export type PageField = {
+  name: string;
+  label: string;
+  multiline?: boolean;
+  image?: boolean;
+  /** Shown under the field. For the photographs this is the shot the design
+   *  was composed around — the one thing the person uploading needs to know
+   *  and the one thing a label has no room for. */
+  hint?: string;
+  /**
+   * One input rather than a pair, for values that are the same in both
+   * languages — a person's name. Stored in the English slot, and read from it
+   * directly rather than through blockCopy, which would fall back to the code
+   * default on the Indonesian page.
+   */
+  single?: boolean;
+};
+
+export const PAGE_FIELDS: Record<string, PageField[]> = {
   default: [
     { name: "heading", label: "Heading" },
     { name: "intro", label: "Introduction", multiline: true },
@@ -118,11 +177,32 @@ export const PAGE_FIELDS: Record<string, { name: string; label: string; multilin
     { name: "eyebrow", label: "Small line above the headline" },
     { name: "heading", label: "Headline — first line only" },
     { name: "intro", label: "Introduction", multiline: true },
+    // Keyed by slug rather than position, so reordering the cards does not
+    // silently move six photographs onto the wrong ones. The label and the
+    // hint are read from the cards themselves and cannot drift from them.
+    ...OUTCOMES.map((o) => ({
+      name: `card_${o.slug}`,
+      label: `${o.titleEn} — ${o.subEn}`,
+      image: true,
+      hint: o.shot,
+    })),
   ],
   "home.ideas": [
     { name: "eyebrow", label: "Small line above the headline" },
     { name: "heading", label: "Headline" },
     { name: "intro", label: "Introduction", multiline: true },
+    // The collage, in the order it is laid out. The shapes differ and are
+    // fixed by the design, so the hint names the crop as well as the subject.
+    { name: "shot1", label: "Collage — large, upper left", image: true,
+      hint: "Portrait-ish crop. Portable electric cooking pot, lifestyle context." },
+    { name: "shot2", label: "Collage — small, upper middle", image: true,
+      hint: "Near-square crop. NFC luggage tag, macro." },
+    { name: "shot3", label: "Collage — small, upper right", image: true,
+      hint: "Near-square crop. Bamboo desk set, top-down." },
+    { name: "shot4", label: "Collage — wide, right", image: true,
+      hint: "Very wide letterbox crop. Merchandise in the field." },
+    { name: "shot5", label: "Collage — the one that breaks the grid", image: true,
+      hint: "Landscape crop, shown on a dark ground. A single feature product." },
   ],
   "home.teasers": [
     { name: "customHeading", label: "Custom Made — headline" },
@@ -151,6 +231,48 @@ export const PAGE_FIELDS: Record<string, { name: string; label: string; multilin
     { name: "eyebrow", label: "Small line above the headline" },
     { name: "heading", label: "Headline" },
   ],
+  // ---------------------------------------------------------------- about
+  "about.story": [
+    { name: "eyebrow", label: "Small line above the headline" },
+    { name: "heading", label: "Headline" },
+    { name: "intro", label: "Standfirst", multiline: true },
+  ],
+  "about.problem": [
+    { name: "eyebrow", label: "Small line above the text" },
+    { name: "intro", label: "First paragraph", multiline: true },
+    { name: "extra", label: "Second paragraph", multiline: true },
+    { name: "hero", label: "Photograph", image: true,
+      hint: "Shown left of the text on a wide screen. Founders — Lanny Kwandy and Icabel Suwandy." },
+  ],
+  "about.people": [
+    { name: "eyebrow", label: "Small line above the people" },
+    { name: "name1", label: "First person — name", single: true },
+    { name: "role1", label: "First person — role" },
+    { name: "bio1", label: "First person — biography", multiline: true },
+    { name: "photo1", label: "First person — portrait", image: true,
+      hint: "Landscape crop, 4:3. Head and shoulders reads best at this size." },
+    { name: "name2", label: "Second person — name", single: true },
+    { name: "role2", label: "Second person — role" },
+    { name: "bio2", label: "Second person — biography", multiline: true },
+    { name: "photo2", label: "Second person — portrait", image: true,
+      hint: "Landscape crop, 4:3, to match the first." },
+  ],
+  "about.vision": [
+    { name: "vision", label: "Vision", multiline: true },
+    { name: "mission", label: "Mission", multiline: true },
+  ],
+  "about.values": [
+    { name: "eyebrow", label: "Small line above the values" },
+    ...[1, 2, 3, 4, 5].flatMap((n) => [
+      { name: `value${n}`, label: `Value ${n} — name` },
+      { name: `valueDesc${n}`, label: `Value ${n} — explanation`, multiline: true },
+    ]),
+  ],
+  "about.closing": [
+    { name: "heading", label: "Headline" },
+    { name: "cta", label: "Button label" },
+  ],
+
   "home.cta": [
     { name: "heading", label: "Headline" },
     { name: "intro", label: "Text below it", multiline: true },
@@ -166,9 +288,16 @@ export const PAGE_FIELDS: Record<string, { name: string; label: string; multilin
  * Singapore and the function is not.
  */
 export async function homeBlocks(): Promise<Record<string, PageBlocks>> {
+  return sectionBlocks("home.");
+}
+
+/** Every override for one page's sections, in a single query. */
+export async function sectionBlocks(
+  prefix: string,
+): Promise<Record<string, PageBlocks>> {
   try {
     const rows = await db.pageContent.findMany({
-      where: { key: { startsWith: "home." } },
+      where: { key: { startsWith: prefix } },
     });
     return Object.fromEntries(
       rows.map((r) => [r.key, (r.blocks as PageBlocks | null) ?? {}]),

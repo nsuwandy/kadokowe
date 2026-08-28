@@ -2,9 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { HOME_SECTIONS, fieldsFor, homeBlocks } from "@/lib/page-content";
-import { PageCopyForm } from "@/components/admin/PageCopyForm";
-import { savePageCopy } from "@/app/admin/pages/actions";
+import { HOME_SECTIONS, homeBlocks } from "@/lib/page-content";
+import { SectionEditor } from "@/components/admin/SectionEditor";
 
 /**
  * Homepage editor — FR-10.5, FR-10.6.
@@ -43,78 +42,17 @@ export default async function AdminHome({
     }),
   ]);
 
-  const values = blocks[section.key] ?? {};
-
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-baseline gap-4">
-        <h1 className="text-2xl font-bold">Homepage</h1>
-        <Link
-          href="/"
-          target="_blank"
-          className="text-xs text-muted underline-offset-2 hover:underline"
-        >
-          View the homepage ↗
-        </Link>
-      </div>
-      <p className="-mt-3 max-w-[74ch] text-sm text-muted">
-        The sections below are in the order they appear on the page. Leave a
-        field empty to keep the original wording — clearing a field you have
-        changed restores it rather than blanking the page.
-      </p>
-
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <nav className="flex flex-col gap-px self-start bg-line">
-          {HOME_SECTIONS.map((s) => {
-            const edited = Object.keys(blocks[s.key] ?? {}).length > 0;
-            return (
-              <a
-                key={s.key}
-                href={`/admin/home?key=${s.key}`}
-                aria-current={s.key === section.key ? "page" : undefined}
-                className={
-                  s.key === section.key
-                    ? "flex items-center gap-2 bg-ink px-4 py-3 text-xs font-semibold text-paper"
-                    : "flex items-center gap-2 bg-paper px-4 py-3 text-xs hover:bg-warm"
-                }
-              >
-                <span className="flex-1">{s.label}</span>
-                {/* Which sections have been touched is the first thing anyone
-                    coming back to this page wants to know. */}
-                {edited && (
-                  <span
-                    title="Edited"
-                    aria-label="Edited"
-                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-red"
-                  />
-                )}
-              </a>
-            );
-          })}
-        </nav>
-
-        <div className="flex flex-col gap-4">
-          <p className="border-l-2 border-line bg-paper px-5 py-3 text-xs text-muted">
-            {section.note}
-          </p>
-
-          <PageCopyForm
-            action={savePageCopy}
-            pageKey={section.key}
-            label={section.label}
-            fields={fieldsFor(section.key)}
-            values={values}
-          />
-
-          {row?.updatedBy && (
-            <p className="text-xs text-muted">
-              Last edited by {row.updatedBy} on{" "}
-              {row.updatedAt.toLocaleDateString("en-GB")}.
-            </p>
-          )}
-        </div>
-      </div>
-
+    <SectionEditor
+      title="Homepage"
+      viewHref="/"
+      sections={HOME_SECTIONS}
+      current={section}
+      blocks={blocks}
+      hrefFor={(k) => `/admin/home?key=${k}`}
+      updatedBy={row?.updatedBy}
+      updatedAt={row?.updatedAt}
+    >
       {/* The two sections driven by records rather than copy. Pointing at them
           from here saves the search for wording that is not in this editor. */}
       <section className="max-w-[74ch] bg-paper p-6 text-sm text-muted">
@@ -172,6 +110,6 @@ export default async function AdminHome({
           </li>
         </ul>
       </section>
-    </div>
+    </SectionEditor>
   );
 }

@@ -117,6 +117,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const copy = (key: string, field: string, en: string, id: string) =>
     blockCopy(blocks[key], field, l, t(en, id));
 
+  /** An administrator-set photograph. Null until one is uploaded, which is
+   *  what Plate wants: it draws its labelled placeholder instead. */
+  const image = (key: string, field: string) =>
+    blocks[key]?.[field]?.en?.trim() || null;
+
   const outcomesHeading = copy(
     "home.outcomes", "heading",
     "Don't start with a product.", "Jangan mulai dari produk.",
@@ -260,6 +265,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 >
                   <Plate
                     ratio="4 / 2.6"
+                    publicId={image("home.outcomes", `card_${o.slug}`)}
+                    alt=""
                     caption={o.shot}
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   />
@@ -313,19 +320,35 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <div className="col-span-12 md:col-span-6">
               <Plate
                 ratio="4 / 3.4"
+                publicId={image("home.ideas", "shot1")}
+                alt=""
                 caption="Portable electric cooking pot, lifestyle context"
                 sizes="(min-width: 768px) 50vw, 100vw"
               />
             </div>
             <div className="col-span-6 md:col-span-3">
-              <Plate ratio="3 / 3.2" caption="NFC luggage tag, macro" sizes="25vw" />
+              <Plate
+                ratio="3 / 3.2"
+                publicId={image("home.ideas", "shot2")}
+                alt=""
+                caption="NFC luggage tag, macro"
+                sizes="25vw"
+              />
             </div>
             <div className="col-span-6 md:col-span-3">
-              <Plate ratio="3 / 3.2" caption="Bamboo desk set, top-down" sizes="25vw" />
+              <Plate
+                ratio="3 / 3.2"
+                publicId={image("home.ideas", "shot3")}
+                alt=""
+                caption="Bamboo desk set, top-down"
+                sizes="25vw"
+              />
             </div>
             <div className="col-span-12 md:col-span-6 md:col-start-7">
               <Plate
                 ratio="16 / 6.4"
+                publicId={image("home.ideas", "shot4")}
+                alt=""
                 caption="Wide lifestyle — merchandise in the field"
                 sizes="(min-width: 768px) 50vw, 100vw"
               />
@@ -335,6 +358,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
               <Plate
                 tone="dark"
                 ratio="4 / 3"
+                publicId={image("home.ideas", "shot5")}
+                alt=""
                 caption="Feature product — breaks the grid deliberately"
                 sizes="(min-width: 768px) 42vw, 100vw"
                 className="md:shadow-[0_24px_60px_rgba(15,12,13,0.16)]"
@@ -496,7 +521,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <div className="relative min-h-[40vh] lg:min-h-[460px]">
           <Plate
             ratio="auto"
-            publicId={blocks["home.process"]?.hero?.en ?? null}
+            publicId={image("home.process", "hero")}
             sizes="(min-width: 1024px) 50vw, 100vw"
             caption="Studio — design review, mockups on the table"
             className="h-full min-h-[40vh] lg:min-h-full"
@@ -591,7 +616,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <Plate
           tone="dark"
           ratio="auto"
-          publicId={blocks["home.behind"]?.hero?.en ?? null}
+          publicId={image("home.behind", "hero")}
           sizes="100vw"
           caption="Production floor — UV printing, engraving, QC bench"
           className="absolute inset-0 h-full"

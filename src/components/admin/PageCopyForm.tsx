@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { emptySaveState, type SaveState } from "@/lib/editor-shared";
+import type { PageField } from "@/lib/page-content";
 import { ImageField } from "@/components/admin/ImageField";
 
 export function PageCopyForm({
@@ -14,7 +15,7 @@ export function PageCopyForm({
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   pageKey: string;
   label: string;
-  fields: { name: string; label: string; multiline?: boolean; image?: boolean }[];
+  fields: PageField[];
   values: Record<string, { en?: string; id?: string }>;
 }) {
   const [state, formAction, pending] = useActionState(action, emptySaveState);
@@ -38,11 +39,29 @@ export function PageCopyForm({
         f.image ? (
           /* Images are language-independent, so one picker rather than two. */
           <div key={f.name} className="border-t border-line pt-4">
-            <ImageField name={`${f.name}_en`} label={f.label} defaultValue={values[f.name]?.en} />
+            <ImageField
+              name={`${f.name}_en`}
+              label={f.label}
+              hint={f.hint}
+              defaultValue={values[f.name]?.en}
+            />
           </div>
+        ) : (
+        f.single ? (
+          /* Language-independent — a person's name is the same in both. */
+          <label key={f.name} className="flex flex-col gap-2 border-t border-line pt-4">
+            <span className={labelCls}>{f.label}</span>
+            {f.hint && <span className="-mt-1 text-xs text-muted">{f.hint}</span>}
+            <input
+              name={`${f.name}_en`}
+              defaultValue={values[f.name]?.en ?? ""}
+              className={field}
+            />
+          </label>
         ) : (
         <div key={f.name} className="flex flex-col gap-3 border-t border-line pt-4">
           <span className={labelCls}>{f.label}</span>
+          {f.hint && <span className="-mt-1.5 text-xs text-muted">{f.hint}</span>}
           <label className="flex flex-col gap-1.5">
             <span className="text-[0.625rem] text-muted">English</span>
             {f.multiline ? (
@@ -60,6 +79,7 @@ export function PageCopyForm({
             )}
           </label>
         </div>
+        )
         ),
       )}
 

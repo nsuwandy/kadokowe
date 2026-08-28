@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
-import { pageCopy } from "@/lib/page-content";
+import { blockCopy, sectionBlocks } from "@/lib/page-content";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -21,7 +21,11 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const values = [
+  /**
+   * Five values, each overridable. The code list is the default; clearing an
+   * override restores it, so the wording is editable but the count is not.
+   */
+  const VALUE_DEFAULTS = [
     { en: "Creativity", id: "Kreativitas", dEn: "Turning ordinary ideas into extraordinary merchandise.", dId: "Mengubah ide biasa menjadi merchandise luar biasa." },
     { en: "Customer-Centric Partnership", id: "Kemitraan Berpusat pada Klien", dEn: "Starting with client needs, we solve pain points with tailored solutions.", dId: "Bermula dari kebutuhan klien, kami menyelesaikan masalah dengan solusi khusus." },
     { en: "Impact", id: "Dampak", dEn: "Every product is crafted to last — a walking brand ambassador, not a throwaway.", dId: "Setiap produk dibuat untuk bertahan — duta merek berjalan, bukan barang sekali pakai." },
@@ -29,16 +33,67 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
     { en: "Professional Excellence", id: "Keunggulan Profesional", dEn: "Operating with the rigour of a branding consultant: structured, detailed, perfection-driven.", dId: "Bekerja dengan ketelitian konsultan merek: terstruktur, detail, dan menuntut kesempurnaan." },
   ];
 
-  // FR-10.5 — overridable from the admin; the code copy is the default.
-  const heading = await pageCopy(
-    "about.story", "heading", l,
-    t("Merchandise should be more than gifts.",
-      "Merchandise seharusnya lebih dari sekadar hadiah."),
+  // FR-10.5 — every editable line on the page, in one query.
+  const blocks = await sectionBlocks("about.");
+  const copy = (key: string, field: string, en: string, id: string) =>
+    blockCopy(blocks[key], field, l, t(en, id));
+  /** Photographs and names: language-independent, so read from the English
+   *  slot directly rather than through the localised fallback. */
+  const plain = (key: string, field: string) =>
+    blocks[key]?.[field]?.en?.trim() || null;
+
+  /**
+   * Both people, each overridable.
+   *
+   * The filter is a guard, not a feature: clearing a field in the admin
+   * deletes it from the stored block, so the code default comes back and a
+   * name can never actually be blank. Removing a person is a code change.
+   */
+  const people = [
+    {
+      name: plain("about.people", "name1") ?? "Lanny Kwandy",
+      role: copy(
+        "about.people", "role1",
+        "Founder — sourcing, manufacturing, brand strategy",
+        "Pendiri — pengadaan, manufaktur, strategi merek",
+      ),
+      bio: copy(
+        "about.people", "bio1",
+        "Thirty years handling international buyers and partnerships including Yonex, Lotto, Disney and Debenhams, with a New Balance USA partnership factory signed in 2024. Since 2004, twenty years as a Retail & Franchise Consultant, helping brands scale from one outlet to thousands — and co-founding partner of Chipmunks Playland & Café, New Zealand, growing from three outlets to more than eighty franchises worldwide as their exclusive buying house.",
+        "Tiga puluh tahun menangani pembeli internasional dan kemitraan termasuk Yonex, Lotto, Disney, dan Debenhams, dengan pabrik kemitraan New Balance USA yang ditandatangani pada 2024. Sejak 2004, dua puluh tahun sebagai Konsultan Ritel & Waralaba, membantu merek berkembang dari satu gerai menjadi ribuan — sekaligus mitra pendiri Chipmunks Playland & Café, Selandia Baru, yang tumbuh dari tiga gerai menjadi lebih dari delapan puluh waralaba di seluruh dunia.",
+      ),
+      photo: plain("about.people", "photo1"),
+    },
+    {
+      name: plain("about.people", "name2") ?? "Icabel Suwandy",
+      role: copy(
+        "about.people", "role2",
+        "Digital marketing — content and engagement strategy",
+        "Pemasaran digital — strategi konten dan keterlibatan",
+      ),
+      bio: copy(
+        "about.people", "bio2",
+        "Creative training from age thirteen at the New York Film Academy, Hollywood Studio — storytelling, scriptwriting, photography and videography. Now leads Kadokowe's digital marketing division, crafting engagement strategies that help brands connect with their audiences.",
+        "Pelatihan kreatif sejak usia tiga belas tahun di New York Film Academy, Hollywood Studio — penceritaan, penulisan naskah, fotografi, dan videografi. Kini memimpin divisi pemasaran digital Kadokowe, menyusun strategi keterlibatan yang membantu merek terhubung dengan audiensnya.",
+      ),
+      photo: plain("about.people", "photo2"),
+    },
+  ].filter((p) => p.name.trim() !== "");
+
+  const values = VALUE_DEFAULTS.map((v, i) => ({
+    name: copy("about.values", `value${i + 1}`, v.en, v.id),
+    desc: copy("about.values", `valueDesc${i + 1}`, v.dEn, v.dId),
+  })).filter((v) => v.name.trim() !== "");
+
+  const heading = copy(
+    "about.story", "heading",
+    "Merchandise should be more than gifts.",
+    "Merchandise seharusnya lebih dari sekadar hadiah.",
   );
-  const intro = await pageCopy(
-    "about.story", "intro", l,
-    t("It should be stories in motion. Walking brand ambassadors. It should deliver ROI, impact and memories — not waste.",
-      "Ia seharusnya menjadi cerita yang bergerak. Duta merek berjalan. Ia harus memberi ROI, dampak, dan kenangan — bukan pemborosan."),
+  const intro = copy(
+    "about.story", "intro",
+    "It should be stories in motion. Walking brand ambassadors. It should deliver ROI, impact and memories — not waste.",
+    "Ia seharusnya menjadi cerita yang bergerak. Duta merek berjalan. Ia harus memberi ROI, dampak, dan kenangan — bukan pemborosan.",
   );
 
   return (
@@ -46,7 +101,9 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
       <Section className="pb-0">
         <Wrap>
           <div className="mx-auto max-w-[820px]">
-            <Eyebrow accent>{t("About Kadokowe", "Tentang Kadokowe")}</Eyebrow>
+            <Eyebrow accent>
+              {copy("about.story", "eyebrow", "About Kadokowe", "Tentang Kadokowe")}
+            </Eyebrow>
             <h1 className="balance my-4 text-xl-display font-bold tracked-tight">
               {heading}
             </h1>
@@ -62,19 +119,25 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
             <Plate
               ratio="4 / 3.4"
+              publicId={plain("about.problem", "hero")}
+              alt=""
               caption="Founders — Lanny Kwandy and Icabel Suwandy"
               sizes="(min-width: 1024px) 50vw, 100vw"
             />
             <div className="flex flex-col justify-center gap-5">
-              <Eyebrow accent>{t("The problem we saw", "Masalah yang kami lihat")}</Eyebrow>
+              <Eyebrow accent>
+                {copy("about.problem", "eyebrow", "The problem we saw", "Masalah yang kami lihat")}
+              </Eyebrow>
               <p className="text-[1.0625rem] leading-relaxed">
-                {t(
+                {copy(
+                  "about.problem", "intro",
                   "For decades, companies spent heavily on promotional merchandise. Most of it ended up forgotten, wasted or irrelevant — because vendors offered the same generic products without understanding brand identity, production quality or campaign goals.",
                   "Selama puluhan tahun, perusahaan mengeluarkan biaya besar untuk merchandise promosi. Sebagian besar berakhir terlupakan, terbuang, atau tidak relevan — karena vendor menawarkan produk generik yang sama tanpa memahami identitas merek, kualitas produksi, atau tujuan kampanye.",
                 )}
               </p>
               <p className="text-[0.9375rem] leading-relaxed text-muted">
-                {t(
+                {copy(
+                  "about.problem", "extra",
                   "Kadokowe was born from the fusion of decades of sourcing and manufacturing expertise with creative energy and brand storytelling — not to be another vendor, but a strategic merchandising partner.",
                   "Kadokowe lahir dari perpaduan puluhan tahun keahlian pengadaan dan manufaktur dengan energi kreatif serta penceritaan merek — bukan untuk menjadi vendor lain, melainkan mitra merchandising strategis.",
                 )}
@@ -86,39 +149,24 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
 
       <Section tone="warm">
         <Wrap>
-          <Eyebrow accent>{t("The people", "Orang-orangnya")}</Eyebrow>
+          <Eyebrow accent>
+            {copy("about.people", "eyebrow", "The people", "Orang-orangnya")}
+          </Eyebrow>
           <ul className="mt-7 grid gap-10 lg:grid-cols-2 lg:gap-16">
-            {[
-              {
-                name: "Lanny Kwandy",
-                roleEn: "Founder — sourcing, manufacturing, brand strategy",
-                roleId: "Pendiri — pengadaan, manufaktur, strategi merek",
-                bioEn:
-                  "Thirty years handling international buyers and partnerships including Yonex, Lotto, Disney and Debenhams, with a New Balance USA partnership factory signed in 2024. Since 2004, twenty years as a Retail & Franchise Consultant, helping brands scale from one outlet to thousands — and co-founding partner of Chipmunks Playland & Café, New Zealand, growing from three outlets to more than eighty franchises worldwide as their exclusive buying house.",
-                bioId:
-                  "Tiga puluh tahun menangani pembeli internasional dan kemitraan termasuk Yonex, Lotto, Disney, dan Debenhams, dengan pabrik kemitraan New Balance USA yang ditandatangani pada 2024. Sejak 2004, dua puluh tahun sebagai Konsultan Ritel & Waralaba, membantu merek berkembang dari satu gerai menjadi ribuan — sekaligus mitra pendiri Chipmunks Playland & Café, Selandia Baru, yang tumbuh dari tiga gerai menjadi lebih dari delapan puluh waralaba di seluruh dunia.",
-                shot: "Portrait — Lanny Kwandy",
-              },
-              {
-                name: "Icabel Suwandy",
-                roleEn: "Digital marketing — content and engagement strategy",
-                roleId: "Pemasaran digital — strategi konten dan keterlibatan",
-                bioEn:
-                  "Creative training from age thirteen at the New York Film Academy, Hollywood Studio — storytelling, scriptwriting, photography and videography. Now leads Kadokowe's digital marketing division, crafting engagement strategies that help brands connect with their audiences.",
-                bioId:
-                  "Pelatihan kreatif sejak usia tiga belas tahun di New York Film Academy, Hollywood Studio — penceritaan, penulisan naskah, fotografi, dan videografi. Kini memimpin divisi pemasaran digital Kadokowe, menyusun strategi keterlibatan yang membantu merek terhubung dengan audiensnya.",
-                shot: "Portrait — Icabel Suwandy",
-              },
-            ].map((p) => (
+            {people.map((p) => (
               <li key={p.name} className="flex flex-col gap-4">
-                <Plate ratio="4 / 3" caption={p.shot} sizes="(min-width: 1024px) 50vw, 100vw" />
+                <Plate
+                  ratio="4 / 3"
+                  publicId={p.photo}
+                  alt=""
+                  caption={`Portrait — ${p.name}`}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
                 <h2 className="text-md-display font-semibold">{p.name}</h2>
                 <p className="text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-red">
-                  {t(p.roleEn, p.roleId)}
+                  {p.role}
                 </p>
-                <p className="text-[0.875rem] leading-relaxed text-muted">
-                  {t(p.bioEn, p.bioId)}
-                </p>
+                <p className="text-[0.875rem] leading-relaxed text-muted">{p.bio}</p>
               </li>
             ))}
           </ul>
@@ -132,7 +180,8 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
               <div className="flex flex-col gap-3">
                 <Eyebrow accent>{t("Vision", "Visi")}</Eyebrow>
                 <p className="font-editorial text-[1.0625rem] italic">
-                  {t(
+                  {copy(
+                    "about.vision", "vision",
                     "To be our clients' most trusted strategic merchandising partner by setting new standards of creativity, efficiency and brand value.",
                     "Menjadi mitra merchandising strategis paling tepercaya bagi klien kami dengan menetapkan standar baru kreativitas, efisiensi, dan nilai merek.",
                   )}
@@ -141,7 +190,8 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
               <div className="flex flex-col gap-3">
                 <Eyebrow accent>{t("Mission", "Misi")}</Eyebrow>
                 <p className="font-editorial text-[1.0625rem] italic">
-                  {t(
+                  {copy(
+                    "about.vision", "mission",
                     "We transform budgets into brand-powered stories by merging creativity, technology and storytelling.",
                     "Kami mengubah anggaran menjadi cerita bertenaga merek dengan memadukan kreativitas, teknologi, dan penceritaan.",
                   )}
@@ -150,16 +200,18 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
             </div>
 
             <div>
-              <Eyebrow accent>{t("Core values", "Nilai inti")}</Eyebrow>
+              <Eyebrow accent>
+                {copy("about.values", "eyebrow", "Core values", "Nilai inti")}
+              </Eyebrow>
               <ul className="mt-5 flex flex-col">
                 {values.map((v) => (
                   <li
-                    key={v.en}
+                    key={v.name}
                     className="grid gap-1 border-t border-line py-4 last:border-b sm:grid-cols-[0.8fr_1.2fr] sm:gap-6"
                   >
-                    <span className="text-[0.9375rem] font-semibold">{t(v.en, v.id)}</span>
+                    <span className="text-[0.9375rem] font-semibold">{v.name}</span>
                     <span className="text-[0.875rem] leading-relaxed text-muted">
-                      {t(v.dEn, v.dId)}
+                      {v.desc}
                     </span>
                   </li>
                 ))}
@@ -172,13 +224,14 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
       <section className="bg-red py-14 text-paper md:py-20">
         <Wrap className="flex flex-col items-start gap-6">
           <h2 className="balance max-w-[26ch] text-xl-display font-bold tracked-tight">
-            {t(
+            {copy(
+              "about.closing", "heading",
               "Most vendors give you products. We give you results.",
               "Kebanyakan vendor memberi Anda produk. Kami memberi Anda hasil.",
             )}
           </h2>
           <Button href={path("/start-a-project")} variant="onRed">
-            {t("Start a Project", "Mulai Proyek")}
+            {copy("about.closing", "cta", "Start a Project", "Mulai Proyek")}
           </Button>
         </Wrap>
       </section>
