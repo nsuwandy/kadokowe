@@ -1,10 +1,34 @@
 /** Site-wide constants. Contact details come from the company profile. */
 
-const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "628113370378";
+const rawNumber = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "628113370378")
+  // wa.me accepts digits only: no +, spaces or dashes. Stripping them here
+  // means the variable can be pasted in whatever shape it was copied.
+  .replace(/[^\d]/g, "");
+
+/**
+ * Format an Indonesian mobile number for display: 628113370378 becomes
+ * +62 811-3370-378.
+ *
+ * Derived from the same value as the link rather than written out beside it.
+ * The two were separate constants, so overriding the number changed every
+ * WhatsApp button while five places on the site — footer, contact, Start a
+ * Project, the privacy policy and the telephone field in structured data —
+ * went on displaying the old one. That mismatch is invisible until a customer
+ * says they messaged and nobody replied.
+ */
+function formatIdMobile(digits: string): string {
+  if (!digits.startsWith("62") || digits.length < 10) return `+${digits}`;
+  const national = digits.slice(2);
+  const head = national.slice(0, 3);
+  const rest = national.slice(3);
+  const mid = rest.slice(0, rest.length - 3);
+  const tail = rest.slice(-3);
+  return `+62 ${head}-${mid}-${tail}`;
+}
 
 export const CONTACT = {
   email: "kreasikadokowe@gmail.com",
-  phoneDisplay: "+62 811-3370-378",
+  phoneDisplay: formatIdMobile(rawNumber),
   whatsappNumber: rawNumber,
   whatsappUrl: `https://wa.me/${rawNumber}`,
 } as const;
