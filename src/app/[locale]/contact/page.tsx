@@ -54,7 +54,7 @@ export default async function ContactPage({
 
           <div className="flex flex-col gap-px border border-line bg-line">
             <a
-              href={whatsappLink()}
+              href={whatsappLink(l)}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex flex-col gap-1 bg-paper p-7 transition-colors hover:bg-warm"

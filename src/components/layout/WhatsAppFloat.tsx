@@ -9,7 +9,7 @@ import type { AppLocale } from "@/lib/i18n";
 export function WhatsAppFloat({ locale }: { locale: AppLocale }) {
   return (
     <a
-      href={whatsappLink()}
+      href={whatsappLink(locale)}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed right-4 bottom-4 z-40 inline-flex items-center gap-2 bg-ink px-4 py-3.5 font-display text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-warm shadow-[0_10px_34px_rgba(15,12,13,0.28)] transition-colors hover:bg-red md:right-8 md:bottom-8"

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { CONTACT, SITE } from "@/lib/site";
+import { CONTACT, SITE, whatsappLink } from "@/lib/site";
 
 /**
  * Holding page — shown on every public route while COMING_SOON is set.
@@ -63,7 +63,7 @@ export default function ComingSoonPage() {
 
         <div className="mt-2 flex flex-wrap gap-4">
           <a
-            href={CONTACT.whatsappUrl}
+            href={whatsappLink("en")}
             className="bg-red px-7 py-3.5 font-display text-[0.8125rem] font-semibold uppercase tracking-[0.1em] text-paper transition-colors hover:bg-paper hover:text-ink"
           >
             WhatsApp {CONTACT.phoneDisplay}

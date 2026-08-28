@@ -3,7 +3,7 @@ import Link from "next/link";
 import { NAV, label, localePath } from "@/lib/nav";
 import type { AppLocale } from "@/lib/i18n";
 import { Wrap } from "@/components/ui/Section";
-import { CONTACT, COMPANY_PROFILE_URL } from "@/lib/site";
+import { CONTACT, COMPANY_PROFILE_URL, whatsappLink } from "@/lib/site";
 
 /**
  * Address and social links are administrator-managed optional fields, hidden
@@ -71,7 +71,9 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
               </li>
               <li>
                 <a
-                  href={CONTACT.whatsappUrl}
+                  href={whatsappLink(locale)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-plate-c transition-colors hover:text-paper"
                 >
                   {CONTACT.phoneDisplay}

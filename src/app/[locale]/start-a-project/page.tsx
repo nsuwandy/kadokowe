@@ -42,7 +42,7 @@ export default async function StartProjectPage({
             <p className="text-sm text-muted">
               {t("Prefer to talk?", "Lebih suka berbicara?")}{" "}
               <a
-                href={whatsappLink()}
+                href={whatsappLink(l, { intent: "project" })}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-red hover:underline"
