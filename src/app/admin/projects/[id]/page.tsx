@@ -39,6 +39,7 @@ export default async function ProjectEditor({
     for (const s of STORY_SECTIONS) {
       sections[`${s.key}En`] = row[`${s.key}En`] ?? null;
       sections[`${s.key}Id`] = row[`${s.key}Id`] ?? null;
+      sections[`${s.key}Image`] = row[`${s.key}Image`] ?? null;
     }
   }
 
@@ -82,6 +83,11 @@ export default async function ProjectEditor({
                 sections,
                 heroImage: project.heroImage,
                 clientLogo: project.clientLogo,
+                testimonialEn: project.testimonialEn,
+                testimonialId: project.testimonialId,
+                testimonialAuthor: project.testimonialAuthor,
+                testimonialRoleEn: project.testimonialRoleEn,
+                testimonialRoleId: project.testimonialRoleId,
                 gallery: project.gallery.map((g) => ({
                   publicId: g.publicId,
                   altEn: g.altEn ?? "",

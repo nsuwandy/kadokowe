@@ -202,3 +202,35 @@ body {
 }
 .prose-editor img { max-width: 100%; height: auto; }
 .prose-editor:focus { outline: none; }
+
+/* ------------------------------------------------------------ story reveal
+   Used by the project story chapters.
+
+   Additive by design: the content is visible with no class at all, and the
+   class only ever plays it in. Starting from an opacity of zero and relying
+   on JavaScript to remove it would leave the whole article invisible to
+   anyone whose script did not run — which for a page whose entire purpose is
+   the writing would be the worst possible failure.
+
+   Motion is dropped entirely for anyone who has asked for less of it; the
+   content is unaffected either way. */
+@keyframes kdk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.kdk-rise {
+  animation: kdk-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kdk-rise {
+    animation: none;
+  }
+}

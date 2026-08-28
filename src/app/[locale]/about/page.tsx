@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { isLocale, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
 import { blockCopy, sectionBlocks } from "@/lib/page-content";
+import { db } from "@/lib/db";
+import { ClientLogos } from "@/components/ClientLogos";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
@@ -33,8 +35,17 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
     { en: "Professional Excellence", id: "Keunggulan Profesional", dEn: "Operating with the rigour of a branding consultant: structured, detailed, perfection-driven.", dId: "Bekerja dengan ketelitian konsultan merek: terstruktur, detail, dan menuntut kesempurnaan." },
   ];
 
-  // FR-10.5 — every editable line on the page, in one query.
-  const blocks = await sectionBlocks("about.");
+  // FR-10.5 — every editable line on the page, in one query, alongside the
+  // partner marks. Distinct from the homepage client strip: that is derived
+  // from published projects, these are who Kadokowe works with.
+  const [blocks, partners] = await Promise.all([
+    sectionBlocks("about."),
+    db.partner.findMany({
+      where: { visibility: "PUBLISHED" },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { name: true, logo: true },
+    }),
+  ]);
   const copy = (key: string, field: string, en: string, id: string) =>
     blockCopy(blocks[key], field, l, t(en, id));
   /** Photographs and names: language-independent, so read from the English
@@ -172,6 +183,13 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
           </ul>
         </Wrap>
       </Section>
+
+      {/* Our Partners. Hidden entirely while none are set, rather than
+          leaving a heading over an empty row (FR-1.6). */}
+      <ClientLogos
+        clients={partners}
+        heading={t("Our partners", "Mitra kami")}
+      />
 
       <Section>
         <Wrap>

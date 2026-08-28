@@ -38,6 +38,9 @@ export async function saveProject(
   for (const s of STORY_SECTIONS) {
     sections[`${s.key}En`] = str(`${s.key}En`);
     sections[`${s.key}Id`] = str(`${s.key}Id`);
+    // The background photograph belongs to its chapter, so it is written
+    // alongside the copy rather than in a gallery somewhere else.
+    sections[`${s.key}Image`] = str(`${s.key}Image`);
   }
 
   const visibility = String(formData.get("visibility") ?? "DRAFT");
@@ -54,6 +57,13 @@ export async function saveProject(
     ...sections,
     heroImage: str("heroImage"),
     clientLogo: str("clientLogo"),
+    // FR-7.x — the client's own words. The band is rendered only when the
+    // quote itself is present, so a stray attribution shows nothing.
+    testimonialEn: str("testimonialEn"),
+    testimonialId: str("testimonialId"),
+    testimonialAuthor: str("testimonialAuthor"),
+    testimonialRoleEn: str("testimonialRoleEn"),
+    testimonialRoleId: str("testimonialRoleId"),
     seoTitleEn: str("seoTitleEn"),
     seoTitleId: str("seoTitleId"),
     seoDescEn: str("seoDescEn"),

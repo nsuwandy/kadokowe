@@ -23,6 +23,11 @@ export type ProjectFormValues = {
   sections: Record<string, string | null>;
   heroImage: string | null;
   clientLogo: string | null;
+  testimonialEn: string | null;
+  testimonialId: string | null;
+  testimonialAuthor: string | null;
+  testimonialRoleEn: string | null;
+  testimonialRoleId: string | null;
   gallery: { publicId: string; altEn: string }[];
   seoTitleEn: string | null;
   seoTitleId: string | null;
@@ -149,6 +154,50 @@ export function ProjectForm({
                 className={field}
               />
             </label>
+            {/* The chapter is read as a full-height scene, so this is the
+                photograph behind it. Left empty the chapter sits on the ink
+                ground rather than repeating the hero. */}
+            {/* --- The client's own words -------------------------------- */}
+        <div className="flex flex-col gap-3 border-t border-line pt-5">
+          <div>
+            <h3 className={labelCls}>Client testimonial</h3>
+            <p className={`${hint} mt-1 max-w-[70ch]`}>
+              Shown as a band of its own below the story. Nothing appears
+              unless the quote itself is filled in, so an attribution left
+              behind after a quote is removed shows nothing rather than a
+              testimonial nobody gave.
+            </p>
+          </div>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.625rem] text-muted">Quote — English</span>
+            <textarea name="testimonialEn" rows={3} defaultValue={project?.testimonialEn ?? ""} className={field} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[0.625rem] text-muted">Quote — Indonesian</span>
+            <textarea name="testimonialId" rows={3} defaultValue={project?.testimonialId ?? ""} className={field} />
+          </label>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.625rem] text-muted">Who said it</span>
+              <input name="testimonialAuthor" defaultValue={project?.testimonialAuthor ?? ""} className={field} />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.625rem] text-muted">Their role — English</span>
+              <input name="testimonialRoleEn" defaultValue={project?.testimonialRoleEn ?? ""} className={field} />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[0.625rem] text-muted">Their role — Indonesian</span>
+              <input name="testimonialRoleId" defaultValue={project?.testimonialRoleId ?? ""} className={field} />
+            </label>
+          </div>
+        </div>
+
+        <ImageField
+              name={`${s.key}Image`}
+              label="Background photograph"
+              hint="Shown full-bleed behind this chapter, darkened so the text stays legible. Landscape works best."
+              defaultValue={project?.sections[`${s.key}Image`] ?? ""}
+            />
           </div>
         ))}
       </section>

@@ -8,6 +8,7 @@ import { isPreview, visibilityFilter, PreviewBanner } from "@/lib/preview";
 import { Wrap, Section } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
+import { StoryChapter } from "@/components/StoryChapter";
 import { ProductCard } from "@/components/ProductCard";
 
 type Stat = { value: string; labelEn: string; labelId?: string };
@@ -84,14 +85,19 @@ export default async function ProjectPage({
 
   const title = pick(project, "title", l);
 
+  // Each chapter carries its own background. A chapter with no photograph
+  // falls back to the ink ground rather than borrowing the hero, which would
+  // repeat the same image six times down the page.
   const sections = [
-    { key: "brief", label: t("The Brief", "Brief-nya"), body: pickOptional(project, "brief", l) },
-    { key: "challenge", label: t("The Challenge", "Tantangannya"), body: pickOptional(project, "challenge", l) },
-    { key: "thinking", label: t("Our Thinking", "Pemikiran Kami"), body: pickOptional(project, "thinking", l) },
-    { key: "createdWork", label: t("What We Created", "Yang Kami Ciptakan"), body: pickOptional(project, "createdWork", l) },
-    { key: "making", label: t("Making It Happen", "Mewujudkannya"), body: pickOptional(project, "making", l) },
-    { key: "impact", label: t("The Impact", "Dampaknya"), body: pickOptional(project, "impact", l) },
+    { key: "brief", label: t("The Brief", "Brief-nya"), body: pickOptional(project, "brief", l), image: project.briefImage },
+    { key: "challenge", label: t("The Challenge", "Tantangannya"), body: pickOptional(project, "challenge", l), image: project.challengeImage },
+    { key: "thinking", label: t("Our Thinking", "Pemikiran Kami"), body: pickOptional(project, "thinking", l), image: project.thinkingImage },
+    { key: "createdWork", label: t("What We Created", "Yang Kami Ciptakan"), body: pickOptional(project, "createdWork", l), image: project.createdWorkImage },
+    { key: "making", label: t("Making It Happen", "Mewujudkannya"), body: pickOptional(project, "making", l), image: project.makingImage },
+    { key: "impact", label: t("The Impact", "Dampaknya"), body: pickOptional(project, "impact", l), image: project.impactImage },
   ].filter((s) => s.body);
+
+  const quote = pickOptional(project, "testimonial", l);
 
   const stats = (project.stats as Stat[] | null) ?? [];
 
@@ -149,51 +155,96 @@ export default async function ProjectPage({
         </dl>
       </Wrap>
 
-      <Section className="py-0">
-        <Wrap>
-          {sections.map((s, i) => (
-            <article
-              key={s.key}
-              className="grid items-start gap-4 border-b border-line py-10 last:border-b-0 md:grid-cols-[0.85fr_1.15fr] md:gap-16 md:py-16"
+      {/* The story, chapter by chapter. Each is a full-height scene with its
+          own pinned photograph; the copy travels over it. FR-7.x asks for
+          treatment distinct from a listing, and a stack of paragraphs on
+          paper was not it. */}
+      {sections.map((chapter, i) => (
+        <StoryChapter
+          key={chapter.key}
+          background={
+            <>
+              <Plate
+                tone="dark"
+                ratio="auto"
+                publicId={chapter.image}
+                alt=""
+                caption={`${chapter.label} — ${title}`}
+                sizes="100vw"
+                className="absolute inset-0 h-full w-full"
+              />
+              {/* The scrim is what makes the copy legible over any
+                  photograph, including one nobody checked first. */}
+              <div className="absolute inset-0 bg-linear-to-t from-ink via-ink/70 to-ink/25" />
+            </>
+          }
+        >
+          <div className="mx-auto flex max-w-[1440px] flex-col gap-4">
+            <span className="text-[0.6875rem] font-bold tracking-[0.14em] tabular-nums text-red">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <h2 className="text-md-display font-semibold text-paper">
+              {chapter.label}
+            </h2>
+            <p
+              className={
+                // The opening and closing chapters carry the voice; the
+                // middle ones carry the detail.
+                i === 0 || chapter.key === "impact"
+                  ? "max-w-[46ch] font-editorial text-lede text-warm"
+                  : "max-w-[62ch] text-[0.9375rem] leading-relaxed text-plate-c"
+              }
             >
-              <div className="flex flex-col gap-2">
-                <span className="text-[0.6875rem] font-bold tracking-[0.1em] tabular-nums text-red">
-                  {String(i + 1).padStart(2, "0")}
+              {chapter.body}
+            </p>
+
+            {chapter.key === "createdWork" && project.gallery.length > 0 && (
+              <ul className="mt-2 grid max-w-[46rem] gap-3 sm:grid-cols-2">
+                {project.gallery.slice(0, 2).map((img) => (
+                  <li key={img.id}>
+                    <Plate
+                      publicId={img.publicId}
+                      alt={pick(img, "alt", l)}
+                      caption={pick(img, "caption", l)}
+                      ratio="4 / 3"
+                      sizes="(min-width: 640px) 22vw, 90vw"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </StoryChapter>
+      ))}
+
+      {/* The client's own words, given a band of their own rather than a
+          pull-quote inside a chapter. Rendered only when there is a quote —
+          an empty attribution reads as a testimonial nobody would give. */}
+      {quote && (
+        <section className="bg-warm py-20 md:py-28">
+          <Wrap className="flex flex-col items-start gap-7">
+            <span className="text-[0.625rem] font-bold uppercase tracking-[0.16em] text-red">
+              {t("In their words", "Dalam kata mereka")}
+            </span>
+            <blockquote className="balance max-w-[24ch] font-editorial text-xl-display italic leading-[1.15]">
+              &ldquo;{quote}&rdquo;
+            </blockquote>
+            {(project.testimonialAuthor || project.client) && (
+              <footer className="flex flex-col gap-1">
+                <span className="text-[0.9375rem] font-semibold">
+                  {project.testimonialAuthor ?? project.client}
                 </span>
-                <h2 className="text-md-display font-semibold">{s.label}</h2>
-              </div>
-              <div className="flex flex-col gap-5">
-                <p
-                  className={
-                    // The opening and closing sections carry the voice; the
-                    // middle ones carry the detail.
-                    i === 0 || s.key === "impact"
-                      ? "font-editorial text-lede"
-                      : "max-w-[62ch] text-[0.9375rem] leading-relaxed text-muted"
-                  }
-                >
-                  {s.body}
-                </p>
-                {s.key === "createdWork" && project.gallery.length > 0 && (
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {project.gallery.slice(0, 2).map((img) => (
-                      <li key={img.id}>
-                        <Plate
-                          publicId={img.publicId}
-                          alt={pick(img, "alt", l)}
-                          caption={pick(img, "caption", l)}
-                          ratio="4 / 3"
-                          sizes="(min-width: 640px) 33vw, 100vw"
-                        />
-                      </li>
-                    ))}
-                  </ul>
+                {pickOptional(project, "testimonialRole", l) && (
+                  <span className="text-xs text-muted">
+                    {pickOptional(project, "testimonialRole", l)}
+                    {project.testimonialAuthor ? ` · ${project.client}` : ""}
+                  </span>
                 )}
-              </div>
-            </article>
-          ))}
-        </Wrap>
-      </Section>
+              </footer>
+            )}
+          </Wrap>
+        </section>
+      )}
 
       {stats.length > 0 && (
         <Section tone="warm">
