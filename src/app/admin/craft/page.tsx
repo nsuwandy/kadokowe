@@ -9,11 +9,8 @@ import { db } from "@/lib/db";
  * These were code constants until now, so this list is the first place an
  * operator can add a category without a developer.
  */
-export default async function AdminCraft() {
-  const admin = await currentAdmin();
-  if (!admin) redirect("/admin/login");
-
-  const families = await db.craftFamily.findMany({
+function loadFamilies() {
+  return db.craftFamily.findMany({
     orderBy: { sortOrder: "asc" },
     select: {
       id: true, slug: true, nameEn: true, visibility: true, sortOrder: true,
@@ -21,6 +18,26 @@ export default async function AdminCraft() {
       _count: { select: { items: true, machines: true } },
     },
   });
+}
+
+export default async function AdminCraft() {
+  const admin = await currentAdmin();
+  if (!admin) redirect("/admin/login");
+
+  // The tables arrived with a migration, so this screen is the first thing an
+  // operator opens against a database that has not had it applied — and a
+  // stack trace is a poor way to learn that. P2021 is Prisma's "table does not
+  // exist"; anything else is re-thrown, because swallowing real failures here
+  // would make a broken admin look merely empty.
+  let families: Awaited<ReturnType<typeof loadFamilies>> = [];
+  let needsMigration = false;
+  try {
+    families = await loadFamilies();
+  } catch (error) {
+    const code = (error as { code?: string })?.code;
+    if (code !== "P2021") throw error;
+    needsMigration = true;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,7 +57,25 @@ export default async function AdminCraft() {
         </Link>
       </div>
 
-      {families.length === 0 ? (
+      {needsMigration ? (
+        <div className="flex flex-col gap-3 border-l-2 border-red bg-paper px-6 py-5">
+          <p className="text-sm font-semibold">
+            This database has not had the Custom Made update applied yet.
+          </p>
+          <p className="max-w-[70ch] text-sm text-muted">
+            The categories moved out of code and into the database, which needs
+            one migration. Until it runs, the public Custom Made pages keep
+            working from the built-in categories — nothing is broken for
+            visitors, but nothing can be edited here.
+          </p>
+          <pre className="overflow-x-auto bg-warm px-4 py-3 text-xs">npx prisma migrate deploy{"\n"}npm run db:seed:craft</pre>
+          <p className="max-w-[70ch] text-xs text-muted">
+            Run both against this environment&rsquo;s database. The second moves
+            the seven existing categories in and leaves alone anything already
+            edited.
+          </p>
+        </div>
+      ) : families.length === 0 ? (
         <p className="bg-paper px-6 py-12 text-center text-sm text-muted">
           No categories yet. The site is falling back to the seven built-in ones
           until you add or import them.

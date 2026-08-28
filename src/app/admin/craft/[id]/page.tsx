@@ -14,9 +14,13 @@ export default async function CraftFamilyEditor({
   const { id } = await params;
   const isNew = id === "new";
 
-  const family = isNew
-    ? null
-    : await db.craftFamily.findUnique({
+  // Same guard as the list: reached before the migration has run, this should
+  // send the operator back to the screen that explains what to do rather than
+  // failing with a stack trace.
+  let family = null;
+  if (!isNew) {
+    try {
+      family = await db.craftFamily.findUnique({
         where: { id },
         include: {
           items: {
@@ -26,8 +30,12 @@ export default async function CraftFamilyEditor({
           machines: { orderBy: { sortOrder: "asc" } },
         },
       });
-
-  if (!isNew && !family) notFound();
+    } catch (error) {
+      if ((error as { code?: string })?.code !== "P2021") throw error;
+      redirect("/admin/craft");
+    }
+    if (!family) notFound();
+  }
 
   const pairs = (value: unknown): PairValue[] =>
     Array.isArray(value)
