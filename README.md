@@ -39,7 +39,8 @@ credentials, so a missing key never takes down a form or a page.
 | `npm test` | Unit checks for upload limits, term ordering, galleries and rate limits |
 | `npm run admin:set` | Create an admin account, or reset a password |
 | `npm run db:status` | What is actually in the database — run it before debugging "the site is empty" |
-| `npm run db:seed` | Seed sample content |
+| `npm run db:seed` | Seed taxonomy, the five real case studies, articles and 12 sample products |
+| `npm run db:seed -- --skip-products` | The same without the sample catalogue — use this on production |
 | `npm run db:migrate` | Create and apply a migration |
 | `npm run db:studio` | Browse the database |
 

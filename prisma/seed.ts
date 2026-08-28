@@ -526,6 +526,20 @@ const ARTICLES = [
   },
 ];
 
+/**
+ * `--skip-products` seeds everything except the sample catalogue.
+ *
+ * The taxonomy and the five case studies are real — the studies come from the
+ * company profile — and are worth having in production. The twelve products
+ * are not: they are representative copy written to exercise the build, and
+ * putting them on a live site means a visitor reading invented merchandise.
+ *
+ * Projects and articles link to products by slug, so with products skipped
+ * those relations simply come out empty. The cross-link blocks they feed
+ * render only when populated (FR-8.8), so they are absent rather than broken.
+ */
+const skipProducts = process.argv.includes("--skip-products");
+
 async function main() {
   console.log("Seeding taxonomy…");
   const axisMap = { product: "PRODUCT", purpose: "PURPOSE", industry: "INDUSTRY", budget: "BUDGET" } as const;
@@ -545,8 +559,9 @@ async function main() {
     }
   }
 
-  console.log("Seeding products…");
-  for (const p of PRODUCTS) {
+  if (skipProducts) console.log("Skipping sample products (--skip-products).");
+  else console.log("Seeding products…");
+  for (const p of skipProducts ? [] : PRODUCTS) {
     // Budget tier is derived rather than hand-tagged — at a thousand products
     // tagging by hand is not workable, and price already implies the tier.
     const tier = p.price ? budgetTierFor(p.price) : null;
