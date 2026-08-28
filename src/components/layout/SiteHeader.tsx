@@ -3,13 +3,28 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
-import { NAV, START_PROJECT, label, localePath } from "@/lib/nav";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Menu, X } from "lucide-react";
+import {
+  NAV,
+  START_PROJECT,
+  label,
+  localePath,
+  visibleChildren,
+  type NavItem,
+} from "@/lib/nav";
 import { type AppLocale, otherLocale } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 
-export function SiteHeader({ locale }: { locale: AppLocale }) {
+export function SiteHeader({
+  locale,
+  hasConcepts = false,
+}: {
+  locale: AppLocale;
+  /** FR-13.6 — computed on the server. The concepts themselves must never
+   *  reach the browser: unpublished ones are real client proposals. */
+  hasConcepts?: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -19,6 +34,19 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
 
   const isCurrent = (href: string) =>
     bare === href || bare.startsWith(`${href}/`);
+
+  /**
+   * Which submenu entry the visitor is actually on.
+   *
+   * Longest match wins, or /ideas/concepts would mark the Idea Library as the
+   * current page as well as itself — two items highlighted, one of them
+   * wrong.
+   */
+  const currentChild = (children: NavItem[]) =>
+    children.reduce<string | null>((best, child) => {
+      if (!isCurrent(child.href)) return best;
+      return best === null || child.href.length > best.length ? child.href : best;
+    }, null);
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/92 backdrop-blur-md backdrop-saturate-150">
@@ -58,16 +86,21 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
               >
                 {label(item, locale)}
               </span>
+            ) : visibleChildren(item, { hasConcepts }).length > 1 ? (
+              <NavMenu
+                key={item.href}
+                item={item}
+                entries={visibleChildren(item, { hasConcepts })}
+                locale={locale}
+                current={isCurrent(item.href)}
+                currentChild={currentChild(visibleChildren(item, { hasConcepts }))}
+              />
             ) : (
               <Link
                 key={item.href}
                 href={localePath(item.href, locale)}
                 aria-current={isCurrent(item.href) ? "page" : undefined}
-                className={cn(
-                  "relative py-1 font-display text-[0.6875rem] font-semibold uppercase tracking-[0.13em] whitespace-nowrap",
-                  "after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:bg-red after:transition-transform after:duration-200",
-                  "hover:after:scale-x-100 aria-[current=page]:after:scale-x-100",
-                )}
+                className={cn(NAV_LINK)}
               >
                 {label(item, locale)}
               </Link>
@@ -118,13 +151,40 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
                     {label(item, locale)}
                   </span>
                 ) : (
-                  <Link
-                    href={localePath(item.href, locale)}
-                    onClick={() => setOpen(false)}
-                    className="block py-3 font-display text-sm font-semibold uppercase tracking-[0.1em]"
-                  >
-                    {label(item, locale)}
-                  </Link>
+                  <>
+                    {/* Hover does not exist here, so the submenu is simply
+                        laid open. A disclosure to tap would hide the section
+                        behind a second gesture for no gain — there are two
+                        entries. */}
+                    <Link
+                      href={localePath(item.href, locale)}
+                      onClick={() => setOpen(false)}
+                      className="block py-3 font-display text-sm font-semibold uppercase tracking-[0.1em]"
+                    >
+                      {label(item, locale)}
+                    </Link>
+                    {visibleChildren(item, { hasConcepts }).length > 1 && (
+                      <ul className="mb-2 ml-4 flex flex-col border-l border-line">
+                        {visibleChildren(item, { hasConcepts }).map((child) => (
+                          <li key={child.href}>
+                            <Link
+                              href={localePath(child.href, locale)}
+                              onClick={() => setOpen(false)}
+                              aria-current={
+                                currentChild(visibleChildren(item, { hasConcepts })) ===
+                                child.href
+                                  ? "page"
+                                  : undefined
+                              }
+                              className="block py-2.5 pl-4 text-sm text-muted aria-[current=page]:font-semibold aria-[current=page]:text-red"
+                            >
+                              {label(child, locale)}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </li>
             ))}
@@ -135,6 +195,126 @@ export function SiteHeader({ locale }: { locale: AppLocale }) {
         </nav>
       )}
     </header>
+  );
+}
+
+const NAV_LINK = cn(
+  "relative py-1 font-display text-[0.6875rem] font-semibold uppercase tracking-[0.13em] whitespace-nowrap",
+  "after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-left after:scale-x-0 after:bg-red after:transition-transform after:duration-200",
+  "hover:after:scale-x-100 aria-[current=page]:after:scale-x-100",
+);
+
+/**
+ * A top-level item that opens a submenu.
+ *
+ * Opening is bound to hover *and* to keyboard focus, and the parent remains a
+ * working link. Hover alone would put Concept Collections behind a gesture
+ * that does not exist on a keyboard, which is the same unreachability the
+ * menu is here to fix.
+ *
+ * Closing is delayed by a moment. The menu sits below the header rather than
+ * flush against the item, and a mouse crossing that gap at an angle would
+ * otherwise dismiss the thing it is travelling towards.
+ */
+function NavMenu({
+  item,
+  entries,
+  locale,
+  current,
+  currentChild,
+}: {
+  item: NavItem;
+  entries: NavItem[];
+  locale: AppLocale;
+  current: boolean;
+  currentChild: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLAnchorElement>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  const cancelClose = () => {
+    if (closeTimer.current !== null) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  };
+
+  const show = () => {
+    cancelClose();
+    setOpen(true);
+  };
+
+  const hide = () => {
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
+  };
+
+  useEffect(() => cancelClose, []);
+
+  return (
+    <div
+      ref={wrapRef}
+      className="relative flex self-stretch items-center"
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={(e) => {
+        // Only close when focus has actually left the whole group, or tabbing
+        // from the trigger into the first entry would shut it.
+        if (!wrapRef.current?.contains(e.relatedTarget as Node | null)) {
+          cancelClose();
+          setOpen(false);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape" || !open) return;
+        cancelClose();
+        setOpen(false);
+        triggerRef.current?.focus();
+      }}
+    >
+      <Link
+        ref={triggerRef}
+        href={localePath(item.href, locale)}
+        aria-current={current ? "page" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open}
+        className={cn(NAV_LINK, "flex items-center gap-1")}
+      >
+        {label(item, locale)}
+        <ChevronDown
+          size={12}
+          aria-hidden
+          className={cn("transition-transform duration-200", open && "rotate-180")}
+        />
+      </Link>
+
+      {open && (
+        /* The padding is inside the panel wrapper rather than a margin on it,
+           so the gap below the header is still part of the hover target. */
+        <div className="absolute left-0 top-full z-50 pt-px">
+          <ul className="min-w-[15rem] border border-line border-t-0 bg-paper py-1 shadow-lg">
+            {entries.map((child) => (
+              <li key={child.href}>
+                <Link
+                  href={localePath(child.href, locale)}
+                  onClick={() => {
+                    cancelClose();
+                    setOpen(false);
+                  }}
+                  aria-current={currentChild === child.href ? "page" : undefined}
+                  className="block px-5 py-3 font-display text-[0.6875rem] font-semibold uppercase tracking-[0.11em] whitespace-nowrap transition-colors hover:bg-warm hover:text-red aria-[current=page]:text-red"
+                >
+                  {label(child, locale)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

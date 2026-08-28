@@ -7,6 +7,7 @@ import { isLocale, htmlLang, type AppLocale } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { JsonLd, organizationSchema } from "@/lib/structured-data";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { publishedConcepts } from "@/content/concepts";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { Analytics } from "@/components/Analytics";
@@ -78,7 +79,10 @@ export default async function LocaleLayout({
       <body className="flex min-h-full flex-col">
         {/* NFR-6.4 */}
         <JsonLd data={organizationSchema()} />
-        <SiteHeader locale={typed} />
+        {/* FR-13.6 — only the answer crosses into the browser, never the
+            collections: the unpublished ones are real client proposals and
+            `published: false` is the only thing keeping them off the site. */}
+        <SiteHeader locale={typed} hasConcepts={publishedConcepts().length > 0} />
         <main className="flex-1">{children}</main>
         <SiteFooter locale={typed} />
         <WhatsAppFloat locale={typed} />
