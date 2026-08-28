@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx tests/term-order.test.ts && tsx tests/enquiry-uploads.test.ts && tsx tests/gallery.test.ts && tsx tests/rate-limit.test.ts && tsx tests/contact.test.ts && tsx tests/photo-import.test.ts",
     "admin:set": "tsx --env-file=.env scripts/admin.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:status": "tsx --env-file=.env scripts/status.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
