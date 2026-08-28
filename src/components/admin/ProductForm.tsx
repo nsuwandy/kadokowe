@@ -5,6 +5,7 @@ import { deleteProduct as deleteAction } from "@/app/admin/products/actions";
 import { TranslationStatus } from "@/components/admin/TranslationStatus";
 import { ImageField } from "@/components/admin/ImageField";
 import { GalleryField } from "@/components/admin/GalleryField";
+import { priceToInput } from "@/lib/price";
 import {
   AVAILABILITY_OPTIONS,
   VISIBILITY_OPTIONS,
@@ -86,7 +87,7 @@ export function ProductForm({
 
           <label className="flex flex-col gap-2">
             <span className={labelCls}>Short line (English) *</span>
-            <input name="shortEn" required defaultValue={product?.shortEn ?? ""} className={field} />
+            <input name="shortEn" defaultValue={product?.shortEn ?? ""} className={field} />
             <span className={hint}>
               One sentence on the card. This is what makes it read as an idea
               rather than a listing — for example &ldquo;A surprisingly useful
@@ -166,13 +167,17 @@ export function ProductForm({
               <span className={labelCls}>Indicative price (Rp)</span>
               <input
                 name="indicativePrice"
-                inputMode="numeric"
-                defaultValue={product?.indicativePrice ?? ""}
+                defaultValue={priceToInput(
+                  product?.indicativePrice ?? null,
+                  product?.indicativePriceMax ?? null,
+                )}
+                placeholder="45000  or  30000-45000"
                 className={field}
               />
               <span className={hint}>
-                Never shown as a headline on the site. Sets the budget tier
-                automatically, so it does not need tagging.
+                One figure, or a range written with a dash. Never shown as a
+                headline on the site. The budget tier comes from the lower
+                figure, so it does not need tagging.
               </span>
             </label>
           </div>

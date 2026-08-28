@@ -15,7 +15,7 @@ export type ProductFormValues = {
   slug: string;
   nameEn: string;
   nameId: string | null;
-  shortEn: string;
+  shortEn: string | null;
   shortId: string | null;
   whyEn: string | null;
   whyId: string | null;
@@ -28,6 +28,7 @@ export type ProductFormValues = {
   customisation: string[];
   availability: string;
   indicativePrice: number | null;
+  indicativePriceMax: number | null;
   tagsEn: string[];
   tagsId: string[];
   heroImage: string | null;

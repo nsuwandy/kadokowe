@@ -95,9 +95,8 @@ export const GRID_COLUMNS: readonly GridColumn[] = [
     label: "One-liner (English)",
     kind: "long",
     width: 260,
-    required: true,
     essential: true,
-    hint: "Required. The idea-led line on the product card — the sentence that makes it read as an idea rather than a listing (FR-4.1).",
+    hint: "Optional. The idea-led line on the product card — the sentence that makes it read as an idea rather than a listing (FR-4.1). Left blank, the card shows the name alone.",
     example: "The canvas everyone keeps.",
   },
   {
@@ -148,11 +147,11 @@ export const GRID_COLUMNS: readonly GridColumn[] = [
   {
     key: "indicative_price",
     label: "Indicative price",
-    kind: "number",
+    kind: "text",
     width: 145,
     essential: true,
-    hint: "Rupiah per unit, digits only — no Rp, no dots. The budget tier is worked out from this, so there is nothing else to tag. Leave blank if unknown.",
-    example: "45000",
+    hint: "Rupiah per unit. One figure, or a range with a dash: 30000-45000. The budget tier is worked out from the lower figure, so there is nothing else to tag. Leave blank if unknown.",
+    example: "45000   or   30000-45000",
   },
   {
     key: "visibility",

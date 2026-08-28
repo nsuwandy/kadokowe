@@ -62,6 +62,15 @@ enum CustomMadeFamily {
   SPECIAL_PROJECTS
 }
 
+/// Whether an add-on carries a price or has to be quoted.
+enum PackagingPricing {
+  /// A fixed uplift per unit, in rupiah.
+  FIXED
+  /// No list price. Quantity, material and artwork decide it, so the cart
+  /// asks for a quotation rather than inventing a number.
+  QUOTE
+}
+
 /// FR-6.1.
 enum EnquiryType {
   EVENT
@@ -117,7 +126,12 @@ model Product {
   nameEn    String
   nameId    String?
   /// The idea-led line on the product card. FR-4.1.
-  shortEn   String
+  ///
+  /// Optional as of the catalogue revision: the client loads products faster
+  /// than the copy for them, and a required field meant a row could not be
+  /// entered at all until someone had written its sentence. The card falls
+  /// back to the name alone.
+  shortEn   String?
   shortId   String?
   /// Kadokowe's perspective. The field that distinguishes a library from a
   /// price list — FR-4.5.
@@ -137,7 +151,12 @@ model Product {
 
   /// Stored for filtering precision and to derive Budget Tier across a large
   /// catalogue. Never a primary display element — FR-4.3.
-  indicativePrice Int?
+  ///
+  /// A range is expressed by setting the max as well: 30000-45000 renders as
+  /// a span, 45000 alone as a single figure. The budget tier is always taken
+  /// from the low end, which is the figure a buyer plans against.
+  indicativePrice    Int?
+  indicativePriceMax Int?
 
   heroImage String?
   gallery   Image[]
@@ -166,6 +185,7 @@ model Product {
 
   boardItems IdeaBoardItem[]
   enquiries  EnquiryProduct[]
+  packaging  ProductPackaging[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -195,6 +215,86 @@ model TaxonomyTerm {
 
   @@unique([axis, slugEn])
   @@index([axis, sortOrder])
+}
+
+/**
+ * Packaging and decoration add-ons offered on a product.
+ *
+ * One tree rather than two lists: the priced decoration methods (laser
+ * engraving, the UV printing variants) and the quote-only packaging types
+ * (factory, plastic, custom tote, custom paper with its three constructions)
+ * are the same choice from the buyer's point of view — what else happens to
+ * this product — and separating them in the data would mean two of every
+ * screen that touches them.
+ *
+ * `appliesToAll` is what makes the four defaults defaults: they are offered on
+ * every product without a row per product. A ProductPackaging row exists only
+ * to add something product-specific or to override a price.
+ */
+model PackagingOption {
+  id     String @id @default(cuid())
+  slug   String @unique
+
+  nameEn String
+  nameId String?
+  descEn String?
+  descId String?
+
+  pricing PackagingPricing @default(FIXED)
+  /// Rupiah added per unit. Meaningful only when pricing is FIXED.
+  priceDelta Int?
+
+  /// Sub-constructions, e.g. paper / softbox / hardbox under custom paper.
+  parentId String?
+  parent   PackagingOption?  @relation("PackagingTree", fields: [parentId], references: [id])
+  children PackagingOption[] @relation("PackagingTree")
+
+  /// Offered on every product. False for options a product opts into.
+  appliesToAll Boolean @default(true)
+  sortOrder    Int     @default(0)
+  visibility   Visibility @default(PUBLISHED)
+
+  products ProductPackaging[]
+  lines    EnquiryProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([appliesToAll, sortOrder])
+}
+
+/// A product-specific add-on, or a price that differs for this product.
+model ProductPackaging {
+  productId String
+  optionId  String
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  option    PackagingOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  /// Overrides the option's own uplift for this product only.
+  priceDelta Int?
+  sortOrder  Int @default(0)
+
+  @@id([productId, optionId])
+}
+
+/// FR-4.x — the partner and supplier marks shown on About.
+model Partner {
+  id     String  @id @default(cuid())
+  name   String
+  /// Cloudinary public ID. Without one the name renders as a wordmark, the
+  /// same fallback the client strip uses.
+  logo   String?
+  url    String?
+  noteEn String?
+  noteId String?
+
+  sortOrder  Int        @default(0)
+  visibility Visibility @default(PUBLISHED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visibility, sortOrder])
 }
 
 /// Gallery images. A single model with nullable parents keeps alt text and
@@ -256,6 +356,24 @@ model Project {
   makingId     String?
   impactEn     String?
   impactId     String?
+
+  /// One background photograph per story section — the chapters are read as
+  /// full-height scenes, and a chapter with no image falls back to the ink
+  /// ground rather than borrowing the hero and repeating it six times.
+  briefImage       String?
+  challengeImage   String?
+  thinkingImage    String?
+  createdWorkImage String?
+  makingImage      String?
+  impactImage      String?
+
+  /// The client's own words. Rendered only when the quote is present, so a
+  /// project without one shows no empty attribution.
+  testimonialEn     String?
+  testimonialId     String?
+  testimonialAuthor String?
+  testimonialRoleEn String?
+  testimonialRoleId String?
 
   /// Impact figures rendered as a stat band.
   stats Json?
@@ -441,11 +559,30 @@ model Enquiry {
 
 /// Explicit join so an enquiry keeps the product reference even if the
 /// product is later unpublished.
+/**
+ * One line of a submitted cart.
+ *
+ * The unit price is snapshotted rather than read back through the product.
+ * The catalogue moves, and an enquiry opened three weeks later has to show
+ * what the buyer was actually looking at when they sent it — otherwise the
+ * conversation and the record disagree, and only one of them is right.
+ */
 model EnquiryProduct {
   enquiryId String
   productId String
   enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  quantity Int @default(1)
+
+  /// The add-on chosen for this line, if any.
+  packagingId String?
+  packaging   PackagingOption? @relation(fields: [packagingId], references: [id])
+
+  /// Rupiah per unit as shown at the time of submission, add-on included.
+  /// Null when the line was quote-only.
+  unitPrice    Int?
+  unitPriceMax Int?
 
   @@id([enquiryId, productId])
 }

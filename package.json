@@ -15,7 +15,8 @@
     "admin:set": "tsx --env-file=.env scripts/admin.ts",
     "postinstall": "prisma generate",
     "db:status": "tsx --env-file=.env scripts/status.ts",
-    "db:seed:craft": "tsx --env-file=.env prisma/seed-craft.ts"
+    "db:seed:craft": "tsx --env-file=.env prisma/seed-craft.ts",
+    "db:seed:packaging": "tsx --env-file=.env prisma/seed-packaging.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

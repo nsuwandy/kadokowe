@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { parsePrice } from "@/lib/price";
 import { budgetTierFor } from "@/content/taxonomy";
 import { galleryFrom } from "@/lib/gallery";
 import { type SaveState } from "@/lib/product-form";
@@ -43,20 +44,17 @@ export async function saveProduct(
   const nameEn = str("nameEn");
   const shortEn = str("shortEn");
   if (!nameEn) return { ok: false, message: "An English name is required." };
-  if (!shortEn) {
-    return {
-      ok: false,
-      message:
-        "The short line is required — it is what makes the card read as an idea rather than a listing.",
-    };
-  }
-
   const slug =
     str("slug") ??
     nameEn.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "")
       .trim().replace(/\s+/g, "-").replace(/-+/g, "-");
 
-  const indicativePrice = num("indicativePrice");
+  // Either "45000" or "30000-45000". The tier is taken from the lower figure:
+  // it is the number a buyer plans against, and using the upper one would file
+  // a product one band above what it can actually be had for.
+  const price = parsePrice(str("indicativePrice"));
+  const indicativePrice = price?.min ?? null;
+  const indicativePriceMax = price?.max ?? null;
 
   // Taxonomy terms chosen in the form, plus the derived budget tier.
   const chosen = formData.getAll("termIds").map(String).filter(Boolean);
@@ -92,6 +90,7 @@ export async function saveProduct(
     customisation: list("customisation"),
     availability: String(formData.get("availability") ?? "LOCAL_PRODUCTION") as never,
     indicativePrice,
+    indicativePriceMax,
     tagsEn: list("tagsEn"),
     tagsId: list("tagsId"),
     heroImage: str("heroImage"),

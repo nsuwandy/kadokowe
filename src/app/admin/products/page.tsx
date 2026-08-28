@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { formatPrice } from "@/lib/price";
 import type { Prisma } from "@/generated/prisma/client";
 
 /** FR-10.2 — product list with search and visibility filtering. */
@@ -35,7 +36,8 @@ export default async function AdminProducts({
       take: 100,
       select: {
         id: true, slug: true, nameEn: true, nameId: true, visibility: true,
-        availability: true, featured: true, indicativePrice: true, updatedAt: true,
+        availability: true, featured: true, indicativePrice: true,
+        indicativePriceMax: true, updatedAt: true,
       },
     }),
     db.product.count({ where }),
@@ -105,7 +107,7 @@ export default async function AdminProducts({
                   </td>
                   <td className="px-5 py-3 text-xs text-muted">{p.availability.replace(/_/g, " ").toLowerCase()}</td>
                   <td className="px-5 py-3 text-xs tabular-nums text-muted">
-                    {p.indicativePrice ? `Rp ${p.indicativePrice.toLocaleString("id-ID")}` : "—"}
+                    {formatPrice(p.indicativePrice, p.indicativePriceMax) ?? "—"}
                   </td>
                   <td className="px-5 py-3">
                     <span className={

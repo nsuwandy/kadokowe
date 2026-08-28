@@ -40,6 +40,7 @@ export async function writeParsedRows(
         customisation: row.customisation,
         availability: row.availability as never,
         indicativePrice: row.indicativePrice,
+        indicativePriceMax: row.indicativePriceMax,
         tagsEn: row.tagsEn, tagsId: row.tagsId,
         heroImage: row.heroImage,
         featured: row.featured, isNew: row.isNew,

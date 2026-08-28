@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import { budgetTierFor } from "@/content/taxonomy";
+import { parsePrice } from "./price";
 import {
   AVAILABILITY_VALUES,
   VISIBILITY_VALUES,
@@ -38,13 +39,14 @@ export type ParsedRow = {
   slug: string;
   nameEn: string;
   nameId: string | null;
-  shortEn: string;
+  shortEn: string | null;
   shortId: string | null;
   whyEn: string | null;
   whyId: string | null;
   termSlugs: string[];
   availability: string;
   indicativePrice: number | null;
+  indicativePriceMax: number | null;
   material: string | null;
   dimensions: string | null;
   capacity: string | null;
@@ -116,12 +118,6 @@ export function normalizeRecords(
       return;
     }
 
-    const shortEn = (raw.short_en ?? "").trim();
-    if (!shortEn) {
-      errors.push({ line, slug: raw.slug, problem: `"${nameEn}" has no short_en. That one line is what makes the card read as an idea rather than a listing.` });
-      return;
-    }
-
     const slug = (raw.slug ?? "").trim() || slugifyName(nameEn);
     if (seen.has(slug)) {
       errors.push({ line, slug, problem: `Duplicate slug "${slug}" — it also appears earlier in this import.` });
@@ -141,21 +137,20 @@ export function normalizeRecords(
       return;
     }
 
-    let price: number | null = null;
-    const rawPrice = (raw.indicative_price ?? "").replace(/[^\d]/g, "");
-    if (rawPrice) {
-      price = Number(rawPrice);
-      if (!Number.isFinite(price)) {
-        errors.push({ line, slug, problem: `Could not read indicative_price "${raw.indicative_price}" as a number.` });
-        return;
-      }
+    // A figure or a range. This used to strip every non-digit and call the
+    // result a number, which turned "30000-45000" into three billion rather
+    // than into a range — wrong by a factor of a hundred thousand, and silent.
+    const price = parsePrice(raw.indicative_price);
+    if (raw.indicative_price?.trim() && price === null) {
+      errors.push({ line, slug, problem: `Could not read indicative_price "${raw.indicative_price}" as a price. Use 45000, or 30000-45000 for a range.` });
+      return;
     }
 
     const moqRaw = (raw.moq ?? "").replace(/[^\d]/g, "");
 
     // Budget tier is derived from price rather than tagged by hand — at this
     // catalogue size a fourth axis of manual tagging is not workable.
-    const tier = price !== null ? budgetTierFor(price) : null;
+    const tier = price !== null ? budgetTierFor(price.min) : null;
 
     const termSlugs = [
       ...list(raw.category),
@@ -169,13 +164,14 @@ export function normalizeRecords(
       slug,
       nameEn,
       nameId: text(raw.name_id),
-      shortEn,
+      shortEn: text(raw.short_en),
       shortId: text(raw.short_id),
       whyEn: text(raw.why_en),
       whyId: text(raw.why_id),
       termSlugs,
       availability,
-      indicativePrice: price,
+      indicativePrice: price?.min ?? null,
+      indicativePriceMax: price?.max ?? null,
       material: text(raw.material),
       dimensions: text(raw.dimensions),
       capacity: text(raw.capacity),
@@ -203,10 +199,11 @@ export function parseProductCsv(csv: string): ParseResult {
   });
 
   const headers = parsed.meta.fields ?? [];
-  // Only these two are structurally required; everything else has a sensible
-  // default, because demanding a full row for every product would make the
-  // import unusable for a partially-written catalogue.
-  const required = ["name_en", "short_en"];
+  // The name is the only structurally required column. The one-liner was
+  // required too until the catalogue revision, which meant a supplier list
+  // could not be loaded until someone had written a sentence for every row —
+  // and the products arrive well before the copy for them does.
+  const required = ["name_en"];
   const missingColumns = required.filter((c) => !headers.includes(c));
   if (missingColumns.length > 0) {
     return { rows: [], errors: [], missingColumns };
@@ -225,7 +222,7 @@ export function importTemplateCsv() {
     "Sturdy enough to outlive the event it was made for.",
     "Cukup kuat untuk bertahan lebih lama dari acaranya.",
     "bags-carry", "corporate-gifts|exhibition", "retail|events",
-    "READY_STOCK", "45000", "12oz cotton canvas", "38 x 42 cm", "",
+    "READY_STOCK", "30000-45000", "12oz cotton canvas", "38 x 42 cm", "",
     "Natural|Black", "300", "10-14 days",
     "Full-surface print|Logo printing", "Events|Retail", "Acara|Ritel",
     "", "false", "true", "DRAFT",

@@ -25,7 +25,7 @@ export type ProductCardData = {
   slug: string;
   nameEn: string;
   nameId: string | null;
-  shortEn: string;
+  shortEn: string | null;
   shortId: string | null;
   tagsEn: string[];
   tagsId: string[];

@@ -284,10 +284,6 @@ function GridEditor({ termsByAxis }: { termsByAxis: TermsByAxis }) {
       rowProblems.set(i, "Needs an English name.");
       return;
     }
-    if (!row.short_en?.trim()) {
-      rowProblems.set(i, "Needs a one-liner — the line that makes the card read as an idea.");
-      return;
-    }
     const slug = row.slug?.trim();
     if (slug) {
       const first = slugsSeen.get(slug);

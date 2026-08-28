@@ -87,6 +87,7 @@ export default async function ProductEditor({
                 customisation: product.customisation,
                 availability: product.availability,
                 indicativePrice: product.indicativePrice,
+                indicativePriceMax: product.indicativePriceMax,
                 tagsEn: product.tagsEn,
                 tagsId: product.tagsId,
                 heroImage: product.heroImage,
