@@ -31,9 +31,12 @@ export default async function IdeasPage({
 
   const sp = await searchParams;
   const page = Math.max(1, Number(sp?.page ?? 1) || 1);
-  const axes = await getAllAxes(l);
-
-  const [products, totalProducts] = await Promise.all([
+  // One wave, not two. The browse terms and the product page do not depend on
+  // each other, so awaiting them in sequence spent two round trips where one
+  // would do — which is invisible next to a local database and very much not
+  // invisible when the database is on another continent.
+  const [axes, products, totalProducts] = await Promise.all([
+    getAllAxes(l),
     db.product.findMany({
     where: { visibility: "PUBLISHED" },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],

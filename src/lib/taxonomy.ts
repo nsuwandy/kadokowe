@@ -55,13 +55,55 @@ export async function getTerms(
   }
 }
 
-/** All four axes at once, for pages that show every entry point. */
+/**
+ * All four axes in a single query.
+ *
+ * This was four queries — one per axis, issued in parallel. Parallel is not
+ * free when the database is on another continent: each is a separate round
+ * trip over the same connection budget, and the page waits for the slowest.
+ * One query returning forty rows costs one round trip and is grouped here,
+ * which is work the database would otherwise do four times.
+ *
+ * The per-axis fallback is kept: an axis with no rows falls back to the code
+ * constants independently, so a partly populated taxonomy still renders every
+ * entry point.
+ */
 export async function getAllAxes(locale: AppLocale) {
   const keys = Object.keys(AXES) as AxisKey[];
-  const entries = await Promise.all(
-    keys.map(async (k) => [k, await getTerms(k, locale)] as const),
-  );
-  return Object.fromEntries(entries) as Record<AxisKey, ResolvedTerm[]>;
+  const fallback = (axis: AxisKey): ResolvedTerm[] =>
+    AXES[axis].terms.map((t: Term) => ({
+      slug: t.slug,
+      label: locale === "id" ? t.id : t.en,
+    }));
+
+  let rows: { axis: string; slugEn: string; nameEn: string; nameId: string | null }[] = [];
+  try {
+    rows = await db.taxonomyTerm.findMany({
+      orderBy: [{ axis: "asc" }, { sortOrder: "asc" }],
+      select: { axis: true, slugEn: true, nameEn: true, nameId: true },
+    });
+  } catch {
+    // A page showing its default browse terms beats a page that fails.
+    return Object.fromEntries(keys.map((k) => [k, fallback(k)])) as Record<AxisKey, ResolvedTerm[]>;
+  }
+
+  const grouped = new Map<string, ResolvedTerm[]>();
+  for (const row of rows) {
+    const list = grouped.get(row.axis) ?? [];
+    list.push({
+      slug: row.slugEn,
+      // Blank Indonesian means untranslated, not deliberately empty.
+      label: locale === "id" && row.nameId?.trim() ? row.nameId : row.nameEn,
+    });
+    grouped.set(row.axis, list);
+  }
+
+  return Object.fromEntries(
+    keys.map((k) => {
+      const found = grouped.get(AXIS_TO_ENUM[k]) ?? [];
+      return [k, found.length > 0 ? found : fallback(k)];
+    }),
+  ) as Record<AxisKey, ResolvedTerm[]>;
 }
 
 /** The display name for an axis itself, which is not administrator-managed. */
