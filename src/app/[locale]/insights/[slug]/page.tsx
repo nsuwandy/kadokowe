@@ -69,9 +69,21 @@ export async function generateMetadata({
   });
 }
 
+/**
+ * Recent articles are built ahead; the archive is rendered on demand.
+ *
+ * Insights grows without bound and the tail is read rarely, so building every
+ * article in both languages on every deploy spends build time on pages nobody
+ * has asked for in a year. Anything outside this set still works — it is
+ * rendered on the first request and cached.
+ */
+const PRERENDERED_ARTICLES = 60;
+
 export async function generateStaticParams() {
   const articles = await db.article.findMany({
     where: livePublished(),
+    orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    take: PRERENDERED_ARTICLES,
     select: { slug: true },
   });
   return articles.flatMap((a) =>

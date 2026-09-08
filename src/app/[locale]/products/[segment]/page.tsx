@@ -357,9 +357,34 @@ export default async function ProductPage({
 }
 
 /** Pre-render published products; the filtered views resolve at request time. */
+/**
+ * How many products are built ahead of time.
+ *
+ * Not the whole catalogue. Prerendering every product in both languages means
+ * two pages per product on every deploy, each with its own database queries
+ * and its own set of Cloudinary derivatives — a thousand products is two
+ * thousand pages built whether or not anyone ever asks for them, and it is
+ * what makes a build slow enough to exhaust the database's connections.
+ *
+ * `dynamicParams` stays true, so anything outside this set is rendered on the
+ * first request and cached from then on. The difference is only ever when a
+ * page is built, never whether it works.
+ *
+ * Raise it if the catalogue is small enough that build time does not matter.
+ */
+const PRERENDERED_PRODUCTS = 150;
+
 export async function generateStaticParams() {
   const products = await db.product.findMany({
     where: { visibility: "PUBLISHED" },
+    // The ones most likely to be asked for first: featured, then new, then
+    // whatever was added most recently.
+    orderBy: [
+      { featured: "desc" },
+      { isNew: "desc" },
+      { createdAt: "desc" },
+    ],
+    take: PRERENDERED_PRODUCTS,
     select: { slug: true },
   });
   return products.flatMap((p) =>
