@@ -22,13 +22,10 @@ export const EDITABLE_PAGES = [
   // keys is how one of them ends up forgotten.
   { key: "what-we-do.intro", label: "What We Do — introduction" },
   { key: "custom-made.intro", label: "Custom Made — introduction" },
-  { key: "custom-made.custom-bags", label: "Custom Made — Custom Bags" },
-  { key: "custom-made.printed-textiles", label: "Custom Made — Printed Textiles" },
-  { key: "custom-made.plush-characters", label: "Custom Made — Plush & Characters" },
-  { key: "custom-made.silicone-moulded", label: "Custom Made — Silicone & Moulded" },
-  { key: "custom-made.custom-apparel", label: "Custom Made — Custom Apparel" },
-  { key: "custom-made.custom-packaging", label: "Custom Made — Custom Packaging" },
-  { key: "custom-made.special-projects", label: "Custom Made — Special Projects" },
+  // The seven families are edited in the Custom Made tab, which owns their
+  // headline, introduction and hero. They were listed here as well, and Page
+  // Copy won — so the same fields existed in two screens and the wrong one
+  // was authoritative.
   { key: "about.story", label: "About — the story" },
   { key: "contact.intro", label: "Contact — introduction" },
 ] as const;

@@ -16,7 +16,8 @@
     "postinstall": "prisma generate",
     "db:status": "tsx --env-file=.env scripts/status.ts",
     "db:seed:craft": "tsx --env-file=.env prisma/seed-craft.ts",
-    "db:seed:packaging": "tsx --env-file=.env prisma/seed-packaging.ts"
+    "db:seed:packaging": "tsx --env-file=.env prisma/seed-packaging.ts",
+    "db:adopt:craft": "tsx --env-file=.env prisma/adopt-craft-copy.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

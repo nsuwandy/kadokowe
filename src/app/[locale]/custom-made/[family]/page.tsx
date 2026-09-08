@@ -9,7 +9,6 @@ import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { FAMILIES, familyBySlug } from "@/content/custom-made";
-import { pageCopy, pageBlocks } from "@/lib/page-content";
 import { getCraftFamily } from "@/lib/craft";
 import { CraftShowcase } from "@/components/CraftShowcase";
 import { isPreview } from "@/lib/preview";
@@ -27,19 +26,20 @@ export async function generateMetadata({
   const f = familyBySlug(family);
   if (!isLocale(locale) || !f) return {};
   const l = locale as AppLocale;
-  // The introduction, not the headline. A meta description is the snippet
+  // Read from the Custom Made record, exactly as the page does. The share
+  // card used to come from Page Copy while the page came from the record, so
+  // a hero set in the Custom Made tab never reached the link preview.
+  //
+  // The introduction, not the headline: a meta description is the snippet
   // shown under the result, and a seven-word headline leaves Google to invent
-  // one from the page — usually from whatever text happens to be first.
-  // Respects the operator's override, so a rewritten introduction reaches the
-  // search result rather than drifting from it.
-  const description = await pageCopy(
-    `custom-made.${f.slug}`, "intro", l, l === "id" ? f.introId : f.introEn,
-  );
-  const blocks = await pageBlocks(`custom-made.${f.slug}`);
+  // one from whatever text happens to be first on the page.
+  const craft = await getCraftFamily(f.slug, l);
+  const description =
+    craft?.intro ?? (l === "id" ? f.introId : f.introEn);
   return shareMetadata({
-    title: l === "id" ? f.nameId : f.nameEn,
+    title: craft?.name ?? (l === "id" ? f.nameId : f.nameEn),
     description,
-    image: blocks.hero?.en ?? null,
+    image: craft?.heroImage ?? null,
     path: localePath(`/custom-made/${family}`, l),
     locale: l,
   });
@@ -69,25 +69,22 @@ export default async function FamilyPage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  // FR-12.11 — the administrator may override this family's headline and
-  // introduction; the code default is used when they have not.
-  // FR-12.11 — imagery is administrator-managed alongside the copy. The image
-  // ID is language-independent, so it is read from the English slot rather
-  // than duplicated per language.
-  const familyBlocks = await pageBlocks(`custom-made.${f.slug}`);
-
   // The family now lives in the database; the code constant remains as the
   // fallback so an unseeded environment renders the pages it always had.
   const preview = await isPreview();
   const craft = (await getCraftFamily(f.slug, l, preview))!;
-  const heroImage = craft.heroImage ?? familyBlocks.hero?.en ?? null;
 
-  const lead = await pageCopy(
-    `custom-made.${f.slug}`, "heading", l, t(f.leadEn, f.leadId),
-  );
-  const intro = await pageCopy(
-    `custom-made.${f.slug}`, "intro", l, t(f.introEn, f.introId),
-  );
+  // FR-12.11 — headline, introduction and hero all come from the Custom Made
+  // tab, with the code default behind them.
+  //
+  // They used to come from Page Copy, with the record consulted only for the
+  // image and only when the family was published. The result was that the
+  // headline and introduction typed into the Custom Made tab reached the site
+  // never, and the hero reached it only sometimes — with no error anywhere to
+  // say so. One editable thing, one place to edit it.
+  const heroImage = craft.heroImage;
+  const lead = craft.lead ?? t(f.leadEn, f.leadId);
+  const intro = craft.intro ?? t(f.introEn, f.introId);
 
   // FR-12.4 — related work, rendered only when a relationship exists.
   const projects = await db.project.findMany({
