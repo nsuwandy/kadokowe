@@ -113,6 +113,8 @@ export default async function ConceptsPage({
                     <Plate
                       tone={i % 2 === 0 ? "light" : "dark"}
                       ratio="16 / 9.5"
+                      publicId={c.heroImage}
+                      alt=""
                       caption={c.shots?.[0] ?? c.titleEn}
                       sizes="(min-width: 1024px) 55vw, 100vw"
                       className={i % 2 === 0 ? "" : "lg:order-2"}

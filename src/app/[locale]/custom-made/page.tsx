@@ -7,6 +7,7 @@ import { pageCopy } from "@/lib/page-content";
 import { Wrap, Section, Eyebrow } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
+import { listCraftFamilies } from "@/lib/craft";
 import { FAMILIES } from "@/content/custom-made";
 
 export const metadata: Metadata = {
@@ -32,7 +33,20 @@ export default async function CustomMadePage({
   const t = (en: string, id: string) => (l === "id" ? id : en);
   const path = (p: string) => localePath(p, l);
 
-  const [first, ...rest] = FAMILIES;
+  // Read from the Custom Made records, not the constants.
+  //
+  // This page listed FAMILIES straight from the code and gave every card a
+  // caption with no image, so all seven were permanent grey placeholders and
+  // a hero uploaded in the admin could never reach them. listCraftFamilies
+  // falls back to the same constants when nothing is published, so an
+  // unseeded environment still renders the page it always had.
+  const families = await listCraftFamilies(l);
+  const [first, ...rest] = families;
+
+  // The shot descriptions are a brief for the photographer and live in the
+  // code; they are the caption a placeholder shows while no photograph exists.
+  const shotFor = (slug: string) =>
+    FAMILIES.find((f) => f.slug === slug)?.shot ?? null;
 
   // FR-10.5 / FR-12.11 — the index headline is overridable like the seven
   // family pages beneath it.
@@ -74,8 +88,10 @@ export default async function CustomMadePage({
                 <Plate
                   tone="dark"
                   ratio="auto"
+                  publicId={first.heroImage}
+                  alt=""
                   sizes="(min-width: 1024px) 55vw, 100vw"
-                  caption={first.shot}
+                  caption={shotFor(first.slug)}
                   className="h-full min-h-[280px] lg:min-h-full"
                   priority
                 />
@@ -85,10 +101,10 @@ export default async function CustomMadePage({
                   01
                 </span>
                 <h2 className="text-xl-display/[1.05] font-bold tracked-tight text-paper transition-colors group-hover:text-red">
-                  {t(first.nameEn, first.nameId)}
+                  {first.name}
                 </h2>
                 <p className="max-w-[40ch] font-editorial text-lede italic text-plate-c">
-                  {t(first.leadEn, first.leadId)}
+                  {first.lead}
                 </p>
               </div>
             </Link>
@@ -103,7 +119,9 @@ export default async function CustomMadePage({
                 >
                   <Plate
                     ratio="4 / 2.8"
-                    caption={f.shot}
+                    publicId={f.heroImage}
+                    alt=""
+                    caption={shotFor(f.slug)}
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   />
                   <div className="flex flex-1 flex-col gap-2 px-6 pt-5 pb-7">
@@ -111,10 +129,10 @@ export default async function CustomMadePage({
                       {String(i + 2).padStart(2, "0")}
                     </span>
                     <h2 className="text-md-display font-semibold transition-colors group-hover:text-red">
-                      {t(f.nameEn, f.nameId)}
+                      {f.name}
                     </h2>
                     <p className="font-editorial text-[0.9375rem] leading-snug italic text-muted">
-                      {t(f.leadEn, f.leadId)}
+                      {f.lead}
                     </p>
                   </div>
                 </Link>

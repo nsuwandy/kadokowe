@@ -162,6 +162,24 @@ export const PAGE_FIELDS: Record<string, PageField[]> = {
   // FR-10.6 — the homepage hero rotates through these (FR-2.2). Kept as
   // separate slots rather than a gallery so the order is explicit and an
   // empty slot is obviously empty.
+  // FR-10.5 — the six execution stages each carry a photograph. Page Copy
+  // offered this key one generic "Hero image" that the page never rendered,
+  // so the field was editable and inert while six placeholders sat on a live
+  // page with no way to fill them.
+  "what-we-do.intro": [
+    { name: "heading", label: "Heading" },
+    { name: "intro", label: "Introduction", multiline: true },
+    ...[
+      ["think", "Think"], ["design", "Design"], ["prototype", "Prototype"],
+      ["make", "Make"], ["check", "Check"], ["deliver", "Deliver"],
+    ].map(([key, label]) => ({
+      name: `stage_${key}`,
+      label: `${label} — photograph`,
+      image: true,
+      hint: "Shown in the execution grid. Landscape, 4:3.",
+    })),
+  ],
+
   "home.hero": [
     { name: "eyebrow", label: "Small line above the headline" },
     { name: "heading", label: "Headline" },

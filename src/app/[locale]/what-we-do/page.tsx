@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
 import { PROCESS } from "@/content/home";
 import { CAPABILITIES, EXECUTION_STAGES, WORKFLOWS } from "@/content/what-we-do";
-import { pageCopy } from "@/lib/page-content";
+import { pageCopy, pageBlocks } from "@/lib/page-content";
 
 export const metadata: Metadata = {
   title: "What We Do",
@@ -25,6 +25,9 @@ export default async function WhatWeDoPage({
   const path = (p: string) => localePath(p, l);
 
   // FR-10.5 — the operator may override the headline and introduction.
+  // One query for the six stage photographs, beside the copy overrides.
+  const stageImages = await pageBlocks("what-we-do.intro");
+
   const heading = await pageCopy(
     "what-we-do.intro", "heading", l,
     t("A strategic merchandising partner, not a vendor.",
@@ -146,6 +149,8 @@ export default async function WhatWeDoPage({
                 <Plate
                   tone="dark"
                   ratio="4 / 3"
+                  publicId={stageImages[`stage_${s.key}`]?.en?.trim() || null}
+                  alt=""
                   caption={s.shot}
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                 />
