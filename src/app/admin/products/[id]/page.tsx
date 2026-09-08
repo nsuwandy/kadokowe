@@ -41,9 +41,9 @@ export default async function ProductEditor({
   const [options, overrides] = await Promise.all([
     db.packagingOption.findMany({
       where: { visibility: "PUBLISHED" },
-      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+      orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { nameEn: "asc" }],
       select: {
-        id: true, nameEn: true, pricing: true, priceDelta: true, parentId: true,
+        id: true, nameEn: true, kind: true, pricing: true, priceDelta: true, parentId: true,
       },
     }),
     isNew
@@ -60,6 +60,7 @@ export default async function ProductEditor({
     return {
       id: o.id,
       name: o.nameEn,
+      kind: o.kind === "BRANDING" ? "BRANDING" : "PACKAGING",
       quoteOnly: o.pricing === "QUOTE",
       priceDelta: own === undefined || own === null ? "" : String(own),
       defaultDelta: o.priceDelta,

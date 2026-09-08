@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import type { AppLocale } from "./i18n";
+import type { PackagingChoice } from "./add-ons";
 import { pick } from "./i18n";
 
 /**
@@ -14,25 +15,17 @@ import { pick } from "./i18n";
  * of what they picked.
  */
 
-export type PackagingChoice = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  /** Null when this option has to be quoted. */
-  priceDelta: number | null;
-  quoteOnly: boolean;
-  children: PackagingChoice[];
-};
+export type { AddOnKind, PackagingChoice } from "./add-ons";
+export { splitAddOns, flattenAddOns } from "./add-ons";
 
 const SELECT = {
-  id: true, slug: true, nameEn: true, nameId: true,
+  id: true, slug: true, nameEn: true, nameId: true, kind: true,
   descEn: true, descId: true, pricing: true, priceDelta: true,
   parentId: true, sortOrder: true, appliesToAll: true, visibility: true,
 } as const;
 
 type Row = {
-  id: string; slug: string; nameEn: string; nameId: string | null;
+  id: string; slug: string; kind: string; nameEn: string; nameId: string | null;
   descEn: string | null; descId: string | null;
   pricing: string; priceDelta: number | null;
   parentId: string | null; sortOrder: number;
@@ -43,6 +36,7 @@ function shape(row: Row, locale: AppLocale, override: number | null): PackagingC
   return {
     id: row.id,
     slug: row.slug,
+    kind: row.kind === "BRANDING" ? "BRANDING" : "PACKAGING",
     name: pick({ nameEn: row.nameEn, nameId: row.nameId }, "name", locale),
     description:
       pick({ descEn: row.descEn, descId: row.descId }, "desc", locale) || null,
@@ -104,7 +98,3 @@ export async function packagingFor(
   return roots;
 }
 
-/** Flattened, for looking a choice up by id when a cart line is submitted. */
-export function flattenPackaging(tree: PackagingChoice[]): PackagingChoice[] {
-  return tree.flatMap((node) => [node, ...flattenPackaging(node.children)]);
-}

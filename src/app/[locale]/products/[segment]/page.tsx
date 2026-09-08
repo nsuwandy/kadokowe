@@ -303,8 +303,9 @@ export default async function ProductPage({
                 basePrice={product.indicativePrice}
                 basePriceMax={product.indicativePriceMax}
                 labels={{
-                  heading: t("Packaging & branding", "Kemasan & branding"),
-                  none: t("Product only", "Produk saja"),
+                  branding: t("Branding", "Branding"),
+                  packaging: t("Packaging", "Kemasan"),
+                  none: t("Leave both empty for the product on its own.", "Kosongkan keduanya untuk produk saja."),
                   quantity: t("Quantity", "Jumlah"),
                   add: t("Add to cart", "Tambahkan ke keranjang"),
                   added: t("Added.", "Ditambahkan."),

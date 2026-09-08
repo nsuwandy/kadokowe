@@ -7,6 +7,7 @@ export type PackagingRow = {
   id: string;
   nameEn: string;
   nameId: string;
+  kind: "BRANDING" | "PACKAGING";
   pricing: "FIXED" | "QUOTE";
   priceDelta: string;
   parentId: string;
@@ -40,7 +41,7 @@ export function PackagingForm({
   const add = () =>
     setRows((prev) => [
       ...prev,
-      { id: "", nameEn: "", nameId: "", pricing: "FIXED", priceDelta: "0", parentId: "" },
+      { id: "", nameEn: "", nameId: "", kind: "PACKAGING", pricing: "FIXED", priceDelta: "0", parentId: "" },
     ]);
 
   // Only saved rows can be parents: an unsaved one has no id to point at yet.
@@ -58,7 +59,7 @@ export function PackagingForm({
         <table className="w-full min-w-[900px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-warm text-left">
-              {["Name (English)", "Name (Indonesian)", "Price", "Fallback uplift", "Grouped under", ""].map((h) => (
+              {["Name (English)", "Name (Indonesian)", "List", "Price", "Fallback uplift", "Grouped under", ""].map((h) => (
                 <th key={h} className="px-3 py-2 text-[0.625rem] font-bold uppercase tracking-[0.1em]">
                   {h}
                 </th>
@@ -86,6 +87,17 @@ export function PackagingForm({
                       onChange={(e) => update(i, { nameId: e.target.value })}
                       className={field}
                     />
+                  </td>
+                  <td className="p-2">
+                    <select
+                      name={`kind_${i}`}
+                      value={row.kind}
+                      onChange={(e) => update(i, { kind: e.target.value as PackagingRow["kind"] })}
+                      className={field}
+                    >
+                      <option value="BRANDING">Branding</option>
+                      <option value="PACKAGING">Packaging</option>
+                    </select>
                   </td>
                   <td className="p-2">
                     <select

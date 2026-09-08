@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/cart/useCart";
 import { formatPrice } from "@/lib/price";
-import type { PackagingChoice } from "@/lib/packaging";
+import { splitAddOns, type PackagingChoice } from "@/lib/add-ons";
 
 /**
  * Choose an add-on, a quantity, and put it in the cart — FR-4.x, FR-6.x.
@@ -36,7 +36,8 @@ export function AddToCart({
   basePrice: number | null;
   basePriceMax: number | null;
   labels: {
-    heading: string;
+    branding: string;
+    packaging: string;
     none: string;
     quantity: string;
     add: string;
@@ -50,6 +51,8 @@ export function AddToCart({
   const [picked, setPicked] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+
+  const { branding, packaging } = splitAddOns(options);
 
   // A family with constructions beneath it is not itself selectable.
   const selectable = options.flatMap((o) =>
@@ -116,23 +119,34 @@ export function AddToCart({
 
   return (
     <div className="flex flex-col gap-5 border border-line bg-paper p-6">
+      {/* Two lists, not one. What is done to the product and what the product
+          goes in are separate decisions, and running them together as eleven
+          undifferentiated tick boxes made the buyer sort them out. */}
+      {([
+        [labels.branding, branding],
+        [labels.packaging, packaging],
+      ] as const).map(([legend, list]) =>
+        list.length === 0 ? null : (
+          <fieldset key={legend} className="flex flex-col">
+            <legend className="mb-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em]">
+              {legend}
+            </legend>
+            {list.map((option) =>
+              option.children.length > 0 ? (
+                <div key={option.id}>
+                  {group(option)}
+                  {option.children.map((child) => row(child, true))}
+                </div>
+              ) : (
+                <div key={option.id}>{row(option, false)}</div>
+              ),
+            )}
+          </fieldset>
+        ),
+      )}
+
       {options.length > 0 && (
-        <fieldset className="flex flex-col">
-          <legend className="mb-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em]">
-            {labels.heading}
-          </legend>
-          <p className="pb-1 text-xs text-muted">{labels.none}</p>
-          {options.map((option) =>
-            option.children.length > 0 ? (
-              <div key={option.id}>
-                {group(option)}
-                {option.children.map((child) => row(child, true))}
-              </div>
-            ) : (
-              <div key={option.id}>{row(option, false)}</div>
-            ),
-          )}
-        </fieldset>
+        <p className="-mt-1 text-xs text-muted">{labels.none}</p>
       )}
 
       <div className="flex flex-wrap items-end gap-4">

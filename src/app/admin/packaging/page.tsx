@@ -18,9 +18,10 @@ export default async function AdminPackaging() {
   if (!admin) redirect("/admin/login");
 
   const options = await db.packagingOption.findMany({
-    orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+    // Branding before packaging, matching the order a buyer meets them in.
+    orderBy: [{ kind: "asc" }, { sortOrder: "asc" }, { nameEn: "asc" }],
     select: {
-      id: true, nameEn: true, nameId: true,
+      id: true, nameEn: true, nameId: true, kind: true,
       pricing: true, priceDelta: true, parentId: true,
     },
   });
@@ -29,6 +30,7 @@ export default async function AdminPackaging() {
     id: o.id,
     nameEn: o.nameEn,
     nameId: o.nameId ?? "",
+    kind: o.kind === "BRANDING" ? "BRANDING" : "PACKAGING",
     pricing: o.pricing === "QUOTE" ? "QUOTE" : "FIXED",
     priceDelta: o.priceDelta === null ? "" : String(o.priceDelta),
     parentId: o.parentId ?? "",
@@ -52,8 +54,12 @@ export default async function AdminPackaging() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Packaging &amp; add-ons</h1>
+        <h1 className="text-2xl font-bold">Branding &amp; packaging</h1>
         <p className="mt-2 max-w-[74ch] text-sm text-muted">
+          Two lists: <strong className="font-semibold text-ink">Branding</strong>{" "}
+          is what is done to the product, <strong className="font-semibold text-ink">
+          Packaging</strong> is what it goes in. A buyer sees them separately
+          and may pick from both.
           Offered on every product. The price here is a{" "}
           <strong className="font-semibold text-ink">fallback</strong>: each
           product sets its own uplift in its editor, because engraving a steel

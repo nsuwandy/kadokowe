@@ -34,6 +34,7 @@ export async function savePackaging(
   const ids = indexed(formData, "id");
   const names = indexed(formData, "nameEn");
   const namesId = indexed(formData, "nameId");
+  const kinds = indexed(formData, "kind");
   const pricings = indexed(formData, "pricing");
   const prices = indexed(formData, "priceDelta");
   const parents = indexed(formData, "parentId");
@@ -66,6 +67,7 @@ export async function savePackaging(
       const data = {
         nameEn,
         nameId: (namesId[i] ?? "").trim() || null,
+        kind: (kinds[i] === "BRANDING" ? "BRANDING" : "PACKAGING") as never,
         pricing: (quote ? "QUOTE" : "FIXED") as never,
         priceDelta,
         parentId,

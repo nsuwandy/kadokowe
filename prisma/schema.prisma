@@ -62,6 +62,20 @@ enum CustomMadeFamily {
   SPECIAL_PROJECTS
 }
 
+/// Which list an add-on belongs to.
+///
+/// Kept separate from the pricing mode, which today happens to divide the two
+/// the same way. That is a coincidence of the current list, not a rule:
+/// nothing stops a branding method being quoted or a packaging type carrying
+/// a fixed price, and inferring the grouping from the price would put such an
+/// option in the wrong list the day it is added.
+enum AddOnKind {
+  /// What is done to the product: engraving, printing.
+  BRANDING
+  /// What the product goes in.
+  PACKAGING
+}
+
 /// Whether an add-on carries a price or has to be quoted.
 enum PackagingPricing {
   /// A fixed uplift per unit, in rupiah.
@@ -240,6 +254,7 @@ model PackagingOption {
   descEn String?
   descId String?
 
+  kind    AddOnKind        @default(PACKAGING)
   pricing PackagingPricing @default(FIXED)
   /// Rupiah added per unit. Meaningful only when pricing is FIXED.
   priceDelta Int?
@@ -260,6 +275,7 @@ model PackagingOption {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([kind, sortOrder])
   @@index([appliesToAll, sortOrder])
 }
 

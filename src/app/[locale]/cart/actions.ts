@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { pick, type AppLocale } from "@/lib/i18n";
-import { packagingFor, flattenPackaging } from "@/lib/packaging";
+import { packagingFor, flattenAddOns } from "@/lib/packaging";
 import type { CartLine, ResolvedLine } from "@/lib/cart";
 
 /**
@@ -34,7 +34,7 @@ export async function resolveCart(
   const packagingByProduct = new Map(
     await Promise.all(
       products.map(async (p) =>
-        [p.id, flattenPackaging(await packagingFor(p.id, locale))] as const,
+        [p.id, flattenAddOns(await packagingFor(p.id, locale))] as const,
       ),
     ),
   );

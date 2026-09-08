@@ -23,6 +23,7 @@ type Seed = {
   slug: string;
   nameEn: string;
   nameId: string;
+  kind: "BRANDING" | "PACKAGING";
   pricing: "FIXED" | "QUOTE";
   /** Starting figure only — the client sets the real ones in the admin. */
   priceDelta?: number;
@@ -31,24 +32,25 @@ type Seed = {
 
 const OPTIONS: Seed[] = [
   // Decoration, priced per unit. These are the four offered on every product.
-  { slug: "laser-engrave", nameEn: "Laser engrave", nameId: "Gravir laser", pricing: "FIXED", priceDelta: 0 },
-  { slug: "uv-printing-logo", nameEn: "UV printing — logo", nameId: "Cetak UV — logo", pricing: "FIXED", priceDelta: 0 },
-  { slug: "uv-printing-1-side", nameEn: "UV printing — one side", nameId: "Cetak UV — satu sisi", pricing: "FIXED", priceDelta: 0 },
-  { slug: "uv-printing-full", nameEn: "UV printing — full print", nameId: "Cetak UV — cetak penuh", pricing: "FIXED", priceDelta: 0 },
+  { slug: "laser-engrave", nameEn: "Laser engrave", nameId: "Gravir laser", kind: "BRANDING", pricing: "FIXED", priceDelta: 0 },
+  { slug: "uv-printing-logo", nameEn: "UV printing — logo", nameId: "Cetak UV — logo", kind: "BRANDING", pricing: "FIXED", priceDelta: 0 },
+  { slug: "uv-printing-1-side", nameEn: "UV printing — one side", nameId: "Cetak UV — satu sisi", kind: "BRANDING", pricing: "FIXED", priceDelta: 0 },
+  { slug: "uv-printing-full", nameEn: "UV printing — full print", nameId: "Cetak UV — cetak penuh", kind: "BRANDING", pricing: "FIXED", priceDelta: 0 },
 
   // Packaging. No list price: quantity, material and artwork decide it.
-  { slug: "factory-packaging", nameEn: "Factory packaging", nameId: "Kemasan pabrik", pricing: "QUOTE" },
-  { slug: "plastic-packaging", nameEn: "Plastic", nameId: "Plastik", pricing: "QUOTE" },
-  { slug: "custom-tote-bag", nameEn: "Custom tote bag", nameId: "Tas tote kustom", pricing: "QUOTE" },
+  { slug: "factory-packaging", nameEn: "Factory packaging", nameId: "Kemasan pabrik", kind: "PACKAGING", pricing: "QUOTE" },
+  { slug: "plastic-packaging", nameEn: "Plastic", nameId: "Plastik", kind: "PACKAGING", pricing: "QUOTE" },
+  { slug: "custom-tote-bag", nameEn: "Custom tote bag", nameId: "Tas tote kustom", kind: "PACKAGING", pricing: "QUOTE" },
   {
     slug: "custom-paper-packaging",
     nameEn: "Custom paper packaging",
     nameId: "Kemasan kertas kustom",
+    kind: "PACKAGING",
     pricing: "QUOTE",
     children: [
-      { slug: "paper-packaging", nameEn: "Paper packaging", nameId: "Kemasan kertas", pricing: "QUOTE" },
-      { slug: "softbox-packaging", nameEn: "Softbox packaging", nameId: "Kemasan softbox", pricing: "QUOTE" },
-      { slug: "hardbox-packaging", nameEn: "Hardbox packaging", nameId: "Kemasan hardbox", pricing: "QUOTE" },
+      { slug: "paper-packaging", nameEn: "Paper packaging", nameId: "Kemasan kertas", kind: "PACKAGING", pricing: "QUOTE" },
+      { slug: "softbox-packaging", nameEn: "Softbox packaging", nameId: "Kemasan softbox", kind: "PACKAGING", pricing: "QUOTE" },
+      { slug: "hardbox-packaging", nameEn: "Hardbox packaging", nameId: "Kemasan hardbox", kind: "PACKAGING", pricing: "QUOTE" },
     ],
   },
 ];
@@ -57,10 +59,13 @@ async function upsert(seed: Seed, sortOrder: number, parentId: string | null) {
   const row = await db.packagingOption.upsert({
     where: { slug: seed.slug },
     // Only structure and naming are written back, so an edited price survives.
-    update: { nameEn: seed.nameEn, nameId: seed.nameId, pricing: seed.pricing, sortOrder, parentId },
+    update: {
+      nameEn: seed.nameEn, nameId: seed.nameId,
+      kind: seed.kind, pricing: seed.pricing, sortOrder, parentId,
+    },
     create: {
       slug: seed.slug, nameEn: seed.nameEn, nameId: seed.nameId,
-      pricing: seed.pricing, priceDelta: seed.priceDelta ?? null,
+      kind: seed.kind, pricing: seed.pricing, priceDelta: seed.priceDelta ?? null,
       sortOrder, parentId, appliesToAll: true,
     },
     select: { id: true },

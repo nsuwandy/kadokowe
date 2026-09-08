@@ -249,11 +249,18 @@ export function ProductForm({
           </p>
 
           <div className="flex flex-col">
-            {packaging.map((option) => (
-              <div
-                key={option.id}
-                className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line py-3 ${option.isChild ? "pl-6" : ""}`}
-              >
+            {packaging.map((option, i) => (
+              <div key={option.id}>
+                {/* A heading wherever the list changes, so the two are not one
+                    undifferentiated column of price boxes. */}
+                {(i === 0 || packaging[i - 1]!.kind !== option.kind) && (
+                  <p className="mt-3 pb-1 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-red">
+                    {option.kind === "BRANDING" ? "Branding" : "Packaging"}
+                  </p>
+                )}
+                <div
+                  className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line py-3 ${option.isChild ? "pl-6" : ""}`}
+                >
                 <span className="min-w-[14rem] flex-1 text-sm">
                   {option.isChild && <span className="text-muted">└ </span>}
                   {option.name}
@@ -280,6 +287,7 @@ export function ProductForm({
                     </span>
                   </>
                 )}
+                </div>
               </div>
             ))}
           </div>

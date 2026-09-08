@@ -81,6 +81,7 @@ export const AXIS_LABELS: Record<string, string> = {
 export type ProductPackagingRow = {
   id: string;
   name: string;
+  kind: "BRANDING" | "PACKAGING";
   quoteOnly: boolean;
   /** Blank when this product has not set its own. */
   priceDelta: string;
