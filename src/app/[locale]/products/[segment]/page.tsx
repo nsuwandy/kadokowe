@@ -307,9 +307,9 @@ export default async function ProductPage({
                   packaging: t("Packaging", "Kemasan"),
                   none: t("Leave both empty for the product on its own.", "Kosongkan keduanya untuk produk saja."),
                   quantity: t("Quantity", "Jumlah"),
-                  add: t("Add to cart", "Tambahkan ke keranjang"),
+                  add: t("I'm Interested", "Saya Tertarik"),
                   added: t("Added.", "Ditambahkan."),
-                  viewCart: t("View cart", "Lihat keranjang"),
+                  viewCart: t("View interests", "Lihat minat"),
                   quoted: t("Quoted", "Ditawarkan"),
                   from: t("Per unit", "Per unit"),
                 }}
@@ -323,8 +323,8 @@ export default async function ProductPage({
               </Button>
               <p className="text-center font-editorial text-xs italic text-muted">
                 {t(
-                  "Nothing is charged here. The cart becomes a brief we quote against.",
-                  "Tidak ada pembayaran di sini. Keranjang menjadi brief yang kami tawarkan harganya.",
+                  "Nothing is charged here. Your interests become a brief we quote against.",
+                  "Tidak ada pembayaran di sini. Daftar minat Anda menjadi brief yang kami tawarkan harganya.",
                 )}
               </p>
             </div>

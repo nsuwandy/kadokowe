@@ -28,8 +28,8 @@ export default async function TermsPage({ params }: PageProps<"/[locale]/terms">
     {
       h: t("About this site", "Tentang situs ini"),
       p: t(
-        "This website presents Kadokowe's merchandising capabilities, products and past work. It is not a shop: there is no cart, no checkout and no payment. Nothing on this site constitutes a binding offer to sell.",
-        "Situs ini menyajikan kemampuan merchandising, produk, dan karya Kadokowe. Ini bukan toko: tidak ada keranjang, checkout, maupun pembayaran. Tidak ada bagian dari situs ini yang merupakan penawaran jual yang mengikat.",
+        "This website presents Kadokowe's merchandising capabilities, products and past work. It is not a shop: nothing is sold here, no payment is taken and no order is placed. Marking products as interesting and sending them to us is a request for a quotation — it commits neither side, and nothing on this site constitutes a binding offer to sell.",
+        "Situs ini menyajikan kemampuan merchandising, produk, dan karya Kadokowe. Ini bukan toko: tidak ada penjualan, pembayaran, maupun pemesanan di sini. Menandai produk sebagai menarik dan mengirimkannya kepada kami adalah permintaan penawaran harga — tidak mengikat kedua pihak, dan tidak ada bagian dari situs ini yang merupakan penawaran jual yang mengikat.",
       ),
     },
     {
