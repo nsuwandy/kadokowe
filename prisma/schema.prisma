@@ -255,7 +255,7 @@ model PackagingOption {
   visibility   Visibility @default(PUBLISHED)
 
   products ProductPackaging[]
-  lines    EnquiryProduct[]
+  lines    EnquiryProduct[] @relation("EnquiryLinePackaging")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -568,6 +568,13 @@ model Enquiry {
  * conversation and the record disagree, and only one of them is right.
  */
 model EnquiryProduct {
+  /// Its own key rather than (enquiryId, productId).
+  ///
+  /// A buyer asking for two hundred plain and fifty engraved is describing
+  /// one product twice, and the composite key made that a constraint
+  /// violation at checkout — the cart allowed the basket and the submission
+  /// then failed.
+  id        String @id @default(cuid())
   enquiryId String
   productId String
   enquiry   Enquiry @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
@@ -575,16 +582,21 @@ model EnquiryProduct {
 
   quantity Int @default(1)
 
-  /// The add-on chosen for this line, if any.
-  packagingId String?
-  packaging   PackagingOption? @relation(fields: [packagingId], references: [id])
+  /// Every add-on chosen for this line. More than one is normal: engraving
+  /// and a hardbox are not alternatives.
+  packaging PackagingOption[] @relation("EnquiryLinePackaging")
 
-  /// Rupiah per unit as shown at the time of submission, add-on included.
+  /// The add-ons as they read at the time of submission. Kept alongside the
+  /// relation because an option renamed or removed later would otherwise
+  /// rewrite what a customer asked for months after they asked for it.
+  packagingLabel String?
+
+  /// Rupiah per unit as shown at the time of submission, add-ons included.
   /// Null when the line was quote-only.
   unitPrice    Int?
   unitPriceMax Int?
 
-  @@id([enquiryId, productId])
+  @@index([enquiryId])
 }
 
 /// FR-15. Double opt-in with recorded consent — required because sending

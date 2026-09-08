@@ -151,13 +151,23 @@ export async function buildCartPdf(input: CartPdfInput): Promise<Uint8Array> {
     );
     y -= 13;
 
-    text(
-      line.packagingName
-        ? `Packaging & branding: ${line.packagingName}`
-        : "Product only",
-      { size: 8.5, color: MUTED, x: MARGIN + 10 },
-    );
-    y -= 16;
+    // Each add-on on its own line rather than a run-on list: a request with
+    // engraving, a hardbox and a tote is three decisions, and a comma-joined
+    // string is the first thing to get skimmed past.
+    if (line.packagingNames.length === 0) {
+      text("Product only", { size: 8.5, color: MUTED, x: MARGIN + 10 });
+      y -= 16;
+    } else {
+      for (const [i, name] of line.packagingNames.entries()) {
+        room(20);
+        text(
+          i === 0 ? `Packaging & branding: ${name}` : name,
+          { size: 8.5, color: MUTED, x: MARGIN + (i === 0 ? 10 : 118) },
+        );
+        y -= 12;
+      }
+      y -= 4;
+    }
   }
 
   rule();

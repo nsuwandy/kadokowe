@@ -9,11 +9,15 @@ import type { PackagingChoice } from "@/lib/packaging";
 /**
  * Choose an add-on, a quantity, and put it in the cart — FR-4.x, FR-6.x.
  *
- * The add-ons are radio buttons rather than a dropdown. There are eleven of
- * them, they carry prices that differ, and a closed control would hide the
- * one thing worth comparing. The sub-constructions are indented under their
- * group and selectable in their own right, since "custom paper packaging" is
- * a family and hardbox is the actual choice.
+ * The add-ons are checkboxes. Engraving and a hardbox are not alternatives,
+ * and offering them as though they were forced a buyer to describe half of
+ * what they wanted. They are not a dropdown either: there are eleven, they
+ * carry prices that differ, and a closed control hides the one thing worth
+ * comparing.
+ *
+ * A family with constructions beneath it is a heading rather than a choice.
+ * Ticking "custom paper packaging" and "hardbox packaging" together says the
+ * same thing twice, and the construction is what anyone actually means.
  *
  * A quote-only option shows no price at all. Writing "Rp 0" or "free" against
  * something that will be charged is worse than saying nothing, and the cart
@@ -43,20 +47,37 @@ export function AddToCart({
   };
 }) {
   const { add } = useCart();
-  const [packagingId, setPackagingId] = useState<string | null>(null);
+  const [picked, setPicked] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
 
-  const flat = options.flatMap((o) => [o, ...o.children]);
-  const chosen = flat.find((o) => o.id === packagingId) ?? null;
-  const quoteOnly = chosen?.quoteOnly ?? false;
+  // A family with constructions beneath it is not itself selectable.
+  const selectable = options.flatMap((o) =>
+    o.children.length > 0 ? o.children : [o],
+  );
+  const chosen = selectable.filter((o) => picked.includes(o.id));
 
-  const unit = basePrice === null ? null : basePrice + (chosen?.priceDelta ?? 0);
-  const unitMax =
-    basePriceMax === null ? null : basePriceMax + (chosen?.priceDelta ?? 0);
+  // One quoted add-on makes the whole line quoted: the price of a product
+  // with engraving and a hardbox is not the price of the engraving.
+  const quoteOnly = chosen.some((o) => o.quoteOnly);
+  const delta = chosen.reduce((sum, o) => sum + (o.priceDelta ?? 0), 0);
+
+  const unit = basePrice === null ? null : basePrice + delta;
+  const unitMax = basePriceMax === null ? null : basePriceMax + delta;
+
+  const toggle = (id: string) =>
+    setPicked((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
 
   const submit = () => {
-    add({ slug, quantity, packagingId });
+    // Sent in the order they are offered, so the same choices always read the
+    // same way wherever they are shown.
+    add({
+      slug,
+      quantity,
+      packagingIds: selectable.filter((o) => picked.includes(o.id)).map((o) => o.id),
+    });
     setJustAdded(true);
     window.setTimeout(() => setJustAdded(false), 4000);
   };
@@ -67,10 +88,9 @@ export function AddToCart({
       className={`flex cursor-pointer items-baseline gap-3 border-t border-line py-2.5 text-sm ${nested ? "pl-7" : ""}`}
     >
       <input
-        type="radio"
-        name="packaging"
-        checked={packagingId === option.id}
-        onChange={() => setPackagingId(option.id)}
+        type="checkbox"
+        checked={picked.includes(option.id)}
+        onChange={() => toggle(option.id)}
         className="mt-1 accent-red"
       />
       <span className="flex-1">{option.name}</span>
@@ -84,6 +104,16 @@ export function AddToCart({
     </label>
   );
 
+  /** A family heading: names the group, offers nothing to tick. */
+  const group = (option: PackagingChoice) => (
+    <p
+      key={`${option.id}-heading`}
+      className="border-t border-line pt-3 pb-1 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted"
+    >
+      {option.name}
+    </p>
+  );
+
   return (
     <div className="flex flex-col gap-5 border border-line bg-paper p-6">
       {options.length > 0 && (
@@ -91,22 +121,17 @@ export function AddToCart({
           <legend className="mb-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em]">
             {labels.heading}
           </legend>
-          <label className="flex cursor-pointer items-baseline gap-3 py-2.5 text-sm">
-            <input
-              type="radio"
-              name="packaging"
-              checked={packagingId === null}
-              onChange={() => setPackagingId(null)}
-              className="mt-1 accent-red"
-            />
-            <span className="flex-1">{labels.none}</span>
-          </label>
-          {options.map((option) => (
-            <div key={option.id}>
-              {row(option, false)}
-              {option.children.map((child) => row(child, true))}
-            </div>
-          ))}
+          <p className="pb-1 text-xs text-muted">{labels.none}</p>
+          {options.map((option) =>
+            option.children.length > 0 ? (
+              <div key={option.id}>
+                {group(option)}
+                {option.children.map((child) => row(child, true))}
+              </div>
+            ) : (
+              <div key={option.id}>{row(option, false)}</div>
+            ),
+          )}
         </fieldset>
       )}
 

@@ -47,22 +47,24 @@ export async function resolveCart(
     if (!product) continue;
 
     const options = packagingByProduct.get(product.id) ?? [];
-    const option = line.packagingId
-      ? options.find((o) => o.id === line.packagingId) ?? null
-      : null;
+    // Kept in the order they are offered, not the order they were ticked, so
+    // the same choices always read the same way on the page and in the PDF.
+    const chosen = options.filter((o) => line.packagingIds.includes(o.id));
 
-    const quoteOnly = option?.quoteOnly ?? false;
+    // One quoted add-on makes the whole line quoted: the price of a product
+    // with engraving *and* a hardbox is not the price of the engraving.
+    const quoteOnly = chosen.some((o) => o.quoteOnly);
     const base = product.indicativePrice;
     const baseMax = product.indicativePriceMax;
-    const delta = option?.priceDelta ?? 0;
+    const delta = chosen.reduce((sum, o) => sum + (o.priceDelta ?? 0), 0);
 
     resolved.push({
       slug: product.slug,
       name: pick(product, "name", locale),
       heroImage: product.heroImage,
       quantity: line.quantity,
-      packagingId: option?.id ?? null,
-      packagingName: option?.name ?? null,
+      packagingIds: chosen.map((o) => o.id),
+      packagingNames: chosen.map((o) => o.name),
       // A product with no indicative price is itself a quotation, add-on or
       // not — there is no figure to build on.
       unitPrice: quoteOnly || base === null ? null : base + delta,

@@ -36,7 +36,7 @@ const schema = z.object({
       z.object({
         slug: z.string().min(1).max(200),
         quantity: z.number().int().min(1).max(1_000_000),
-        packagingId: z.string().max(64).nullable(),
+        packagingIds: z.array(z.string().max(64)).max(20).default([]),
       }),
     )
     .min(1)
@@ -106,9 +106,12 @@ export async function POST(request: Request) {
           create: lines.map((line) => ({
             product: { connect: { slug: line.slug } },
             quantity: line.quantity,
-            packaging: line.packagingId
-              ? { connect: { id: line.packagingId } }
+            packaging: line.packagingIds.length
+              ? { connect: line.packagingIds.map((id) => ({ id })) }
               : undefined,
+            // Snapshotted alongside the relation: an option renamed or
+            // removed later must not rewrite what a customer asked for.
+            packagingLabel: line.packagingNames.join(", ") || null,
             unitPrice: line.unitPrice,
             unitPriceMax: line.unitPriceMax,
           })),
@@ -142,7 +145,8 @@ export async function POST(request: Request) {
         phone: input.phone || null,
         message: input.message || null,
         lines: lines.map((l) => ({
-          name: l.name, quantity: l.quantity, packaging: l.packagingName,
+          name: l.name, quantity: l.quantity,
+          packaging: l.packagingNames.join(", ") || null,
         })),
         total: totals.quoteOnly
           ? "To be quoted"

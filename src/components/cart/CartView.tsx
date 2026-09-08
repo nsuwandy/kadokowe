@@ -132,13 +132,13 @@ export function CartView({
       <div className="flex flex-col">
         <ul className="flex flex-col border-t border-line">
           {resolved.map((line, i) => (
-            <li key={`${line.slug}-${line.packagingId ?? "none"}`} className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-line py-5">
+            <li key={`${line.slug}-${line.packagingIds.join("+") || "none"}`} className="flex flex-wrap items-baseline gap-x-5 gap-y-2 border-b border-line py-5">
               <div className="min-w-[16rem] flex-1">
                 <Link href={`/products/${line.slug}`} className="font-semibold hover:text-red">
                   {line.name}
                 </Link>
                 <p className="mt-1 text-xs text-muted">
-                  {line.packagingName ?? labels.productOnly}
+                  {line.packagingNames.join(" · ") || labels.productOnly}
                 </p>
               </div>
 

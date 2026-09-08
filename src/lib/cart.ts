@@ -19,8 +19,12 @@ export const CART_MAX_LINES = 40;
 export type CartLine = {
   slug: string;
   quantity: number;
-  /** PackagingOption id, or null for the product on its own. */
-  packagingId: string | null;
+  /**
+   * Every add-on chosen, in the order they are offered. More than one is
+   * normal — engraving and a hardbox are not alternatives, and offering them
+   * as though they were forced a buyer to describe half of what they wanted.
+   */
+  packagingIds: string[];
 };
 
 /** What the server sends back for display. */
@@ -29,8 +33,8 @@ export type ResolvedLine = {
   name: string;
   heroImage: string | null;
   quantity: number;
-  packagingId: string | null;
-  packagingName: string | null;
+  packagingIds: string[];
+  packagingNames: string[];
   /** Per unit, add-on included. Null when the line has to be quoted. */
   unitPrice: number | null;
   unitPriceMax: number | null;
@@ -94,13 +98,24 @@ export function readCart(): CartLine[] {
     return parsed
       .filter((l): l is CartLine =>
         !!l && typeof l === "object" &&
-        typeof (l as CartLine).slug === "string" &&
-        Number.isFinite((l as CartLine).quantity))
-      .map((l) => ({
-        slug: l.slug,
-        quantity: Math.max(1, Math.round(l.quantity)),
-        packagingId: typeof l.packagingId === "string" ? l.packagingId : null,
-      }))
+        typeof (l as { slug?: unknown }).slug === "string" &&
+        Number.isFinite((l as { quantity?: unknown }).quantity))
+      .map((l) => {
+        // Carts written before add-ons became multiple stored a single
+        // packagingId. Read them rather than discarding them: someone with a
+        // basket open across the change should not lose it.
+        const legacy = (l as unknown as { packagingId?: unknown }).packagingId;
+        const ids = Array.isArray(l.packagingIds)
+          ? l.packagingIds.filter((id): id is string => typeof id === "string")
+          : typeof legacy === "string"
+            ? [legacy]
+            : [];
+        return {
+          slug: l.slug,
+          quantity: Math.max(1, Math.round(l.quantity)),
+          packagingIds: ids,
+        };
+      })
       .slice(0, CART_MAX_LINES);
   } catch {
     return [];
@@ -121,8 +136,14 @@ export function writeCart(lines: CartLine[]) {
  * Someone ordering two hundred plain and fifty engraved is describing two
  * things, and merging them on slug alone would quietly lose half the brief.
  */
-export function sameLine(a: CartLine, b: { slug: string; packagingId: string | null }) {
-  return a.slug === b.slug && a.packagingId === b.packagingId;
+export function sameLine(a: CartLine, b: { slug: string; packagingIds: string[] }) {
+  if (a.slug !== b.slug) return false;
+  if (a.packagingIds.length !== b.packagingIds.length) return false;
+  // Order is presentation, not meaning: engraving-then-hardbox and
+  // hardbox-then-engraving are the same request and must merge.
+  const mine = [...a.packagingIds].sort();
+  const theirs = [...b.packagingIds].sort();
+  return mine.every((id, i) => id === theirs[i]);
 }
 
 export function addLine(lines: CartLine[], entry: CartLine): CartLine[] {

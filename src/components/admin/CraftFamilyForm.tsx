@@ -62,6 +62,9 @@ export function CraftFamilyForm({
   const [machines, setMachines] = useState<MachineValue[]>(family?.machines ?? []);
   const [options, setOptions] = useState<PairValue[]>(family?.options ?? []);
   const [branding, setBranding] = useState<string[]>(family?.branding ?? []);
+  // Tracked so the warning appears the moment the select changes, rather than
+  // only after a save has already gone in with the wrong setting.
+  const [visibility, setVisibility] = useState(family?.visibility ?? "DRAFT");
 
   const move = <T,>(list: T[], set: (v: T[]) => void, i: number, by: number) => {
     const j = i + by;
@@ -76,6 +79,20 @@ export function CraftFamilyForm({
       <input type="hidden" name="id" value={family?.id ?? "new"} />
 
       <TranslationStatus />
+
+      {/* An unpublished category still has a public page — it renders the
+          wording and imagery built into the site instead of what is edited
+          here. Nothing looks broken, which is precisely the problem: a hero
+          uploaded against a draft simply never appears, and there is no error
+          anywhere to explain why. */}
+      {visibility !== "PUBLISHED" && (
+        <p className="border-l-2 border-red bg-paper px-5 py-4 text-sm">
+          <strong className="font-semibold">This category is not published.</strong>{" "}
+          Its page on the site is showing the built-in wording and imagery, not
+          what you edit here — including the hero photograph. Set Visibility to
+          Published and save to make this page the live one.
+        </p>
+      )}
 
       {state.message && (
         <p role="alert" className="border-l-2 border-red bg-paper px-5 py-3 text-sm">
@@ -355,7 +372,12 @@ export function CraftFamilyForm({
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-2">
             <span className={labelCls}>Visibility</span>
-            <select name="visibility" defaultValue={family?.visibility ?? "DRAFT"} className={field}>
+            <select
+              name="visibility"
+              defaultValue={family?.visibility ?? "DRAFT"}
+              onChange={(e) => setVisibility(e.target.value)}
+              className={field}
+            >
               {VISIBILITY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
