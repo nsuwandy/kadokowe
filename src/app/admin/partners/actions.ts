@@ -51,7 +51,7 @@ export async function savePartners(
     }
 
     revalidatePath("/admin/partners");
-    revalidatePath("/about", "layout");
+    revalidatePath("/[locale]/about", "page");
     return { ok: true, message: "Saved." };
   } catch {
     return { ok: false, message: "Could not save. Check the fields and try again." };

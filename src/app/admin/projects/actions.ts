@@ -89,7 +89,7 @@ export async function saveProject(
         select: { id: true },
       });
       revalidatePath("/admin/projects");
-      revalidatePath("/our-work");
+      revalidatePath("/[locale]/our-work", "page");
       redirect(`/admin/projects/${created.id}?saved=1`);
     }
 
@@ -103,8 +103,8 @@ export async function saveProject(
       },
     });
     revalidatePath("/admin/projects");
-    revalidatePath("/our-work");
-    revalidatePath(`/our-work/${slug}`);
+    revalidatePath("/[locale]/our-work", "page");
+    revalidatePath("/[locale]/our-work/[slug]", "page");
     return { ok: true, message: "Saved." };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;

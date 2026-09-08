@@ -84,7 +84,7 @@ export async function savePackaging(
     }
 
     revalidatePath("/admin/packaging");
-    revalidatePath("/products", "layout");
+    revalidatePath("/[locale]/products", "layout");
     return { ok: true, message: "Saved." };
   } catch (error) {
     const message =

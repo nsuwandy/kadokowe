@@ -71,7 +71,7 @@ export async function writeParsedRows(
   }
 
   revalidatePath("/admin/products");
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
 
   return { imported, issues };
 }

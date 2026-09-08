@@ -123,7 +123,7 @@ export async function saveFamily(
         select: { id: true },
       });
       revalidatePath("/admin/craft");
-      revalidatePath("/custom-made");
+      revalidatePath("/[locale]/custom-made", "page");
       redirect(`/admin/craft/${created.id}?saved=1`);
     }
 
@@ -138,8 +138,8 @@ export async function saveFamily(
     });
 
     revalidatePath("/admin/craft");
-    revalidatePath("/custom-made");
-    revalidatePath(`/custom-made/${slug}`);
+    revalidatePath("/[locale]/custom-made", "page");
+    revalidatePath("/[locale]/custom-made/[family]", "page");
     return { ok: true, message: "Saved." };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
@@ -180,6 +180,6 @@ export async function deleteFamily(id: string): Promise<void> {
 
   await db.craftFamily.delete({ where: { id } });
   revalidatePath("/admin/craft");
-  revalidatePath("/custom-made");
+  revalidatePath("/[locale]/custom-made", "page");
   redirect("/admin/craft");
 }

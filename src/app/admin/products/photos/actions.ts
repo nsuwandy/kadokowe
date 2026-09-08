@@ -79,7 +79,7 @@ export async function applyPhotoImport(
         },
       });
 
-      revalidatePath(`/products/${assignment.slug}`);
+      revalidatePath("/[locale]/products/[segment]", "page");
       updated += 1;
     } catch (error) {
       failures.push({
@@ -89,7 +89,7 @@ export async function applyPhotoImport(
     }
   }
 
-  revalidatePath("/products");
+  revalidatePath("/[locale]/products", "page");
   revalidatePath("/admin/products");
 
   return {
