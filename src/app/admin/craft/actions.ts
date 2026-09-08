@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import slugify from "slugify";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import type { SaveState } from "@/lib/editor-shared";
 
 /**
@@ -127,6 +128,25 @@ export async function saveFamily(
       redirect(`/admin/craft/${created.id}?saved=1`);
     }
 
+    // Everything this family pointed at before the save. Items and machines
+    // are replaced wholesale, so their media is dropped and recreated on every
+    // save — comparing before with after is what stops an unchanged image
+    // being retired and immediately referenced again.
+    const previous = await db.craftFamily
+      .findUnique({
+        where: { id },
+        select: {
+          heroImage: true,
+          items: { select: { media: { select: { publicId: true } } } },
+          machines: { select: { image: true } },
+        },
+      })
+      .then((r) => [
+        r?.heroImage,
+        ...(r?.items ?? []).flatMap((i) => i.media.map((m) => m.publicId)),
+        ...(r?.machines ?? []).map((m) => m.image),
+      ]);
+
     await db.craftFamily.update({
       where: { id },
       data: {
@@ -136,6 +156,14 @@ export async function saveFamily(
         machines: { deleteMany: {}, ...nested.machines },
       },
     });
+
+    await retireAssets(
+      removedFrom(previous, [
+        data.heroImage,
+        ...items.flatMap((i) => i.media.map((m) => m.publicId)),
+        ...machines.map((m) => m.image),
+      ]),
+    );
 
     revalidatePath("/admin/craft");
     revalidatePath("/[locale]/custom-made", "page");

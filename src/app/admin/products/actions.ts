@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import { parsePrice } from "@/lib/price";
 import { budgetTierFor } from "@/content/taxonomy";
 import { galleryFrom } from "@/lib/gallery";
@@ -127,6 +128,17 @@ export async function saveProduct(
     });
   }
 
+  // What this product pointed at before the save, so anything dropped can be
+  // retired afterwards.
+  const previous = isNew
+    ? []
+    : await db.product
+        .findUnique({
+          where: { id },
+          select: { heroImage: true, gallery: { select: { publicId: true } } },
+        })
+        .then((p) => [p?.heroImage, ...(p?.gallery ?? []).map((g) => g.publicId)]);
+
   try {
     if (isNew) {
       const created = await db.product.create({
@@ -156,6 +168,12 @@ export async function saveProduct(
         packaging: { deleteMany: {}, create: packagingPrices },
       },
     });
+    // After the write, never before: an image is only orphaned once the row
+    // that referenced it no longer does.
+    await retireAssets(
+      removedFrom(previous, [data.heroImage, ...gallery.map((g) => g.publicId)]),
+    );
+
     revalidatePath("/admin/products");
     revalidatePath("/[locale]/products", "page");
     revalidatePath("/[locale]/products/[segment]", "page");

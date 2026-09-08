@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import type { SaveState } from "@/lib/editor-shared";
 
 /** Partner and supplier marks shown on About — saved wholesale, as elsewhere. */
@@ -29,6 +30,10 @@ export async function savePartners(
   const urls = indexed(formData, "url");
   const removed = new Set(formData.getAll("remove").map(String));
 
+  const previous = await db.partner
+    .findMany({ select: { logo: true } })
+    .then((rows) => rows.map((r) => r.logo));
+
   try {
     for (let i = 0; i < names.length; i += 1) {
       const id = (ids[i] ?? "").trim();
@@ -49,6 +54,8 @@ export async function savePartners(
       if (id) await db.partner.update({ where: { id }, data });
       else await db.partner.create({ data });
     }
+
+    await retireAssets(removedFrom(previous, logos));
 
     revalidatePath("/admin/partners");
     revalidatePath("/[locale]/about", "page");

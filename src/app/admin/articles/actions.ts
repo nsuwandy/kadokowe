@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import { galleryFrom } from "@/lib/gallery";
 import type { SaveState } from "@/lib/editor-shared";
 
@@ -65,6 +66,15 @@ export async function saveArticle(
     publishedAt: publishAt ?? (visibility === "PUBLISHED" ? new Date() : null),
   };
 
+  const previous = isNew
+    ? []
+    : await db.article
+        .findUnique({
+          where: { id },
+          select: { heroImage: true, shareImage: true, gallery: { select: { publicId: true } } },
+        })
+        .then((r) => [r?.heroImage, r?.shareImage, ...(r?.gallery ?? []).map((g) => g.publicId)]);
+
   try {
     if (isNew) {
       const created = await db.article.create({
@@ -92,6 +102,16 @@ export async function saveArticle(
         projects: { set: projectIds.map((i) => ({ id: i })) },
       },
     });
+
+    await retireAssets(
+      removedFrom(previous, [
+        // shareImage is not written by this form — the hero doubles as the
+        // share image — so it is read above but never compared. The row still
+        // holds it, and the reference check sees that.
+        data.heroImage, ...gallery.map((g) => g.publicId),
+      ]),
+    );
+
     revalidatePath("/admin/articles");
     revalidatePath("/[locale]/insights", "page");
     revalidatePath("/[locale]/insights/[slug]", "page");

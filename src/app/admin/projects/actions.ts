@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import { galleryFrom } from "@/lib/gallery";
 import { STORY_SECTIONS, type SaveState } from "@/lib/editor-shared";
 
@@ -77,6 +78,23 @@ export async function saveProject(
   // FR-7.3 — replaced wholesale; see the note in the product action.
   const gallery = galleryFrom(formData, "gallery");
 
+  const previous = isNew
+    ? []
+    : await db.project
+        .findUnique({
+          where: { id },
+          select: {
+            heroImage: true, clientLogo: true, briefImage: true, challengeImage: true,
+            thinkingImage: true, createdWorkImage: true, makingImage: true,
+            impactImage: true, gallery: { select: { publicId: true } },
+          },
+        })
+        .then((r) => [
+          r?.heroImage, r?.clientLogo, r?.briefImage, r?.challengeImage,
+          r?.thinkingImage, r?.createdWorkImage, r?.makingImage, r?.impactImage,
+          ...(r?.gallery ?? []).map((g) => g.publicId),
+        ]);
+
   try {
     if (isNew) {
       const created = await db.project.create({
@@ -102,6 +120,16 @@ export async function saveProject(
         gallery: { deleteMany: {}, create: gallery },
       },
     });
+
+    await retireAssets(
+      removedFrom(previous, [
+        data.heroImage, data.clientLogo,
+        ...Object.entries(sections)
+          .filter(([k]) => k.endsWith("Image"))
+          .map(([, v]) => v),
+        ...gallery.map((g) => g.publicId),
+      ]),
+    );
     revalidatePath("/admin/projects");
     revalidatePath("/[locale]/our-work", "page");
     revalidatePath("/[locale]/our-work/[slug]", "page");
