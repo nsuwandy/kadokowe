@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
       { source: "/ideas/:path*", destination: "/products/:path*", permanent: true },
       { source: "/id/ideas", destination: "/id/products", permanent: true },
       { source: "/id/ideas/:path*", destination: "/id/products/:path*", permanent: true },
+
+      // The interest list was briefly at /cart, back when it was called one.
+      { source: "/cart", destination: "/interests", permanent: true },
+      { source: "/id/cart", destination: "/id/interests", permanent: true },
     ];
   },
 

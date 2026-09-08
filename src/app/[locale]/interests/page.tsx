@@ -20,7 +20,7 @@ export const metadata: Metadata = {
  * for a card. What it produces is a brief: a list of products, quantities and
  * finishes, sent to Kadokowe and handed back as a PDF.
  */
-export default async function CartPage({ params }: PageProps<"/[locale]/cart">) {
+export default async function CartPage({ params }: PageProps<"/[locale]/interests">) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const l = locale as AppLocale;

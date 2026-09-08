@@ -187,7 +187,7 @@ export function AddToCart({
         {justAdded && (
           <span role="status" className="text-sm">
             {labels.added}{" "}
-            <Link href="/cart" className="font-semibold text-red hover:underline">
+            <Link href="/interests" className="font-semibold text-red hover:underline">
               {labels.viewCart}
             </Link>
           </span>

@@ -18,7 +18,7 @@ export function CartLink({ locale }: { locale: AppLocale }) {
 
   return (
     <Link
-      href={localePath("/cart", locale)}
+      href={localePath("/interests", locale)}
       className="inline-flex items-center gap-2 border border-line px-3 py-2 font-display text-[0.6875rem] font-semibold uppercase tracking-[0.11em] whitespace-nowrap transition-colors hover:border-ink"
     >
       {locale === "id" ? "Minat" : "Interests"}

@@ -70,7 +70,7 @@ export function CartView({
         if (file instanceof File && file.size > 0) body.append("uploads", file);
       }
 
-      const res = await fetch("/api/cart/checkout", { method: "POST", body });
+      const res = await fetch("/api/interests/checkout", { method: "POST", body });
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setError(

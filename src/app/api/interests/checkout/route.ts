@@ -5,7 +5,7 @@ import { checkUploads } from "@/lib/enquiry-schema";
 import { sendCartNotification } from "@/lib/email";
 import { storeEnquiryFile } from "@/lib/uploads";
 import { rateLimit, clientIp, LIMITS } from "@/lib/rate-limit";
-import { resolveCart } from "@/app/[locale]/cart/actions";
+import { resolveCart } from "@/app/[locale]/interests/actions";
 import { buildCartPdf } from "@/lib/cart-pdf";
 import { cartTotals } from "@/lib/cart";
 import { formatPrice } from "@/lib/price";
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
         company: input.brand,
         phone: input.phone || null,
         description: input.message || null,
-        sourcePage: "/cart",
+        sourcePage: "/interests",
         locale: input.locale === "id" ? "ID" : "EN",
         uploads,
         products: {
