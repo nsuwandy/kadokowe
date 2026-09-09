@@ -11,6 +11,7 @@ import { publishedConcepts } from "@/content/concepts";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { Analytics } from "@/components/Analytics";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 /**
  * Root layout for the public site.
@@ -90,6 +91,7 @@ export default async function LocaleLayout({
         <SiteFooter locale={typed} />
         <WhatsAppFloat locale={typed} />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
