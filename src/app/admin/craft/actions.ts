@@ -171,6 +171,10 @@ export async function saveFamily(
     return { ok: true, message: "Saved." };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
+    // Logged as well as reported. The operator gets a sentence they can act
+    // on; whoever has to work out why needs the actual error, and swallowing
+    // it is how a save that loses data looks like one that worked.
+    console.error("[craft] save failed:", error);
     const message =
       error instanceof Error && error.message.includes("Unique constraint")
         ? `The web address "${slug}" is already used by another category.`
