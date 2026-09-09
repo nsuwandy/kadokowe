@@ -23,12 +23,15 @@ export function CloudImage({
   sizes,
   priority,
   className,
+  onLoad,
 }: {
   publicId: string;
   alt: string;
   sizes: string;
   priority?: boolean;
   className?: string;
+  /** The file's own pixel dimensions, once known. */
+  onLoad?: (width: number, height: number) => void;
 }) {
   return (
     <CldImage
@@ -38,6 +41,13 @@ export function CloudImage({
       sizes={sizes}
       priority={priority}
       className={className}
+      onLoad={
+        onLoad &&
+        ((e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth) onLoad(img.naturalWidth, img.naturalHeight);
+        })
+      }
     />
   );
 }

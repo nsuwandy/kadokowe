@@ -24,6 +24,7 @@ export function Plate({
   sizes = "100vw",
   priority = false,
   fit = "cover",
+  onLoad,
   className,
 }: {
   publicId?: string | null;
@@ -44,6 +45,14 @@ export function Plate({
    * the top and bottom of the thing being sold.
    */
   fit?: "cover" | "contain";
+  /**
+   * The image's own pixel dimensions, once known.
+   *
+   * Passing this makes Plate a client component at that call site, which is
+   * why it is optional: nearly every other Plate on the site stays on the
+   * server.
+   */
+  onLoad?: (width: number, height: number) => void;
   className?: string;
 }) {
   // Without a cloud name next-cloudinary cannot build a URL and renders
@@ -72,6 +81,7 @@ export function Plate({
           sizes={sizes}
           priority={priority}
           className={fit === "contain" ? "object-contain" : "object-cover"}
+          onLoad={onLoad}
         />
       ) : (
         caption && (

@@ -42,6 +42,21 @@ export function ProductGallery({
   const [index, setIndex] = useState(0);
   const strip = useRef<HTMLUListElement>(null);
 
+  /**
+   * The frame's shape, taken from the media in it.
+   *
+   * A fixed frame with the image contained inside shows the whole image but
+   * pads whatever is left over, so a portrait shot sits between two grey
+   * bars. Letting the frame take the image's own proportions removes the
+   * padding entirely — the image *is* the frame.
+   *
+   * Measured from the file rather than stored, so it works for photographs
+   * already uploaded. Until the first one loads the frame holds a plausible
+   * shape rather than collapsing to nothing.
+   */
+  const [ratio, setRatio] = useState<Record<string, number>>({});
+  const shapeOf = (id: string) => ratio[id] ?? 4 / 3.6;
+
   const current = media[index] ?? media[0];
   const count = media.length;
 
@@ -72,7 +87,7 @@ export function ProductGallery({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative">
+      <div className="relative" style={{ aspectRatio: shapeOf(current.id) }}>
         {current.kind === "VIDEO" ? (
           <video
             ref={video}
@@ -81,7 +96,13 @@ export function ProductGallery({
             playsInline
             preload="metadata"
             aria-label={current.alt ?? name}
-            className="aspect-[4/3.6] w-full bg-ink object-contain"
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              if (v.videoWidth) {
+                setRatio((r) => ({ ...r, [current.id]: v.videoWidth / v.videoHeight }));
+              }
+            }}
+            className="h-full w-full bg-ink"
             src={videoUrl(current.publicId)}
           />
         ) : (
@@ -90,10 +111,14 @@ export function ProductGallery({
             publicId={current.publicId}
             alt={current.alt ?? name}
             caption={current.caption ?? name}
-            ratio="4 / 3.6"
-            fit="contain"
+            ratio={String(shapeOf(current.id))}
+            fit="cover"
+            onLoad={(w, h) =>
+              setRatio((r) => (r[current.id] ? r : { ...r, [current.id]: w / h }))
+            }
             sizes="(min-width: 1024px) 52vw, 100vw"
             priority={index === 0}
+            className="h-full w-full"
           />
         )}
 
