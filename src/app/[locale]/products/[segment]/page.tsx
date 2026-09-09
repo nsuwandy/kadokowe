@@ -180,14 +180,16 @@ export default async function ProductPage({
                 }}
               />
             ) : (
-              <Plate
-                publicId={null}
-                alt={name}
-                caption={name}
-                ratio="4 / 3.6"
-                sizes="(min-width: 1024px) 52vw, 100vw"
-                priority
-              />
+              <div className="w-full max-w-[34rem]">
+                <Plate
+                  publicId={null}
+                  alt={name}
+                  caption={name}
+                  ratio="4 / 3.6"
+                  sizes="(min-width: 1024px) 34rem, 100vw"
+                  priority
+                />
+              </div>
             )}
           </div>
 

@@ -86,7 +86,16 @@ export function ProductGallery({
   if (count === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3">
+    /**
+     * Capped, and capped here rather than on the column.
+     *
+     * Now that the frame takes the image's own proportions, the column's full
+     * width is not a sensible size for every photograph — on a wide monitor
+     * it made a landscape shot enormous and a portrait one taller than the
+     * screen. The cap holds the gallery to a readable size and leaves the
+     * layout around it alone; below that width it still fills what it has.
+     */
+    <div className="flex w-full max-w-[34rem] flex-col gap-3">
       <div className="relative" style={{ aspectRatio: shapeOf(current.id) }}>
         {current.kind === "VIDEO" ? (
           <video
@@ -116,7 +125,9 @@ export function ProductGallery({
             onLoad={(w, h) =>
               setRatio((r) => (r[current.id] ? r : { ...r, [current.id]: w / h }))
             }
-            sizes="(min-width: 1024px) 52vw, 100vw"
+            // Matches the cap above, so Cloudinary is asked for a file the
+            // size of the frame rather than one sized to the whole column.
+            sizes="(min-width: 1024px) 34rem, 100vw"
             priority={index === 0}
             className="h-full w-full"
           />
