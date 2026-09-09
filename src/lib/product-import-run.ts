@@ -72,6 +72,13 @@ export async function writeParsedRows(
 
   revalidatePath("/admin/products");
   revalidatePath("/[locale]/products", "page");
+  // The detail pages too. A bulk import mostly *updates* products — a new
+  // price, a colour list — and revalidating only the index left every product
+  // page showing what it said before the import, which reads as an import
+  // that silently did nothing.
+  revalidatePath("/[locale]/products/[segment]", "page");
+  // Featured and new products surface on the homepage, which is prerendered.
+  revalidatePath("/[locale]", "page");
 
   return { imported, issues };
 }
