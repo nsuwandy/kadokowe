@@ -24,6 +24,7 @@ export function Plate({
   sizes = "100vw",
   priority = false,
   fit = "cover",
+  label,
   onLoad,
   className,
 }: {
@@ -31,6 +32,16 @@ export function Plate({
   alt?: string | null;
   /** Names the intended shot while the image is absent. */
   caption?: string | null;
+  /**
+   * A label that stays on the plate once the photograph arrives.
+   *
+   * `caption` is scaffolding — it names the shot that is missing and
+   * disappears the moment one exists. This is the opposite: a small card over
+   * the image that is part of the composition, for a plate that has to say
+   * what it is a picture of. When both are given the label wins, because a
+   * brief for the photographer is of no use to a visitor.
+   */
+  label?: string | null;
   ratio?: string;
   tone?: "light" | "dark" | "red";
   sizes?: string;
@@ -84,6 +95,7 @@ export function Plate({
           onLoad={onLoad}
         />
       ) : (
+        !label &&
         caption && (
           <span
             className={cn(
@@ -96,6 +108,12 @@ export function Plate({
             {caption}
           </span>
         )
+      )}
+
+      {label && (
+        <span className="absolute bottom-0 left-0 z-2 max-w-[88%] bg-paper px-3 py-2 text-[0.6875rem] font-semibold leading-snug tracking-[0.01em] text-ink">
+          {label}
+        </span>
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale, pick, pickOptional, type AppLocale } from "@/lib/i18n";
 import { localePath } from "@/lib/nav";
@@ -18,6 +19,53 @@ const HOME_PRODUCT_SELECT = {
 import { homeBlocks, blockCopy } from "@/lib/page-content";
 import { livePublished } from "@/lib/articles";
 import { CATEGORIES } from "@/content/insights";
+
+/**
+ * The Product Library collage, slot by slot.
+ *
+ * Kept as data rather than as five hand-written blocks so the shape is stated
+ * once and the products are poured into it. The fifth deliberately breaks the
+ * grid — FR-2.4 — and the negative margin is the whole point of it, so it is
+ * not a value to tidy away.
+ */
+const IDEAS_SLOTS = [
+  { cell: "col-span-12 md:col-span-6", ratio: "4 / 3.4", tone: "light" as const,
+    sizes: "(min-width: 768px) 50vw, 100vw", plate: "" },
+  { cell: "col-span-6 md:col-span-3", ratio: "3 / 3.2", tone: "light" as const,
+    sizes: "25vw", plate: "" },
+  { cell: "col-span-6 md:col-span-3", ratio: "3 / 3.2", tone: "light" as const,
+    sizes: "25vw", plate: "" },
+  { cell: "col-span-12 md:col-span-6 md:col-start-7", ratio: "16 / 6.4", tone: "light" as const,
+    sizes: "(min-width: 768px) 50vw, 100vw", plate: "" },
+  { cell: "col-span-12 md:col-span-5 md:col-start-3 md:-mt-16", ratio: "4 / 3",
+    tone: "dark" as const, sizes: "(min-width: 768px) 42vw, 100vw",
+    plate: "md:shadow-[0_24px_60px_rgba(15,12,13,0.16)]" },
+] as const;
+
+/** Plates in the Product Library collage. The layout above is built for five. */
+const IDEAS_SHOTS = IDEAS_SLOTS.length;
+
+/**
+ * Fisher-Yates, on a copy.
+ *
+ * `sort(() => Math.random() - 0.5)` is the usual shortcut and is not a
+ * shuffle — comparison sorts assume a consistent comparator, and with a random
+ * one the result is measurably biased towards the original order. On a band
+ * meant to show a different five products each time, that shows.
+ *
+ * The draw happens when the page is generated, so the five change on
+ * revalidation rather than on every visit. That is the right trade for a
+ * prerendered homepage: a fresh draw per request would make the page dynamic
+ * and cost a database round trip on every visit for a decorative band.
+ */
+function shuffle<T>(items: T[]): T[] {
+  const out = items.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
 
 /**
  * Homepage — SRS v1.4 §11.4 and FR-2.1 to FR-2.14.
@@ -60,6 +108,54 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     slug: true, titleEn: true, titleId: true, client: true,
     summaryEn: true, summaryId: true, stats: true, heroImage: true,
   } as const;
+
+  // FR-3.1 — the category band, from the taxonomy the admin manages rather
+  // than a code constant whose counts were written as zero and never wired to
+  // anything. A term added on the Categories page now appears here, and the
+  // number beside it is the published products actually filed under it.
+  const categoryRows = await db.taxonomyTerm.findMany({
+    where: { axis: "PRODUCT" },
+    orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+    select: {
+      slugEn: true, nameEn: true, nameId: true,
+      _count: { select: { products: { where: { visibility: "PUBLISHED" } } } },
+    },
+  });
+  // An empty table renders the categories the site already had, the way
+  // listCraftFamilies does: an unseeded environment is a normal starting
+  // state, and a missing band is worse than one showing zeroes.
+  const categories =
+    categoryRows.length > 0
+      ? categoryRows.map((c) => ({
+          slug: c.slugEn,
+          en: c.nameEn,
+          id: c.nameId ?? c.nameEn,
+          count: c._count.products,
+        }))
+      : PRODUCT_CATEGORIES.map((c) => ({ ...c }));
+
+  // FR-2.x — the Product Library preview shows the library.
+  //
+  // The five plates were five image pickers in the admin, filled by hand and
+  // captioned with a photographer's brief, so the band advertising the
+  // catalogue was the one part of the page the catalogue could not reach. It
+  // now draws real products, which also means it fills itself as the
+  // catalogue grows.
+  //
+  // Picked in two steps rather than by fetching every product and shuffling:
+  // the ids are small, the records are not, and at a thousand products the
+  // difference is the whole band's cost.
+  const shootable = await db.product.findMany({
+    where: { visibility: "PUBLISHED", heroImage: { not: null } },
+    select: { id: true },
+  });
+  const picked = shuffle(shootable.map((p) => p.id)).slice(0, IDEAS_SHOTS);
+  const ideasProducts = picked.length
+    ? await db.product.findMany({
+        where: { id: { in: picked } },
+        select: { slug: true, nameEn: true, nameId: true, heroImage: true },
+      })
+    : [];
 
   const [flaggedNew, recentProducts, flaggedProject, recentProject, latestArticles, blocks] =
     await Promise.all([
@@ -316,55 +412,32 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             }
           />
 
+          {/* The collage shape is fixed and deliberate — FR-2.4 and FR-2.12 —
+              so the products are poured into it rather than laid out by it.
+              Each slot keeps its ratio, span and offset whichever product
+              lands there. */}
           <div className="grid grid-cols-12 gap-3 md:gap-5">
-            <div className="col-span-12 md:col-span-6">
-              <Plate
-                ratio="4 / 3.4"
-                publicId={image("home.ideas", "shot1")}
-                alt=""
-                caption="Portable electric cooking pot, lifestyle context"
-                sizes="(min-width: 768px) 50vw, 100vw"
-              />
-            </div>
-            <div className="col-span-6 md:col-span-3">
-              <Plate
-                ratio="3 / 3.2"
-                publicId={image("home.ideas", "shot2")}
-                alt=""
-                caption="NFC luggage tag, macro"
-                sizes="25vw"
-              />
-            </div>
-            <div className="col-span-6 md:col-span-3">
-              <Plate
-                ratio="3 / 3.2"
-                publicId={image("home.ideas", "shot3")}
-                alt=""
-                caption="Bamboo desk set, top-down"
-                sizes="25vw"
-              />
-            </div>
-            <div className="col-span-12 md:col-span-6 md:col-start-7">
-              <Plate
-                ratio="16 / 6.4"
-                publicId={image("home.ideas", "shot4")}
-                alt=""
-                caption="Wide lifestyle — merchandise in the field"
-                sizes="(min-width: 768px) 50vw, 100vw"
-              />
-            </div>
-            {/* Deliberately breaks the grid — FR-2.4. */}
-            <div className="col-span-12 md:col-span-5 md:col-start-3 md:-mt-16">
-              <Plate
-                tone="dark"
-                ratio="4 / 3"
-                publicId={image("home.ideas", "shot5")}
-                alt=""
-                caption="Feature product — breaks the grid deliberately"
-                sizes="(min-width: 768px) 42vw, 100vw"
-                className="md:shadow-[0_24px_60px_rgba(15,12,13,0.16)]"
-              />
-            </div>
+            {ideasProducts.map((product, i) => {
+              const slot = IDEAS_SLOTS[i]!;
+              return (
+                <div key={product.slug} className={slot.cell}>
+                  <Link
+                    href={path(`/products/${product.slug}`)}
+                    className="group block"
+                  >
+                    <Plate
+                      tone={slot.tone}
+                      ratio={slot.ratio}
+                      publicId={product.heroImage}
+                      alt=""
+                      label={pick(product, "name", l)}
+                      sizes={slot.sizes}
+                      className={slot.plate}
+                    />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </Wrap>
       </Section>
@@ -498,7 +571,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </Eyebrow>
         </Wrap>
         <ul className="grid grid-cols-2 gap-px border-y border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
-          {PRODUCT_CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <li key={c.slug} className="bg-paper">
               <a
                 href={path(`/products/product/${c.slug}`)}
