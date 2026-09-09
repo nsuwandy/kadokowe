@@ -9,6 +9,9 @@ import { parsePrice } from "@/lib/price";
 import { budgetTierFor } from "@/content/taxonomy";
 import { galleryFrom } from "@/lib/gallery";
 import { type SaveState } from "@/lib/product-form";
+import {
+  STALE_MESSAGE, expectedStamp, isStaleWrite, stampGuard,
+} from "@/lib/editor-shared";
 
 /**
  * Create or update a product — FR-10.2.
@@ -157,7 +160,7 @@ export async function saveProduct(
     }
 
     await db.product.update({
-      where: { id },
+      where: { id, ...stampGuard(expectedStamp(formData)) },
       data: {
         ...data,
         slug,
@@ -181,6 +184,7 @@ export async function saveProduct(
   } catch (error) {
     // redirect() throws by design; let it through rather than reporting it.
     if (error && typeof error === "object" && "digest" in error) throw error;
+    if (isStaleWrite(error)) return { ok: false, message: STALE_MESSAGE };
     const message =
       error instanceof Error && error.message.includes("Unique constraint")
         ? `The slug "${slug}" is already used by another product.`

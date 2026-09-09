@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { editStamp } from "@/lib/editor-shared";
 import { ProductForm } from "@/components/admin/ProductForm";
 import type { ProductPackagingRow } from "@/lib/product-form";
 import { saveProduct } from "../actions";
@@ -115,6 +116,7 @@ export default async function ProductEditor({
 
       <ProductForm
         action={saveProduct}
+        updatedAt={editStamp(product?.updatedAt)}
         terms={terms}
         packaging={packaging}
         product={

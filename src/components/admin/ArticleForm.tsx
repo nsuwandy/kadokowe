@@ -48,11 +48,14 @@ export type ArticleFormValues = {
 export function ArticleForm({
   action,
   article,
+  updatedAt,
   products,
   projects,
 }: {
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   article: ArticleFormValues | null;
+  /** ISO timestamp of the record as loaded — see STALE_MESSAGE in editor-shared. */
+  updatedAt?: string;
   products: { id: string; nameEn: string }[];
   projects: { id: string; titleEn: string; client: string }[];
 }) {
@@ -70,6 +73,10 @@ export function ArticleForm({
   return (
     <form action={formAction} className="flex flex-col gap-8">
       <input type="hidden" name="id" value={article?.id ?? "new"} />
+      {/* Optimistic concurrency: the record as this page loaded it. A save
+          whose stamp no longer matches the row is refused rather than allowed
+          to overwrite whatever landed in between. */}
+      {updatedAt && <input type="hidden" name="updatedAt" value={updatedAt} />}
 
       <TranslationStatus />
 

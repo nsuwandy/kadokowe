@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
-import type { SaveState } from "@/lib/editor-shared";
+import {
+  STALE_MESSAGE, isStaleWrite, stampGuard,
+  type SaveState,
+} from "@/lib/editor-shared";
 
 /** Partner and supplier marks shown on About — saved wholesale, as elsewhere. */
 function indexed(formData: FormData, prefix: string): string[] {
@@ -28,11 +31,23 @@ export async function savePartners(
   const names = indexed(formData, "name");
   const logos = indexed(formData, "logo");
   const urls = indexed(formData, "url");
+  const stamps = indexed(formData, "stamp");
   const removed = new Set(formData.getAll("remove").map(String));
 
-  const previous = await db.partner
-    .findMany({ select: { logo: true } })
-    .then((rows) => rows.map((r) => r.logo));
+  // Only the rows this submission is actually responsible for.
+  //
+  // This read used to be every partner's logo, which made the cleanup below a
+  // statement about the whole table rather than about this edit. A partner
+  // added by someone else after this page loaded was absent from the submitted
+  // list, so it counted as removed and had its logo moved into the removed
+  // folder — while the row itself, which this form never touches, stayed put
+  // and pointed at a file that was no longer there.
+  const known = ids.map((v) => (v ?? "").trim()).filter(Boolean);
+  const previous = known.length
+    ? await db.partner
+        .findMany({ where: { id: { in: known } }, select: { logo: true } })
+        .then((rows) => rows.map((r) => r.logo))
+    : [];
 
   try {
     for (let i = 0; i < names.length; i += 1) {
@@ -51,8 +66,21 @@ export async function savePartners(
         url: (urls[i] ?? "").trim() || null,
         sortOrder: i,
       };
-      if (id) await db.partner.update({ where: { id }, data });
-      else await db.partner.create({ data });
+      if (id) {
+        const stamp = (stamps[i] ?? "").trim();
+        const expected = stamp ? new Date(stamp) : undefined;
+        await db.partner.update({
+          where: {
+            id,
+            ...stampGuard(
+              expected && !Number.isNaN(expected.getTime()) ? expected : undefined,
+            ),
+          },
+          data,
+        });
+      } else {
+        await db.partner.create({ data });
+      }
     }
 
     await retireAssets(removedFrom(previous, logos));
@@ -60,7 +88,9 @@ export async function savePartners(
     revalidatePath("/admin/partners");
     revalidatePath("/[locale]/about", "page");
     return { ok: true, message: "Saved." };
-  } catch {
+  } catch (error) {
+    if (isStaleWrite(error)) return { ok: false, message: STALE_MESSAGE };
+    console.error("[partners] save failed:", error);
     return { ok: false, message: "Could not save. Check the fields and try again." };
   }
 }

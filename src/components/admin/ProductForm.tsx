@@ -32,11 +32,14 @@ import {
 export function ProductForm({
   action,
   product,
+  updatedAt,
   terms,
   packaging,
 }: {
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   product: ProductFormValues | null;
+  /** ISO timestamp of the record as loaded — see STALE_MESSAGE in editor-shared. */
+  updatedAt?: string;
   terms: TermOption[];
   packaging: ProductPackagingRow[];
 }) {
@@ -58,6 +61,10 @@ export function ProductForm({
     <>
       <form action={formAction} className="flex flex-col gap-8">
         <input type="hidden" name="id" value={product?.id ?? "new"} />
+        {/* Optimistic concurrency: the record as this page loaded it. A save
+            whose stamp no longer matches the row is refused rather than allowed
+            to overwrite whatever landed in between. */}
+        {updatedAt && <input type="hidden" name="updatedAt" value={updatedAt} />}
 
       <TranslationStatus />
 

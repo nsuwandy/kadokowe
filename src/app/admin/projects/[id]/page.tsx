@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ProjectForm } from "@/components/admin/ProjectForm";
-import { STORY_SECTIONS } from "@/lib/editor-shared";
+import { STORY_SECTIONS, editStamp } from "@/lib/editor-shared";
 import { saveProject } from "../actions";
 
 /** Project editor — FR-7.7, FR-10.3. `new` shares this route with edit. */
@@ -68,6 +68,7 @@ export default async function ProjectEditor({
 
       <ProjectForm
         action={saveProject}
+        updatedAt={editStamp(project?.updatedAt)}
         products={products}
         project={
           project

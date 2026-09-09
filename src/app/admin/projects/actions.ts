@@ -6,7 +6,10 @@ import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
 import { galleryFrom } from "@/lib/gallery";
-import { STORY_SECTIONS, type SaveState } from "@/lib/editor-shared";
+import {
+  STORY_SECTIONS, STALE_MESSAGE, expectedStamp, isStaleWrite, stampGuard,
+  type SaveState,
+} from "@/lib/editor-shared";
 
 /** Create or update an Our Work project — FR-7.7, FR-10.3. */
 export async function saveProject(
@@ -112,7 +115,7 @@ export async function saveProject(
     }
 
     await db.project.update({
-      where: { id },
+      where: { id, ...stampGuard(expectedStamp(formData)) },
       data: {
         ...data,
         slug,
@@ -136,6 +139,7 @@ export async function saveProject(
     return { ok: true, message: "Saved." };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
+    if (isStaleWrite(error)) return { ok: false, message: STALE_MESSAGE };
     const message =
       error instanceof Error && error.message.includes("Unique constraint")
         ? `The web address "${slug}" is already used by another project.`

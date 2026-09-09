@@ -6,7 +6,10 @@ import slugify from "slugify";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { retireAssets, removedFrom } from "@/lib/asset-cleanup";
-import type { SaveState } from "@/lib/editor-shared";
+import {
+  STALE_MESSAGE, expectedStamp, isStaleWrite, stampGuard,
+  type SaveState,
+} from "@/lib/editor-shared";
 
 /**
  * Custom Made families — FR-12.x.
@@ -148,7 +151,7 @@ export async function saveFamily(
       ]);
 
     await db.craftFamily.update({
-      where: { id },
+      where: { id, ...stampGuard(expectedStamp(formData)) },
       data: {
         ...data,
         slug,
@@ -171,6 +174,7 @@ export async function saveFamily(
     return { ok: true, message: "Saved." };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
+    if (isStaleWrite(error)) return { ok: false, message: STALE_MESSAGE };
     // Logged as well as reported. The operator gets a sentence they can act
     // on; whoever has to work out why needs the actual error, and swallowing
     // it is how a save that loses data looks like one that worked.

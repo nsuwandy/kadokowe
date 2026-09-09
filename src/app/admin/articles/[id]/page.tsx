@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { editStamp } from "@/lib/editor-shared";
 import { ArticleForm } from "@/components/admin/ArticleForm";
 import { saveArticle } from "../actions";
 
@@ -58,6 +59,7 @@ export default async function ArticleEditor({
 
       <ArticleForm
         action={saveArticle}
+        updatedAt={editStamp(article?.updatedAt)}
         products={products}
         projects={projects}
         article={

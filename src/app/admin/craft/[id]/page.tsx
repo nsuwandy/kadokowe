@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { editStamp } from "@/lib/editor-shared";
 import { CraftFamilyForm, type PairValue } from "@/components/admin/CraftFamilyForm";
 import { saveFamily } from "../actions";
 
@@ -70,6 +71,7 @@ export default async function CraftFamilyEditor({
 
       <CraftFamilyForm
         action={saveFamily}
+        updatedAt={editStamp(family?.updatedAt)}
         family={
           family
             ? {

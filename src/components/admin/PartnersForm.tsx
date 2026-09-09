@@ -4,7 +4,14 @@ import { useActionState, useState } from "react";
 import { emptySaveState, type SaveState } from "@/lib/editor-shared";
 import { ImageField } from "@/components/admin/ImageField";
 
-export type PartnerRow = { id: string; name: string; logo: string; url: string };
+export type PartnerRow = {
+  id: string;
+  name: string;
+  logo: string;
+  url: string;
+  /** The row as this page loaded it — see STALE_MESSAGE in editor-shared. */
+  updatedAt: string;
+};
 
 /**
  * Partner marks — FR-4.x.
@@ -48,6 +55,9 @@ export function PartnersForm({
               className={`grid gap-4 bg-paper p-5 md:grid-cols-[1fr_1fr_auto] ${gone ? "opacity-40" : ""}`}
             >
               <input type="hidden" name={`id_${i}`} value={row.id} />
+              {/* The row as loaded, so a save cannot silently overwrite an
+                  edit someone else made to this partner in the meantime. */}
+              <input type="hidden" name={`stamp_${i}`} value={row.updatedAt} />
               <div className="flex flex-col gap-3">
                 <label className="flex flex-col gap-1.5">
                   <span className="text-[0.625rem] font-bold uppercase tracking-[0.14em]">Name</span>
@@ -115,7 +125,12 @@ export function PartnersForm({
       <div className="flex flex-wrap items-center gap-4">
         <button
           type="button"
-          onClick={() => setRows((prev) => [...prev, { id: "", name: "", logo: "", url: "" }])}
+          onClick={() =>
+            setRows((prev) => [
+              ...prev,
+              { id: "", name: "", logo: "", url: "", updatedAt: "" },
+            ])
+          }
           className="border border-line px-4 py-2 text-xs font-semibold hover:border-ink"
         >
           + Add a partner

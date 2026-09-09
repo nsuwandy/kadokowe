@@ -52,10 +52,13 @@ export type ProjectFormValues = {
 export function ProjectForm({
   action,
   project,
+  updatedAt,
   products,
 }: {
   action: (prev: SaveState, formData: FormData) => Promise<SaveState>;
   project: ProjectFormValues | null;
+  /** ISO timestamp of the record as loaded — see STALE_MESSAGE in editor-shared. */
+  updatedAt?: string;
   products: { id: string; nameEn: string }[];
 }) {
   const [state, formAction, pending] = useActionState(action, emptySaveState);
@@ -73,6 +76,10 @@ export function ProjectForm({
   return (
     <form action={formAction} className="flex flex-col gap-8">
       <input type="hidden" name="id" value={project?.id ?? "new"} />
+      {/* Optimistic concurrency: the record as this page loaded it. A save
+          whose stamp no longer matches the row is refused rather than allowed
+          to overwrite whatever landed in between. */}
+      {updatedAt && <input type="hidden" name="updatedAt" value={updatedAt} />}
 
       <TranslationStatus />
 

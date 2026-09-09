@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { currentAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { editStamp } from "@/lib/editor-shared";
 import { PartnersForm, type PartnerRow } from "@/components/admin/PartnersForm";
 import { savePartners } from "./actions";
 
@@ -11,7 +12,7 @@ export default async function AdminPartners() {
 
   const partners = await db.partner.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true, logo: true, url: true },
+    select: { id: true, name: true, logo: true, url: true, updatedAt: true },
   });
 
   const rows: PartnerRow[] = partners.map((p) => ({
@@ -19,6 +20,7 @@ export default async function AdminPartners() {
     name: p.name,
     logo: p.logo ?? "",
     url: p.url ?? "",
+    updatedAt: editStamp(p.updatedAt),
   }));
 
   return (
