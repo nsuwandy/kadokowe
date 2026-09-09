@@ -48,13 +48,28 @@ export default async function ImportPage() {
           <code className="bg-warm px-1">indicative_price</code>, so there is no
           need to tag it.
         </p>
-        <a
-          href="/api/admin/import-template"
-          download="kadokowe-products-template.csv"
-          className="text-xs font-semibold text-red hover:underline"
-        >
-          Download template CSV ↓
-        </a>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <a
+            href="/api/admin/import-template"
+            download="kadokowe-products-template.csv"
+            className="text-xs font-semibold text-red hover:underline"
+          >
+            Download template CSV ↓
+          </a>
+          <a
+            href="/api/admin/products.csv"
+            download
+            className="text-xs font-semibold text-red hover:underline"
+          >
+            Download the products you already have ↓
+          </a>
+        </div>
+        <p className="mt-3 max-w-[70ch] text-xs text-muted">
+          The export uses these same columns, so it is also the way to change
+          many products at once: export, edit in a spreadsheet, import the file
+          back. Rows are matched on their slug, so the products are updated
+          rather than duplicated.
+        </p>
         <pre className="mt-4 overflow-x-auto border border-line bg-warm p-4 font-mono text-[0.6875rem] leading-relaxed">
           {importTemplateCsv()}
         </pre>
