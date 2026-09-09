@@ -94,6 +94,23 @@ const INCLUDE = {
   machines: { orderBy: { sortOrder: "asc" } },
 } as const;
 
+/**
+ * Prisma's "the table is not there" — the one failure the constants exist for.
+ *
+ * Every other error has to be allowed through. The constants carry names and
+ * wording but no photographs at all, so falling back to them on a database
+ * blip serves a page that looks complete and has quietly lost every image on
+ * it — and Next then caches that page until something revalidates it. A 500 is
+ * the better failure by a distance: it is not cached, the next request tries
+ * again, and it says what happened instead of looking like an editor's mistake.
+ *
+ * This is the same narrow test the admin editor already used; only the public
+ * reader was catching everything.
+ */
+function notMigrated(error: unknown): boolean {
+  return (error as { code?: string })?.code === "P2021";
+}
+
 /** Published families for the index, in the operator's order. */
 export async function listCraftFamilies(locale: AppLocale): Promise<CraftFamilyView[]> {
   try {
@@ -104,7 +121,8 @@ export async function listCraftFamilies(locale: AppLocale): Promise<CraftFamilyV
     });
     if (rows.length === 0) return FAMILIES.map((f) => fromConstant(f, locale));
     return rows.map((r) => shape(r, locale));
-  } catch {
+  } catch (error) {
+    if (!notMigrated(error)) throw error;
     return FAMILIES.map((f) => fromConstant(f, locale));
   }
 }
@@ -121,9 +139,12 @@ export async function getCraftFamily(
       include: INCLUDE,
     });
     if (row) return shape(row, locale);
-  } catch {
-    // fall through to the constants
+  } catch (error) {
+    if (!notMigrated(error)) throw error;
   }
+  // No row is not an error: either the family is only in the constants, or it
+  // exists but is not published. The editor warns about the second case, since
+  // what renders then is the built-in wording with no photographs.
   const constant = FAMILIES.find((f) => f.slug === slug);
   return constant ? fromConstant(constant, locale) : null;
 }
