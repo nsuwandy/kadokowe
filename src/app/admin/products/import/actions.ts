@@ -4,6 +4,7 @@ import { currentAdmin } from "@/lib/auth";
 import {
   parseProductCsv,
   emptyImportState,
+  IMPORT_COLUMNS,
   type ImportState,
 } from "@/lib/product-import";
 import { writeParsedRows } from "@/lib/product-import-run";
@@ -36,12 +37,21 @@ export async function importProducts(
     return { ...emptyImportState, ran: true, message: "Choose a CSV file or paste some rows first." };
   }
 
-  const { rows, errors, missingColumns } = parseProductCsv(csv);
+  const { rows, errors, missingColumns, present } = parseProductCsv(csv);
   if (missingColumns.length > 0) {
     return { ...emptyImportState, ran: true, missingColumns };
   }
 
-  const { imported, issues } = await writeParsedRows(rows);
+  const { imported, issues } = await writeParsedRows(rows, present);
 
-  return { ran: true, imported, issues: [...errors, ...issues], missingColumns: [] };
+  return {
+    ran: true,
+    imported,
+    issues: [...errors, ...issues],
+    missingColumns: [],
+    // Named rather than counted: "material was left alone" is actionable in a
+    // way that "5 columns were left alone" is not, and a misspelled header
+    // shows up here as the field the operator meant to change.
+    untouchedColumns: IMPORT_COLUMNS.filter((c) => c !== "slug" && !present.has(c)),
+  };
 }

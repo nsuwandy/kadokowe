@@ -1,6 +1,7 @@
 /** Run with: npm test */
 import { productsToCsv, type ExportableProduct } from "../src/lib/product-export";
 import { parseProductCsv } from "../src/lib/product-import";
+import { IMPORT_COLUMNS as ALL } from "../src/lib/product-grid";
 import { IMPORT_COLUMNS } from "../src/lib/product-grid";
 
 const check = (label: string, got: unknown, want: unknown) => {
@@ -46,6 +47,11 @@ const product = (over: Partial<ExportableProduct> = {}): ExportableProduct => ({
 
 check("header is the import template's own columns",
   productsToCsv([]).split("\n")[0], IMPORT_COLUMNS.join(","));
+// The importer now only writes the columns a file carries, so a full export
+// re-imported must still declare every one of them — otherwise the round trip
+// would quietly stop updating whatever the export had dropped.
+check("a full export carries every column, so it updates every field",
+  [...parseProductCsv(productsToCsv([])).present].sort(), [...ALL].sort());
 
 // The whole point of the feature: a file that goes straight back in.
 const round = (p: ExportableProduct) => {

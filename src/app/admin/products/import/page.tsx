@@ -22,9 +22,17 @@ export default async function ImportPage() {
         <p className="mt-2 max-w-[70ch] text-sm text-muted">
           Upload a CSV exported from a spreadsheet, or paste the rows directly.
           Products are matched on <code className="bg-warm px-1">slug</code> — an
-          existing product is updated, a new one is created. Everything imports as
-          a draft unless you set <code className="bg-warm px-1">visibility</code> to
-          PUBLISHED.
+          existing product is updated, a new one is created. A <em>new</em>{" "}
+          product arrives as a draft unless you set{" "}
+          <code className="bg-warm px-1">visibility</code> to PUBLISHED.
+          <br />
+          Only the columns your file actually has are written. A file of just{" "}
+          <code className="bg-warm px-1">slug</code> and{" "}
+          <code className="bg-warm px-1">indicative_price</code> updates the
+          prices and leaves everything else on those products alone — so a
+          narrow spreadsheet is a safe way to correct one thing across the
+          catalogue. An empty cell in a column you <em>did</em> include still
+          clears that field.
         </p>
         <p className="mt-3 text-xs text-muted">
           No spreadsheet to start from?{" "}
@@ -40,8 +48,7 @@ export default async function ImportPage() {
       <section className="bg-paper p-6">
         <h2 className="mb-3 text-sm font-semibold">Column guide</h2>
         <p className="mb-4 max-w-[70ch] text-sm text-muted">
-          Only <code className="bg-warm px-1">name_en</code> and{" "}
-          <code className="bg-warm px-1">short_en</code> are required — a
+          Only <code className="bg-warm px-1">name_en</code> is required — a
           partially written catalogue still imports. Multi-value fields (tags,
           colours, purposes, industries, customisation) separate entries with{" "}
           <code className="bg-warm px-1">|</code>. Budget tier is worked out from{" "}

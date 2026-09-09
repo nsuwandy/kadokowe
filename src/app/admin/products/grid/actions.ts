@@ -4,10 +4,12 @@ import { currentAdmin } from "@/lib/auth";
 import {
   normalizeRecords,
   emptyImportState,
+  ALL_COLUMNS,
   type ImportRecord,
   type ImportState,
+  type PresentColumns,
 } from "@/lib/product-import";
-import { IMPORT_COLUMNS } from "@/lib/product-grid";
+import { IMPORT_COLUMNS, type ImportColumn } from "@/lib/product-grid";
 import { writeParsedRows } from "@/lib/product-import-run";
 
 /**
@@ -75,10 +77,31 @@ export async function importProductGrid(
     return { ...emptyImportState, ran: true, message: "Every row is empty. Fill at least a name and a one-liner." };
   }
 
+  // Which columns the operator could actually see.
+  //
+  // The grid keeps every column on every row whether or not it is displayed,
+  // so a submitted payload always carries all 25 — and with the reduced column
+  // set showing, importing a row whose slug matched an existing product used
+  // to blank the twenty the operator was never shown. A column that was not on
+  // screen was not edited, so it is not part of this import.
+  const declared = String(formData.get("columns") ?? "")
+    .split(",")
+    .map((c) => c.trim())
+    .filter((c): c is ImportColumn => (IMPORT_COLUMNS as readonly string[]).includes(c));
+  // An older page still open in a tab submits no list. Falling back to every
+  // column keeps that submission behaving exactly as it did before.
+  const present: PresentColumns = declared.length > 0 ? new Set(declared) : ALL_COLUMNS;
+
   // Row 1 in the grid is row 1 in the report — the operator has to be able to
   // find the row a problem refers to.
   const { rows, errors } = normalizeRecords(filled, 1);
-  const { imported, issues } = await writeParsedRows(rows);
+  const { imported, issues } = await writeParsedRows(rows, present);
 
-  return { ran: true, imported, issues: [...errors, ...issues], missingColumns: [] };
+  return {
+    ran: true,
+    imported,
+    issues: [...errors, ...issues],
+    missingColumns: [],
+    untouchedColumns: IMPORT_COLUMNS.filter((c) => c !== "slug" && !present.has(c)),
+  };
 }

@@ -360,6 +360,10 @@ function GridEditor({ termsByAxis }: { termsByAxis: TermsByAxis }) {
       {/* ---------------------------------------------------------- grid */}
       <form action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="rows" ref={payloadRef} />
+        {/* The columns on screen. A column the operator cannot see is not one
+            they chose to empty, so an import leaves it alone on an existing
+            product rather than clearing it. */}
+        <input type="hidden" name="columns" value={columns.map((c) => c.key).join(",")} />
 
         <div className="overflow-x-auto border border-line bg-paper">
           <table ref={tableRef} className="w-max border-collapse text-sm">
@@ -473,7 +477,9 @@ function GridEditor({ termsByAxis }: { termsByAxis: TermsByAxis }) {
           <p className="text-xs text-muted">
             Rows are matched on web address — an existing product is updated
             rather than duplicated, so it is safe to fix a few rows and import
-            again.
+            again. Only the {columns.length} columns shown here are written;
+            {showAll ? " " : " the rest are left as they are."}
+            {showAll ? "every column is on screen." : ""}
           </p>
         </div>
       </form>

@@ -1,28 +1,50 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import type { ParsedRow, RowError } from "@/lib/product-import";
+import type { ParsedRow, PresentColumns, RowError } from "@/lib/product-import";
+import {
+  axesReplacedBy,
+  productData,
+  termIdsForUpdate,
+  updateFields,
+} from "@/lib/product-import-plan";
 
 /**
  * Writes validated rows to the catalogue — the shared tail of both import
  * front ends (FR-10.11).
  *
- * Products are matched on slug and upserted, so re-running an import is a
- * correction rather than a duplication. That property is what makes the grid
- * safe to use as a working surface: the operator can fix three rows and press
- * Import again without first hunting down what the previous run created.
+ * Products are matched on slug — found and updated, or created — so re-running
+ * an import is a correction rather than a duplication. That property is what
+ * makes the grid safe to use as a working surface: the operator can fix three
+ * rows and press Import again without first hunting down what the previous run
+ * created. It is a lookup rather than an upsert because the two branches no
+ * longer write the same thing, and an update needs the product's existing
+ * terms to know which axes it is leaving alone.
+ *
+ * An update touches only the columns the file actually carried. This is the
+ * difference between an import that corrects three fields and one that
+ * silently empties twenty: a CSV of `slug,name_en` used to blank material,
+ * colours, lead time, every tag and every taxonomy term on every product it
+ * matched, and reset availability, visibility and both flags to their
+ * defaults. A create is unaffected — there a missing column genuinely does
+ * mean "use the default".
  */
+
 export async function writeParsedRows(
   rows: ParsedRow[],
+  present: PresentColumns,
 ): Promise<{ imported: number; issues: RowError[] }> {
   const issues: RowError[] = [];
   let imported = 0;
+
+  // An axis whose column is absent keeps whatever the product already has.
+  const replacedAxes = axesReplacedBy(present);
 
   for (const row of rows) {
     try {
       const terms = row.termSlugs.length
         ? await db.taxonomyTerm.findMany({
             where: { slugEn: { in: row.termSlugs } },
-            select: { id: true, slugEn: true },
+            select: { id: true, slugEn: true, axis: true },
           })
         : [];
 
@@ -31,27 +53,35 @@ export async function writeParsedRows(
       const found = new Set(terms.map((t) => t.slugEn));
       const unknown = row.termSlugs.filter((s) => !found.has(s));
 
-      const data = {
-        nameEn: row.nameEn, nameId: row.nameId,
-        shortEn: row.shortEn, shortId: row.shortId,
-        whyEn: row.whyEn, whyId: row.whyId,
-        material: row.material, dimensions: row.dimensions, capacity: row.capacity,
-        colours: row.colours, moq: row.moq, leadTime: row.leadTime,
-        customisation: row.customisation,
-        availability: row.availability as never,
-        indicativePrice: row.indicativePrice,
-        indicativePriceMax: row.indicativePriceMax,
-        tagsEn: row.tagsEn, tagsId: row.tagsId,
-        heroImage: row.heroImage,
-        featured: row.featured, isNew: row.isNew,
-        visibility: row.visibility as never,
-      };
-
-      await db.product.upsert({
+      const existing = await db.product.findUnique({
         where: { slug: row.slug },
-        update: { ...data, terms: { set: terms.map((t) => ({ id: t.id })) } },
-        create: { ...data, slug: row.slug, terms: { connect: terms.map((t) => ({ id: t.id })) } },
+        select: { id: true, terms: { select: { id: true, axis: true } } },
       });
+
+      if (!existing) {
+        // A create writes everything: an absent column here genuinely does
+        // mean "use the default", because there is nothing yet to preserve.
+        await db.product.create({
+          data: {
+            ...productData(row),
+            availability: row.availability as never,
+            visibility: row.visibility as never,
+            slug: row.slug,
+            terms: { connect: terms.map((t) => ({ id: t.id })) },
+          },
+        });
+      } else {
+        const ids = termIdsForUpdate(existing.terms, terms, replacedAxes);
+        await db.product.update({
+          where: { id: existing.id },
+          data: {
+            ...updateFields(row, present),
+            // Left alone entirely when the file carries no taxonomy column and
+            // no price, rather than rewritten to the value it already had.
+            ...(ids === null ? {} : { terms: { set: ids.map((id) => ({ id })) } }),
+          },
+        });
+      }
       imported += 1;
 
       if (unknown.length > 0) {

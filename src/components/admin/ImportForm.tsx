@@ -98,6 +98,24 @@ export function ImportForm() {
             </p>
           </div>
 
+          {state.untouchedColumns && state.untouchedColumns.length > 0 && (
+            <section className="border-t border-line px-5 py-4">
+              <h3 className="text-sm font-semibold">
+                Columns your file did not have
+              </h3>
+              <p className="mt-1 max-w-[70ch] text-sm text-muted">
+                Products that already existed kept these as they were:{" "}
+                <span className="font-mono text-xs">
+                  {state.untouchedColumns.join(", ")}
+                </span>
+                . New products got the usual defaults. If one of those is a
+                field you meant to change, check the heading is spelled exactly
+                as it is in the template — a misspelled heading is not
+                recognised, so that field is left alone.
+              </p>
+            </section>
+          )}
+
           {rejected.length > 0 && (
             <section className="border-t border-line">
               <h3 className="px-5 pt-5 text-sm font-semibold">Rows that were skipped</h3>

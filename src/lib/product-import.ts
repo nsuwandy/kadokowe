@@ -68,7 +68,27 @@ export type ParseResult = {
   rows: ParsedRow[];
   errors: RowError[];
   missingColumns: string[];
+  present: PresentColumns;
 };
+
+/**
+ * The columns the source actually carried.
+ *
+ * The importer cannot read an absent column and an empty cell as the same
+ * thing. A spreadsheet with a `material` column and nothing in it is an
+ * instruction to clear the material; a spreadsheet with no `material` column
+ * is not about material at all. Conflating them meant a two-column CSV wiped
+ * everything else on every product it matched, silently — and the admin now
+ * tells operators to export, edit and import back, which is exactly the
+ * workflow that produces a narrow file.
+ *
+ * Carried alongside the rows rather than inside them because it describes the
+ * file, not any one line of it.
+ */
+export type PresentColumns = ReadonlySet<ImportColumn>;
+
+/** Every column — what a source that carries the lot declares. */
+export const ALL_COLUMNS: PresentColumns = new Set(IMPORT_COLUMNS);
 
 /** One record as it arrives from either front end: every value a raw string. */
 export type ImportRecord = Partial<Record<ImportColumn, string>>;
@@ -205,13 +225,19 @@ export function parseProductCsv(csv: string): ParseResult {
   // and the products arrive well before the copy for them does.
   const required = ["name_en"];
   const missingColumns = required.filter((c) => !headers.includes(c));
+  // Only the columns this importer knows about. A misspelled header is not a
+  // present column, which is the whole point: it now leaves that field alone
+  // instead of blanking it.
+  const present: PresentColumns = new Set(
+    IMPORT_COLUMNS.filter((c) => headers.includes(c)),
+  );
   if (missingColumns.length > 0) {
-    return { rows: [], errors: [], missingColumns };
+    return { rows: [], errors: [], missingColumns, present };
   }
 
   // +2: one for the header row, one because humans count from 1.
   const { rows, errors } = normalizeRecords(parsed.data as ImportRecord[], 2);
-  return { rows, errors, missingColumns: [] };
+  return { rows, errors, missingColumns: [], present };
 }
 
 /** A template the operator can open in a spreadsheet and fill in. */
@@ -242,6 +268,16 @@ export type ImportState = {
   imported: number;
   issues: RowError[];
   missingColumns: string[];
+  /**
+   * Columns the file did not carry, and which existing products therefore
+   * kept unchanged.
+   *
+   * Reported because the safe behaviour is also the silent one. An operator
+   * who misspells a header now sees that field left alone rather than
+   * emptied — which is the better outcome, but indistinguishable from the
+   * import having worked unless somebody says so.
+   */
+  untouchedColumns?: string[];
   message?: string;
 };
 
