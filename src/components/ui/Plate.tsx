@@ -23,6 +23,7 @@ export function Plate({
   tone = "light",
   sizes = "100vw",
   priority = false,
+  fit = "cover",
   className,
 }: {
   publicId?: string | null;
@@ -33,6 +34,16 @@ export function Plate({
   tone?: "light" | "dark" | "red";
   sizes?: string;
   priority?: boolean;
+  /**
+   * How the image sits in the frame.
+   *
+   * `cover` fills it and crops whatever does not fit — right for the
+   * editorial plates, where the frame's shape is the composition. `contain`
+   * shows the whole image and lets the ground show around it, which is what a
+   * product photograph needs: a tall shot cropped to a landscape frame loses
+   * the top and bottom of the thing being sold.
+   */
+  fit?: "cover" | "contain";
   className?: string;
 }) {
   // Without a cloud name next-cloudinary cannot build a URL and renders
@@ -60,7 +71,7 @@ export function Plate({
           alt={alt ?? ""}
           sizes={sizes}
           priority={priority}
-          className="object-cover"
+          className={fit === "contain" ? "object-contain" : "object-cover"}
         />
       ) : (
         caption && (

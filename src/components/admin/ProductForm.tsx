@@ -324,6 +324,7 @@ export function ProductForm({
 
           <GalleryField
             name="gallery"
+          allowVideo
             label="More images"
             defaultValue={product?.gallery}
             hint="Shown beneath the hero on the product page. Detail shots, packaging, the product in use."

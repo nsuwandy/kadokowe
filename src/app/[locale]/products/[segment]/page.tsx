@@ -10,6 +10,7 @@ import { SITE } from "@/lib/site";
 import { Wrap, Section, Eyebrow, Tag } from "@/components/ui/Section";
 import { Button, ArrowLink } from "@/components/ui/Button";
 import { Plate } from "@/components/ui/Plate";
+import { ProductGallery } from "@/components/ProductGallery";
 import { ProductCard } from "@/components/ProductCard";
 import { AddToCart } from "@/components/cart/AddToCart";
 import { packagingFor } from "@/lib/packaging";
@@ -77,13 +78,30 @@ export default async function ProductPage({
 
   const packaging = await packagingFor(product.id, l);
 
-  // The first three gallery images sit beside the hero; anything beyond them
-  // is treated as branded mockups for "Make It Yours" (FR-4.9).
-  const mockups = product.gallery.slice(3);
-
   const name = pick(product, "name", l);
   const why = pickOptional(product, "why", l);
   const tags = pickArray(product, "tags", l);
+
+  // The hero leads, then everything in the gallery, in one strip.
+  //
+  // The page used to show the first three beside the hero and push the rest
+  // into the "Make It Yours" grid further down, so a product with six
+  // photographs had them in two places and the fourth appeared to belong to a
+  // different section. One gallery, one place.
+  const media = [
+    ...(product.heroImage
+      ? [{ id: "hero", publicId: product.heroImage, kind: "IMAGE" as const,
+           alt: name, caption: name }]
+      : []),
+    ...product.gallery.map((img) => ({
+      id: img.id,
+      publicId: img.publicId,
+      kind: img.kind === "VIDEO" ? ("VIDEO" as const) : ("IMAGE" as const),
+      alt: pickOptional(img, "alt", l),
+      caption: pickOptional(img, "caption", l),
+    })),
+  ];
+
 
   // "Best For" is the Purpose axis surfaced under a client-facing label —
   // FR-4.6. Purposes are how a visitor without a product in mind navigates.
@@ -145,36 +163,31 @@ export default async function ProductPage({
 
         <div className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
           {/* Gallery */}
-          <div className="flex flex-col gap-3 lg:sticky lg:top-24">
-            <div className="relative">
+          <div className="lg:sticky lg:top-24">
+            {media.length > 0 ? (
+              <ProductGallery
+                media={media}
+                name={name}
+                badge={
+                  product.availability === "READY_STOCK"
+                    ? t("Ready when you are", "Siap saat Anda siap")
+                    : null
+                }
+                labels={{
+                  gallery: t("Product photographs", "Foto produk"),
+                  video: t("video", "video"),
+                  showing: t("Showing", "Menampilkan"),
+                }}
+              />
+            ) : (
               <Plate
-                publicId={product.heroImage}
+                publicId={null}
                 alt={name}
                 caption={name}
                 ratio="4 / 3.6"
                 sizes="(min-width: 1024px) 52vw, 100vw"
                 priority
               />
-              {product.availability === "READY_STOCK" && (
-                <span className="absolute top-0 left-0 z-2 bg-red px-3 py-2 text-[0.625rem] font-bold uppercase tracking-[0.14em] text-paper">
-                  {t("Ready when you are", "Siap saat Anda siap")}
-                </span>
-              )}
-            </div>
-            {product.gallery.length > 0 && (
-              <ul className="grid grid-cols-3 gap-3">
-                {product.gallery.slice(0, 3).map((img) => (
-                  <li key={img.id}>
-                    <Plate
-                      publicId={img.publicId}
-                      alt={pick(img, "alt", l)}
-                      caption={pick(img, "caption", l)}
-                      ratio="1 / 1"
-                      sizes="18vw"
-                    />
-                  </li>
-                ))}
-              </ul>
             )}
           </div>
 
@@ -241,11 +254,11 @@ export default async function ProductPage({
             )}
 
             {/* FR-4.9 — "Make It Yours", named to match the same section on the
-                Custom Made family pages so the two read as one idea. Mockups
-                are any gallery images past the three shown beside the hero:
-                they exist to show the product carrying a brand, which is the
-                point of the section and what the chips alone cannot do. */}
-            {(product.customisation.length > 0 || mockups.length > 0) && (
+                Custom Made family pages so the two read as one idea. It now
+                carries the branding methods alone: the mockups it used to show
+                were gallery images past the third, and they belong with the
+                rest of the photography rather than in a second grid. */}
+            {product.customisation.length > 0 && (
               <div className="flex flex-col gap-3">
                 <Eyebrow>{t("Make It Yours", "Jadikan Milik Anda")}</Eyebrow>
                 {product.customisation.length > 0 && (
@@ -256,21 +269,6 @@ export default async function ProductPage({
                         className="border border-line bg-warm px-4 py-2 text-xs font-semibold"
                       >
                         {c}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {mockups.length > 0 && (
-                  <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {mockups.map((image) => (
-                      <li key={image.id}>
-                        <Plate
-                          publicId={image.publicId}
-                          alt={pickOptional(image, "alt", l) ?? pick(product, "name", l)}
-                          caption={pickOptional(image, "caption", l) ?? undefined}
-                          ratio="4 / 3"
-                          sizes="(min-width: 640px) 20vw, 45vw"
-                        />
                       </li>
                     ))}
                   </ul>

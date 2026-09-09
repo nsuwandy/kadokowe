@@ -62,6 +62,16 @@ enum CustomMadeFamily {
   SPECIAL_PROJECTS
 }
 
+/// Whether a gallery entry is a still or a clip.
+///
+/// Separate from CraftMediaKind, which says the same thing for the Custom
+/// Made showcase. Merging them would mean one enum owned by two features that
+/// have no reason to change together.
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
 /// Which list an add-on belongs to.
 ///
 /// Kept separate from the pricing mode, which today happens to divide the two
@@ -318,6 +328,10 @@ model Partner {
 model Image {
   id         String  @id @default(cuid())
   publicId   String  // Cloudinary public ID
+  /// Cloudinary serves stills and clips from different delivery paths, so
+  /// guessing from the file extension returns a broken asset rather than an
+  /// error. The kind is stored rather than inferred.
+  kind       MediaKind @default(IMAGE)
   altEn      String?
   altId      String?
   /// Caption naming the intended shot; carried over from the approved concept.

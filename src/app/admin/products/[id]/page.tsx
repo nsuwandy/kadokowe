@@ -144,6 +144,7 @@ export default async function ProductEditor({
                 gallery: product.gallery.map((g) => ({
                   publicId: g.publicId,
                   altEn: g.altEn ?? "",
+                  kind: g.kind,
                 })),
                 seoTitleEn: product.seoTitleEn,
                 seoTitleId: product.seoTitleId,

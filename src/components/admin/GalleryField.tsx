@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ImageField } from "@/components/admin/ImageField";
 
-export type GalleryItem = { publicId: string; altEn: string };
+export type GalleryItem = { publicId: string; altEn: string; kind?: "IMAGE" | "VIDEO" };
 
 /**
  * Multi-image editor — FR-7.3, FR-4.x.
@@ -25,11 +25,20 @@ export function GalleryField({
   label,
   defaultValue,
   hint,
+  allowVideo = false,
 }: {
   name: string;
   label: string;
   defaultValue?: GalleryItem[];
   hint?: string;
+  /**
+   * Offer video as well as stills.
+   *
+   * Only where the page that renders this gallery knows what to do with a
+   * clip. Elsewhere the option would let someone add one that renders as a
+   * broken image, which is worse than not offering it.
+   */
+  allowVideo?: boolean;
 }) {
   const [items, setItems] = useState<GalleryItem[]>(defaultValue ?? []);
 
@@ -59,6 +68,7 @@ export function GalleryField({
         <div key={i} className="flex flex-col gap-3 border border-line p-3 sm:flex-row sm:items-start">
           <input type="hidden" name={`${name}_publicId`} value={item.publicId} />
           <input type="hidden" name={`${name}_alt`} value={item.altEn} />
+          <input type="hidden" name={`${name}_kind`} value={item.kind ?? "IMAGE"} />
 
           <div className="flex-1">
             <ImageField
@@ -76,6 +86,17 @@ export function GalleryField({
               aria-label={`Alt text for image ${i + 1}`}
               className="w-full border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-red"
             />
+            {allowVideo && (
+              <label className="flex items-center gap-2 text-xs text-muted">
+                <input
+                  type="checkbox"
+                  checked={item.kind === "VIDEO"}
+                  onChange={(e) => update(i, { kind: e.target.checked ? "VIDEO" : "IMAGE" })}
+                  className="accent-red"
+                />
+                This is a video
+              </label>
+            )}
             <div className="flex gap-2">
               <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className={btn}>
                 ↑
@@ -103,7 +124,7 @@ export function GalleryField({
 
       <button
         type="button"
-        onClick={() => setItems((prev) => [...prev, { publicId: "", altEn: "" }])}
+        onClick={() => setItems((prev) => [...prev, { publicId: "", altEn: "", kind: "IMAGE" }])}
         className="self-start border border-ink bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-red"
       >
         Add image
