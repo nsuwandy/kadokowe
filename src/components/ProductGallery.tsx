@@ -57,8 +57,39 @@ export function ProductGallery({
   const [ratio, setRatio] = useState<Record<string, number>>({});
   const shapeOf = (id: string) => ratio[id] ?? 4 / 3.6;
 
+
   const current = media[index] ?? media[0];
   const count = media.length;
+
+  const remember = useCallback((id: string, w: number, h: number) => {
+    if (!w || !h) return;
+    setRatio((r) => (r[id] ? r : { ...r, [id]: w / h }));
+  }, []);
+
+  /**
+   * Measure as the frame mounts, not only when the file finishes loading.
+   *
+   * An image already in the browser's cache completes before React attaches
+   * its load handler, so onLoad never fires for it and the frame keeps the
+   * placeholder shape. The ratio then arrived late — on a re-render, or on
+   * coming back to the page — and the frame changed shape under a filled
+   * image, which reads as the picture zooming.
+   *
+   * A ref callback runs while the element is in front of us, so anything
+   * already loaded is measured immediately and onLoad covers the rest.
+   */
+  const measure = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+      const el = node.querySelector("img, video");
+      if (el instanceof HTMLImageElement && el.complete) {
+        remember(current.id, el.naturalWidth, el.naturalHeight);
+      } else if (el instanceof HTMLVideoElement && el.videoWidth) {
+        remember(current.id, el.videoWidth, el.videoHeight);
+      }
+    },
+    [current.id, remember],
+  );
 
   const go = useCallback(
     (next: number) => setIndex(((next % count) + count) % count),
@@ -96,7 +127,11 @@ export function ProductGallery({
      * layout around it alone; below that width it still fills what it has.
      */
     <div className="flex w-full max-w-[34rem] flex-col gap-3">
-      <div className="relative" style={{ aspectRatio: shapeOf(current.id) }}>
+      <div
+        ref={measure}
+        className="relative"
+        style={{ aspectRatio: shapeOf(current.id) }}
+      >
         {current.kind === "VIDEO" ? (
           <video
             ref={video}
@@ -107,9 +142,7 @@ export function ProductGallery({
             aria-label={current.alt ?? name}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
-              if (v.videoWidth) {
-                setRatio((r) => ({ ...r, [current.id]: v.videoWidth / v.videoHeight }));
-              }
+              remember(current.id, v.videoWidth, v.videoHeight);
             }}
             className="h-full w-full bg-ink"
             src={videoUrl(current.publicId)}
@@ -122,9 +155,7 @@ export function ProductGallery({
             caption={current.caption ?? name}
             ratio={String(shapeOf(current.id))}
             fit="cover"
-            onLoad={(w, h) =>
-              setRatio((r) => (r[current.id] ? r : { ...r, [current.id]: w / h }))
-            }
+            onLoad={(w, h) => remember(current.id, w, h)}
             // Matches the cap above, so Cloudinary is asked for a file the
             // size of the frame rather than one sized to the whole column.
             sizes="(min-width: 1024px) 34rem, 100vw"
