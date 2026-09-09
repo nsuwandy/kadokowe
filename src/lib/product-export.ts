@@ -44,6 +44,12 @@ export type ExportableProduct = {
   isNew: boolean;
   visibility: string;
   terms: { axis: string; slugEn: string }[];
+  /**
+   * Stills only, in display order — the photo column falls back to the first
+   * of these when no hero has been set. Optional because the CSV export has no
+   * use for it and should not pay for the join.
+   */
+  gallery?: { publicId: string }[];
 };
 
 /** What the exported file is called. Dated, because it is a snapshot. */

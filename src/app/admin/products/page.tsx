@@ -49,6 +49,17 @@ export default async function AdminProducts({
         <h1 className="text-2xl font-bold">Products</h1>
         <span className="text-sm text-muted">{total} total</span>
         <div className="ml-auto flex gap-2">
+          <Link
+            href={`/admin/products/export${
+              q || visibility
+                ? `?${new URLSearchParams({ ...(q ? { q } : {}), ...(visibility ? { visibility } : {}) })}`
+                : ""
+            }`}
+            title="Pick columns and download an Excel or PDF sheet with the product photographs in it."
+            className="border border-line bg-paper px-4 py-2.5 text-xs font-semibold hover:border-ink"
+          >
+            Export sheet
+          </Link>
           <a
             href={`/api/admin/products.csv${
               q || visibility
